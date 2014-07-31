@@ -1,4 +1,6 @@
-# Acesync
+=======
+Acesync
+=======
 
 Non-blocking sockets + secure userland TLS encryption. Acesync provides (almost all) of the new
 SSL/TLS encryption features found in PHP 5.6 for 5.4 and 5.5 users. And It's pronounced, "a-sync."
@@ -261,11 +263,5 @@ The following 5.6 features are unavailable:
 
 
 [man-ssl-ctx]: http://php.net/manual/en/context.ssl.php
-
-
-
-
-
-
 
 
