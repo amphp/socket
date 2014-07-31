@@ -28,7 +28,7 @@ class Encryptor {
         $this->defaultCryptoMethod = $isLegacy
             ? STREAM_CRYPTO_METHOD_SSLv23_CLIENT
             : STREAM_CRYPTO_METHOD_ANY_CLIENT;
-        $this->defaultTlsCiphers = implode(':', [
+        $this->defaultCiphers = implode(':', [
             'ECDHE-RSA-AES128-GCM-SHA256',
             'ECDHE-ECDSA-AES128-GCM-SHA256',
             'ECDHE-RSA-AES256-GCM-SHA384',

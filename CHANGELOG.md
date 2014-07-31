@@ -2,6 +2,11 @@
 
 n/a
 
+##### v0.2.1
+
+- Fix cipher variable typo failing all encryption attempts
+
+
 v0.2.0
 ======
 
