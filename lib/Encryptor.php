@@ -8,13 +8,12 @@ use Alert\Reactor,
     After\Deferred;
 
 class Encryptor {
-    const DEFAULT_CAFILE = '{%DEFAULT_CAFILE%}';
-
     private $reactor;
     private $pending = [];
     private $isLegacy;
     private $defaultCryptoMethod;
     private $defaultCaFile;
+    private $defaultCiphers;
     private $msCryptoTimeout = 10000;
 
     /**
@@ -29,6 +28,44 @@ class Encryptor {
         $this->defaultCryptoMethod = $isLegacy
             ? STREAM_CRYPTO_METHOD_SSLv23_CLIENT
             : STREAM_CRYPTO_METHOD_ANY_CLIENT;
+        $this->defaultTlsCiphers = implode(':', [
+            'ECDHE-RSA-AES128-GCM-SHA256',
+            'ECDHE-ECDSA-AES128-GCM-SHA256',
+            'ECDHE-RSA-AES256-GCM-SHA384',
+            'ECDHE-ECDSA-AES256-GCM-SHA384',
+            'DHE-RSA-AES128-GCM-SHA256',
+            'DHE-DSS-AES128-GCM-SHA256',
+            'kEDH+AESGCM',
+            'ECDHE-RSA-AES128-SHA256',
+            'ECDHE-ECDSA-AES128-SHA256',
+            'ECDHE-RSA-AES128-SHA',
+            'ECDHE-ECDSA-AES128-SHA',
+            'ECDHE-RSA-AES256-SHA384',
+            'ECDHE-ECDSA-AES256-SHA384',
+            'ECDHE-RSA-AES256-SHA',
+            'ECDHE-ECDSA-AES256-SHA',
+            'DHE-RSA-AES128-SHA256',
+            'DHE-RSA-AES128-SHA',
+            'DHE-DSS-AES128-SHA256',
+            'DHE-RSA-AES256-SHA256',
+            'DHE-DSS-AES256-SHA',
+            'DHE-RSA-AES256-SHA',
+            'AES128-GCM-SHA256',
+            'AES256-GCM-SHA384',
+            'ECDHE-RSA-RC4-SHA',
+            'ECDHE-ECDSA-RC4-SHA',
+            'AES128',
+            'AES256',
+            'RC4-SHA',
+            'HIGH',
+            '!aNULL',
+            '!eNULL',
+            '!EXPORT',
+            '!DES',
+            '!3DES',
+            '!MD5',
+            '!PSK'
+        ]);
     }
 
     /**
@@ -56,10 +93,6 @@ class Encryptor {
 
         if ($this->isLegacy) {
             $options = $this->normalizeLegacyCryptoOptions($options);
-        }
-
-        if (isset($options['cafile']) && $options['cafile'] === self::DEFAULT_CAFILE) {
-            $options['cafile'] = $this->defaultCaFile;
         }
 
         $existingContext = @stream_context_get_options($socket)['ssl'];
@@ -101,6 +134,9 @@ class Encryptor {
         }
         if (empty($options['cafile'])) {
             $options['cafile'] = $this->defaultCaFile;
+        }
+        if (empty($options['ciphers'])) {
+            $options['ciphers'] = $this->defaultCiphers;
         }
 
         return $options;
