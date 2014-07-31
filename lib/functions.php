@@ -118,3 +118,50 @@ function cryptoConnectSync($authority, array $options = []) {
 
     return $retval;
 }
+
+/**
+ * Asynchronously enable SSL/TLS encryption on an already-connected TCP socket stream (non-blocking)
+ *
+ * @param \Alert\Reactor $reactor
+ * @param resource $stream
+ * @param array $options
+ * @return \After\Promise
+ */
+function encrypt(Reactor $reactor, $stream, array $options = []) {
+    static $encryptor;
+    $encryptor = $encryptor ?: new Encryptor($reactor);
+
+    return $encryptor->enable($stream, $options);
+}
+
+/**
+ * Synchronously enable SSL/TLS encryption on an already-connected TCP socket stream (blocking)
+ *
+ * @param resource $stream
+ * @param array $options
+ * @return mixed Returns newly-encrypted socket stream on success, FALSE if an error occurs
+ */
+function encryptSync($stream, array $options = []) {
+    static $reactor, $encryptor;
+    $reactor = $reactor ?: new NativeReactor;
+    $encryptor = $encryptor ?: new Encryptor($reactor);
+    $retval = false;
+
+    stream_set_blocking($stream, false);
+
+    $reactor->run(function($reactor) use ($encryptor, $stream, $options, &$retval) {
+        $promise = $encryptor->enable($stream, $options);
+        $promise->onResolve(function($error, $result) use ($reactor, &$retval) {
+            $reactor->stop();
+            if ($error) {
+                trigger_error($error, E_USER_WARNING);
+            } else {
+                $retval = $result;
+            }
+        });
+    });
+
+    stream_set_blocking($stream, true);
+
+    return $retval;
+}
