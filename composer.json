@@ -1,0 +1,63 @@
+{
+    "name":           "rdlowrey/acesync",
+    "homepage":       "https://github.com/rdlowrey/Acesync",
+    "description":    "Non-blocking TCP socket connection/encryption tools",
+    "keywords": [
+        "tcp",
+        "sockets",
+        "tls",
+        "encryption",
+        "async",
+        "non-blocking"
+    ],
+    "license":        "MIT",
+    "authors": [
+        {
+            "name": "Daniel Lowrey",
+            "email": "rdlowrey@gmail.com",
+            "role": "Creator / Lead Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "rdlowrey/alert": "~0.9.0",
+        "rdlowrey/after": "~0.1.0",
+        "daverandom/addr": "~0.2.0",
+        "bagder/ca-bundle": "dev-master"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/rdlowrey/Alert.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/rdlowrey/After.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/DaveRandom/Addr.git"
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "bagder/ca-bundle",
+                "version": "dev-master",
+                "source": {
+                    "url": "https://github.com/bagder/ca-bundle",
+                    "type": "git",
+                    "reference": "origin/master"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Acesync\\": "lib/"
+        },
+        "files": ["lib/functions.php"]
+    },
+    "branch-alias": {
+        "dev-master": "0.1.x-dev"
+    }
+}
