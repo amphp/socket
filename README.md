@@ -1,11 +1,10 @@
-=======
 Acesync
 =======
 
-Non-blocking sockets + secure userland TLS encryption. Acesync provides (almost all) of the new
-SSL/TLS encryption features found in PHP 5.6 for 5.4 and 5.5 users. And It's pronounced, "a-sync."
+Non-blocking sockets + secure userland TLS encryption. Acesync provides (almost all of) the new
+SSL/TLS encryption features found in PHP 5.6 for 5.4 and 5.5 users.
 
-#### What?
+**What?**
 
 - Establishes non-blocking socket connections asynchronously
 - Exposes PHP 5.6 stream encryption options in older versions of PHP:
@@ -14,12 +13,12 @@ SSL/TLS encryption features found in PHP 5.6 for 5.4 and 5.5 users. And It's pro
     * Uses new encryption context options for future-proof compatibility
 - Supports TCP, UDP, UNIX and UDG sockets. Encryption supported only for TCP sockets.
 
-#### Why?
+**Why?**
 
 - Establishing socket connections asynchronously is a major pain point in PHP
 - Secure socket encryption prior to PHP 5.6 is virtually impossible
 
-#### How?
+**How?**
 
 - Acesync relies on the `Alert` event reactor for its non-blocking event loop. Blocking
   connect operations require no knowledge of the event reactor or the non-blocking
@@ -32,7 +31,7 @@ SSL/TLS encryption features found in PHP 5.6 for 5.4 and 5.5 users. And It's pro
 
 
 
-## Installation
+### Installation
 
 ```bash
 $ git clone https://github.com/rdlowrey/Acesync.git
@@ -51,7 +50,7 @@ Or, to include in your projects:
 
 
 
-## Examples
+### Examples
 
 ##### Synchronous Connect
 
@@ -217,7 +216,7 @@ functionality still exists.
 
 
 
-## Notes
+### Notes
 
 ##### 5.6 Encryption Features Missing From Acesync
 
