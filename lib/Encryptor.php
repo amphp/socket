@@ -22,9 +22,7 @@ class Encryptor {
     public function __construct(Reactor $reactor) {
         $this->reactor = $reactor;
         $this->isLegacy = $isLegacy = (PHP_VERSION_ID < 50600);
-        $this->defaultCaFile = $isLegacy
-            ? __DIR__ . '/../vendor/bagder/ca-bundle/ca-bundle.crt'
-            : null;
+        $this->defaultCaFile = __DIR__ . '/../vendor/bagder/ca-bundle/ca-bundle.crt'
         $this->defaultCryptoMethod = $isLegacy
             ? STREAM_CRYPTO_METHOD_SSLv23_CLIENT
             : STREAM_CRYPTO_METHOD_ANY_CLIENT;
@@ -93,6 +91,9 @@ class Encryptor {
 
         if ($this->isLegacy) {
             $options = $this->normalizeLegacyCryptoOptions($options);
+        } elseif (empty($options['cafile'])) {
+            // Don't explicitly trust OS certs in 5.6+
+            $options['cafile'] = $this->defaultCaFile;
         }
 
         $existingContext = @stream_context_get_options($socket)['ssl'];

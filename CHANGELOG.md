@@ -1,6 +1,6 @@
 ### master
 
-n/a
+- Don't explicitly trust OS provided CAs in 5.6+
 
 ##### v0.2.1
 
