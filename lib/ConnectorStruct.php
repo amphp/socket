@@ -11,6 +11,6 @@ class ConnectorStruct {
     public $socket;
     public $connectWatcher;
     public $timeoutWatcher;
-    public $deferred;
+    public $future;
     public $options;
 }

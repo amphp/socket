@@ -3,7 +3,7 @@
 namespace Acesync;
 
 use Alert\Reactor,
-    After\Deferred,
+    After\Future,
     After\Failure,
     Addr\Resolver,
     Addr\ResolverFactory;
@@ -59,10 +59,10 @@ class Connector {
         $struct->scheme = $scheme;
         $struct->uri = "{$scheme}:///" . ltrim($path, '/');
         $struct->options = $options ? array_merge($this->options, $options) : $this->options;
-        $struct->deferred = new Deferred;
+        $struct->future = new Future;
         $this->doConnect($struct);
 
-        return $struct->deferred->promise();
+        return $struct->future->promise();
     }
 
     private function doInetConnect($uri, $options) {
@@ -93,7 +93,7 @@ class Connector {
         $struct->port = $port;
         $struct->uri = "{$scheme}://{$host}:{$port}";
         $struct->options = $options ? array_merge($this->options, $options) : $this->options;
-        $struct->deferred = new Deferred;
+        $struct->future = new Future;
 
         if (!$inAddr = @inet_pton($host)) {
             $this->dnsResolver->resolve($host, function($resolvedIp, $ipType) use ($struct) {
@@ -105,12 +105,12 @@ class Connector {
             $this->doConnect($struct);
         }
 
-        return $struct->deferred->promise();
+        return $struct->future->promise();
     }
 
     private function onDnsResolution(ConnectorStruct $struct, $resolvedIp, $ipType) {
         if ($resolvedIp === null) {
-            $struct->deferred->fail(new DnsException(
+            $struct->future->fail(new DnsException(
                 sprintf(
                     'DNS resolution failed for %s (error code: %d)',
                     $struct->uri,
@@ -156,7 +156,7 @@ class Connector {
             $struct->socket = $socket;
             $this->initializePendingSocket($struct);
         } else {
-            $struct->deferred->fail(new SocketException(
+            $struct->future->fail(new SocketException(
                 sprintf(
                     'Connection to %s failed: [Error #%d] %s',
                     $struct->uri,
@@ -188,7 +188,7 @@ class Connector {
         $this->reactor->cancel($struct->connectWatcher);
         $this->reactor->cancel($struct->timeoutWatcher);
         $timeout = $struct->options[self::OP_MS_CONNECT_TIMEOUT];
-        $struct->deferred->fail(new SocketException(
+        $struct->future->fail(new SocketException(
             sprintf('Socket connect timeout exceeded: %d ms', $timeout)
         ));
     }
@@ -199,7 +199,7 @@ class Connector {
             $this->reactor->cancel($struct->timeoutWatcher);
         }
 
-        $struct->deferred->succeed($struct->socket);
+        $struct->future->succeed($struct->socket);
     }
 
     /**

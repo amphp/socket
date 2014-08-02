@@ -5,7 +5,7 @@ namespace Acesync;
 use Alert\Reactor,
     After\Failure,
     After\Success,
-    After\Deferred;
+    After\Future;
 
 class Encryptor {
     private $reactor;
@@ -22,7 +22,7 @@ class Encryptor {
     public function __construct(Reactor $reactor) {
         $this->reactor = $reactor;
         $this->isLegacy = $isLegacy = (PHP_VERSION_ID < 50600);
-        $this->defaultCaFile = __DIR__ . '/../vendor/bagder/ca-bundle/ca-bundle.crt'
+        $this->defaultCaFile = __DIR__ . '/../vendor/bagder/ca-bundle/ca-bundle.crt';
         $this->defaultCryptoMethod = $isLegacy
             ? STREAM_CRYPTO_METHOD_SSLv23_CLIENT
             : STREAM_CRYPTO_METHOD_ANY_CLIENT;
@@ -146,7 +146,7 @@ class Encryptor {
     private function renegotiate($socket, $options) {
         $deferred = new Deferred;
         $deferredDisable = $this->disable($socket);
-        $deferredDisable->onResolve(function($error, $result) use ($deferred, $options) {
+        $deferredDisable->when(function($error, $result) use ($deferred, $options) {
             if ($error) {
                 $deferred->fail(new CryptoException(
                     'Failed renegotiating crypto',
@@ -155,7 +155,7 @@ class Encryptor {
                 ));
             } else {
                 $deferredEnable = $this->encrypt($result, $options);
-                $deferredEnable->onResolve(function($error, $result) use ($deferred) {
+                $deferredEnable->when(function($error, $result) use ($deferred) {
                     return $error ? $deferred->fail($error) : $deferred->succeed($result);
                 });
             }
@@ -291,19 +291,19 @@ class Encryptor {
         $encryptorStruct = new EncryptorStruct;
         $encryptorStruct->id = $socketId;
         $encryptorStruct->socket = $socket;
-        $encryptorStruct->deferred = new Deferred;
+        $encryptorStruct->future = new Future;
         $encryptorStruct->pendingWatcher = $this->reactor->onReadable($socket, function() use ($encryptorStruct, $func) {
             $socket = $encryptorStruct->socket;
             if ($result = $this->{$func}($socket)) {
-                $encryptorStruct->deferred->succeed($socket);
+                $encryptorStruct->future->succeed($socket);
                 $this->unloadPendingStruct($encryptorStruct);
             } elseif ($result === false) {
-                $encryptorStruct->deferred->fail($this->generateErrorException());
+                $encryptorStruct->future->fail($this->generateErrorException());
                 $this->unloadPendingStruct($encryptorStruct);
             }
         });
         $encryptorStruct->timeoutWatcher = $this->reactor->once(function() use ($encryptorStruct) {
-            $encryptorStruct->deferred->fail(new TimeoutException(
+            $encryptorStruct->future->fail(new TimeoutException(
                 sprintf('Crypto timeout exceeded: %d ms', $this->msCryptoTimeout)
             ));
             $this->unloadPendingStruct($encryptorStruct);
@@ -311,7 +311,7 @@ class Encryptor {
 
         $this->pending[$socketId] = $encryptorStruct;
 
-        return $encryptorStruct->deferred;
+        return $encryptorStruct->future;
     }
 
     private function unloadPendingStruct(EncryptorStruct $encryptorStruct) {
