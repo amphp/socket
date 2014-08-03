@@ -6,16 +6,10 @@ use Alert\Reactor,
     After\Future,
     After\Failure,
     Addr\Resolver,
+    Addr\AddressModes,
     Addr\ResolverFactory;
 
 class Connector {
-    /**
-     * DNS address family constants
-     * @TODO These constants should be part of the DNS lib ... move 'em out
-     */
-    const ADDR_INET4 = 1;
-    const ADDR_INET6 = 2;
-
     const OP_BIND_IP_ADDRESS = 'bind_to';
     const OP_MS_CONNECT_TIMEOUT = 'connect_timeout';
     const OP_DISABLE_SNI_HACK = 'disable_sni_hack';
@@ -118,7 +112,7 @@ class Connector {
                 )
             ));
         } else {
-            $struct->resolvedAddress = ($ipType === self::ADDR_INET6)
+            $struct->resolvedAddress = ($ipType === AddressModes::INET6_ADDR)
                 ? "[{$resolvedIp}]:{$struct->port}"
                 : "{$resolvedIp}:{$struct->port}";
 
