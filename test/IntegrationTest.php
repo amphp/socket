@@ -1,29 +1,13 @@
 <?php
 
-use Alert\NativeReactor;
-
 class IntegrationTest extends PHPUnit_Framework_TestCase {
 
     /**
      * @dataProvider provideConnectArgs
      */
-    public function testConnectSync($uri, $options) {
-        $sock = Acesync\connectSync($uri, $options);
-        $this->assertTrue(is_resource($sock));
-    }
-
-    /**
-     * @dataProvider provideConnectArgs
-     */
     public function testConnect($uri, $options) {
-        (new NativeReactor)->run(function($reactor) use ($uri, $options) {
-            $promise = Acesync\connect($reactor, $uri, $options);
-            $promise->onResolve(function($error, $sock) use ($reactor) {
-                $reactor->stop();
-                $this->assertNull($error);
-                $this->assertTrue(is_resource($sock));
-            });
-        });
+        $sock = Acesync\connect($uri, $options)->wait();
+        $this->assertTrue(is_resource($sock));
     }
 
     public function provideConnectArgs() {
@@ -36,22 +20,8 @@ class IntegrationTest extends PHPUnit_Framework_TestCase {
     /**
      * @dataProvider provideCryptoConnectArgs
      */
-    public function testCryptoConnect($uri, $options) {
-        (new NativeReactor)->run(function($reactor) use ($uri, $options) {
-            $promise = Acesync\cryptoConnect($reactor, $uri, $options);
-            $promise->onResolve(function($error, $sock) use ($reactor) {
-                $reactor->stop();
-                $this->assertNull($error);
-                $this->assertTrue(is_resource($sock));
-            });
-        });
-    }
-
-    /**
-     * @dataProvider provideCryptoConnectArgs
-     */
     public function testCryptoConnectSync($uri, $options) {
-        $sock = Acesync\cryptoConnectSync($uri, $options);
+        $sock = Acesync\cryptoConnect($uri, $options)->wait();
         $this->assertTrue(is_resource($sock));
     }
 
