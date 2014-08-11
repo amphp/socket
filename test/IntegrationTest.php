@@ -20,7 +20,7 @@ class IntegrationTest extends PHPUnit_Framework_TestCase {
     /**
      * @dataProvider provideCryptoConnectArgs
      */
-    public function testCryptoConnectSync($uri, $options) {
+    public function testCryptoConnect($uri, $options) {
         $sock = Acesync\cryptoConnect($uri, $options)->wait();
         $this->assertTrue(is_resource($sock));
     }

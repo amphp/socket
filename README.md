@@ -43,7 +43,7 @@ Or, to include in your projects:
 
 ```json
     "require": {
-        "rdlowrey/async": "~0.1.0",
+        "rdlowrey/acesync": "~0.1.0",
     }
 ```
 
@@ -52,15 +52,13 @@ Or, to include in your projects:
 
 ### Examples
 
-##### Synchronous Connect
+##### Connect
 
 ```php
 <?php
 
 // Get an unecrypted socket
-if (!$sock = Acesync\connectSync('www.google.com:80')) {
-    die('NULL is returned if the operation fails for some reason');
-}
+$sock = Acesync\connect('www.google.com:80')->wait();
 
 // Make a simple HTTP/1.0 request and echo the response
 fwrite($sock, "GET / HTTP/1.0\r\n\r\n");
@@ -70,81 +68,19 @@ while (!feof($sock)) {
 
 ```
 
-##### Synchronous Encrypted Connect
+##### Encrypted Connect
 
 ```php
 <?php
 
 // Get an encrypted socket
-if (!$sock = Acesync\cryptoConnectSync('raw.githubusercontent.com:443')) {
-    die('NULL is returned if the operation fails for some reason');
-}
+$sock = Acesync\cryptoConnect('raw.githubusercontent.com:443')->wait();
 
 // Make a simple HTTP/1.0 request and echo the response
 fwrite($sock, "GET /rdlowrey/Acesync/master/README.md HTTP/1.0\r\n\r\n");
 while (!feof($sock)) {
     echo fread($sock, 8192);
 }
-
-```
-
-##### Non-blocking Connect
-
-```php
-<?php
-
-// Non-blocking things run inside the Alert event reactor loop
-(new Alert\ReactorFactory)->select()->run(function($reactor) {
-
-    // This is async! We don't get the actual socket back, we get a promise
-    // that the socket will resolve eventually.
-    $promise = Acesync\connect($reactor, 'www.google.com:80');
-
-    // What to do when the socket connection resolves
-    $promise->onResolve(function($error, $sock) use ($reactor) {
-        if ($error) {
-            echo $error;
-        } else {
-            stream_set_blocking($sock, true);
-            fwrite($sock, "GET / HTTP/1.0\r\n\r\n");
-            while (!feof($sock)) {
-                echo fread($sock, 8192);
-            }
-        }
-        echo "\n\n";
-        $reactor->stop();
-    });
-});
-
-```
-
-##### Non-blocking Encrypted Connect
-
-```php
-<?php
-
-// Non-blocking things run inside the Alert event reactor loop
-(new Alert\ReactorFactory)->select()->run(function($reactor) {
-
-    // This is async! We don't get the actual socket back, we get a promise
-    // that the socket will resolve eventually.
-    $promise = Acesync\cryptoConnect($reactor, 'www.google.com:443');
-
-    // What to do when the socket connection resolves
-    $promise->onResolve(function($error, $sock) use ($reactor) {
-        if ($error) {
-            echo $error;
-        } else {
-            stream_set_blocking($sock, true);
-            fwrite($sock, "GET / HTTP/1.0\r\n\r\n");
-            while (!feof($sock)) {
-                echo fread($sock, 8192);
-            }
-        }
-        echo "\n\n";
-        $reactor->stop();
-    });
-});
 
 ```
 
@@ -160,7 +96,7 @@ $options = [
     'peer_fingerprint'  => 'a5e6b2d9ec52e6bc2aa5f18f249c01d403538224',
 ];
 
-$sock = Acesync\cryptoConnectSync('www.google.com:443', $options);
+$sock = Acesync\cryptoConnect('www.google.com:443', $options);
 
 ```
 

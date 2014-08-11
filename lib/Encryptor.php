@@ -144,7 +144,7 @@ class Encryptor {
     }
 
     private function renegotiate($socket, $options) {
-        $deferred = new Deferred;
+        $deferred = new Future;
         $deferredDisable = $this->disable($socket);
         $deferredDisable->when(function($error, $result) use ($deferred, $options) {
             if ($error) {
