@@ -119,7 +119,14 @@ class Encryptor {
     }
 
     private function isContextOptionMatch(array $a, array $b) {
-        unset($a['SNI_nb_hack'], $b['SNI_nb_hack'], $a['peer_certificate'], $b['peer_certificate']);
+        unset(
+            $a['SNI_nb_hack'],
+            $b['SNI_nb_hack'],
+            $a['peer_certificate'],
+            $b['peer_certificate'],
+            $a['SNI_server_name'],
+            $b['SNI_server_name']
+        );
 
         return ($a == $b);
     }
@@ -154,7 +161,7 @@ class Encryptor {
                     $error
                 ));
             } else {
-                $deferredEnable = $this->encrypt($result, $options);
+                $deferredEnable = $this->enable($result, $options);
                 $deferredEnable->when(function($error, $result) use ($deferred) {
                     return $error ? $deferred->fail($error) : $deferred->succeed($result);
                 });
@@ -343,7 +350,7 @@ class Encryptor {
         } elseif ($result = $this->doDisable($socket)) {
             return new Success($socket);
         } elseif ($result === false) {
-            return new Failure($this->generateErrorException());
+            return new Failure('Failed disabling crypto on socket');
         } else {
             return $this->watch($socket, 'doDisable');
         }

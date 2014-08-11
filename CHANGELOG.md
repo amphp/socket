@@ -1,3 +1,7 @@
+##### v0.2.4
+
+- Fix naming error, correctly discern ssl context match
+
 ##### v0.2.3
 
 - Fix some outdated names, update README, etc.
