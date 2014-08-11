@@ -1,4 +1,8 @@
-### master
+##### v0.2.3
+
+- Fix some outdated names, update README, etc.
+
+##### v0.2.2
 
 - Don't explicitly trust OS provided CAs in 5.6+
 
