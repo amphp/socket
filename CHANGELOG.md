@@ -1,3 +1,7 @@
+##### v0.2.0
+
+- Fax fatal error in 5.6 when no crypto_method assigned in SSL context
+
 ##### v0.2.6
 
 - Fix fatal error when no existing SSL context assigned on stream

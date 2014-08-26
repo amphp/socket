@@ -89,12 +89,9 @@ class Encryptor {
             ));
         }
 
-        if ($this->isLegacy) {
-            $options = $this->normalizeLegacyCryptoOptions($options);
-        } elseif (empty($options['cafile'])) {
-            // Don't explicitly trust OS certs in 5.6+
-            $options['cafile'] = $this->defaultCaFile;
-        }
+        $options = $this->isLegacy
+            ? $this->normalizeLegacyCryptoOptions($options)
+            : $this->normalizeCryptoOptions($options);
 
         $existingContext = @stream_context_get_options($socket)['ssl'];
 
@@ -145,6 +142,19 @@ class Encryptor {
         }
         if (empty($options['ciphers'])) {
             $options['ciphers'] = $this->defaultCiphers;
+        }
+
+        return $options;
+    }
+
+    private function normalizeCryptoOptions($options) {
+        if (empty($options['cafile'])) {
+            // Don't explicitly trust OS certs in 5.6+
+            $options['cafile'] = $this->defaultCaFile;
+        }
+        if (empty($options['crypto_method'])) {
+            // Use default crypto method
+            $options['crypto_method'] = STREAM_CRYPTO_METHOD_TLS_CLIENT;
         }
 
         return $options;
