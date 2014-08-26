@@ -98,7 +98,7 @@ class Encryptor {
 
         $existingContext = @stream_context_get_options($socket)['ssl'];
 
-        if ($this->isContextOptionMatch($existingContext, $options)) {
+        if ($existingContext && $this->isContextOptionMatch($existingContext, $options)) {
             return new Success($socket);
         } elseif ($existingContext && empty($existingContext['SNI_nb_hack'])) {
             // If crypto was previously enabled for this socket we need to disable

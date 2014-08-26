@@ -1,3 +1,11 @@
+##### v0.2.6
+
+- Fix fatal error when no existing SSL context assigned on stream
+
+##### v0.2.5
+
+- @TODO What was fixed here?
+
 ##### v0.2.4
 
 - Fix naming error, correctly discern ssl context match
