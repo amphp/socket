@@ -360,7 +360,9 @@ class Encryptor {
         } elseif ($result = $this->doDisable($socket)) {
             return new Success($socket);
         } elseif ($result === false) {
-            return new Failure('Failed disabling crypto on socket');
+            return new Failure(new CryptoException(
+                'Failed disabling crypto on socket'
+            ));
         } else {
             return $this->watch($socket, 'doDisable');
         }

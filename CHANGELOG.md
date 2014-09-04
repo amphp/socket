@@ -1,6 +1,10 @@
-##### v0.2.0
+##### v0.2.8
 
-- Fax fatal error in 5.6 when no crypto_method assigned in SSL context
+- Fix Issue #1: Bad param for Failure constructor
+
+##### v0.2.7
+
+- Fix fatal error in 5.6 when no crypto_method assigned in SSL context
 
 ##### v0.2.6
 
