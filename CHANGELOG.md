@@ -1,3 +1,8 @@
+v0.3.0
+======
+
+- Package CA certs with distribution
+
 ##### v0.2.8
 
 - Fix Issue #1: Bad param for Failure constructor

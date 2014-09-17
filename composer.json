@@ -22,8 +22,7 @@
         "php": ">=5.4.0",
         "rdlowrey/alert": "~0.10.0",
         "rdlowrey/after": "~0.3.0",
-        "daverandom/addr": "~0.2.0",
-        "bagder/ca-bundle": "dev-master"
+        "daverandom/addr": "~0.2.0"
     },
     "repositories": [
         {
@@ -37,18 +36,6 @@
         {
             "type": "vcs",
             "url": "https://github.com/DaveRandom/Addr.git"
-        },
-        {
-            "type": "package",
-            "package": {
-                "name": "bagder/ca-bundle",
-                "version": "dev-master",
-                "source": {
-                    "url": "https://github.com/bagder/ca-bundle",
-                    "type": "git",
-                    "reference": "origin/master"
-                }
-            }
         }
     ],
     "autoload": {

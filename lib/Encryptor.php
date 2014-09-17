@@ -22,7 +22,7 @@ class Encryptor {
     public function __construct(Reactor $reactor) {
         $this->reactor = $reactor;
         $this->isLegacy = $isLegacy = (PHP_VERSION_ID < 50600);
-        $this->defaultCaFile = __DIR__ . '/../vendor/bagder/ca-bundle/ca-bundle.crt';
+        $this->defaultCaFile = __DIR__ . '/../var/ca-bundle.crt';
         $this->defaultCryptoMethod = $isLegacy
             ? STREAM_CRYPTO_METHOD_SSLv23_CLIENT
             : STREAM_CRYPTO_METHOD_ANY_CLIENT;
