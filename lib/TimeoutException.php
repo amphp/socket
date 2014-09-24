@@ -1,5 +1,5 @@
 <?php
 
-namespace Acesync;
+namespace Nbsock;
 
 class TimeoutException extends \Exception {}

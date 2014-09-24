@@ -1,13 +1,13 @@
 <?php
 
-namespace Acesync;
+namespace Nbsock;
 
-use Alert\Reactor,
-    After\Future,
-    After\Failure,
-    Addr\Resolver,
-    Addr\AddressModes,
-    Addr\ResolverFactory;
+use Amp\Reactor;
+use Amp\Future;
+use Amp\Failure;
+use Amp\Dns\Client;
+use Amp\Dns\Resolver;
+use Amp\Dns\AddressModes;
 
 class Connector {
     const OP_BIND_IP_ADDRESS = 'bind_to';
@@ -24,7 +24,7 @@ class Connector {
 
     public function __construct(Reactor $reactor, Resolver $dnsResolver = null) {
         $this->reactor = $reactor;
-        $this->dnsResolver = $dnsResolver ?: (new ResolverFactory)->createResolver($reactor);
+        $this->dnsResolver = $dnsResolver ?: new Resolver(new Client($reactor));
     }
 
     /**
@@ -35,7 +35,7 @@ class Connector {
      *
      * @param string $uri
      * @param array $options
-     * @return \After\Promise
+     * @return \Amp\Promise
      */
     public function connect($uri, array $options = []) {
         if (stripos($uri, 'unix://') === 0 || stripos($uri, 'udg://') === 0) {
@@ -90,8 +90,15 @@ class Connector {
         $struct->future = new Future;
 
         if (!$inAddr = @inet_pton($host)) {
-            $this->dnsResolver->resolve($host, function($resolvedIp, $ipType) use ($struct) {
-                $this->onDnsResolution($struct, $resolvedIp, $ipType);
+            $this->dnsResolver->resolve($host)->when(function($error, $result) use ($struct) {
+                if ($error) {
+                    return $struct->future->fail($error);
+                }
+                list($addr, $type) = $result;
+                $struct->resolvedAddress = ($type === AddressModes::INET6_ADDR)
+                    ? "[{$addr}]:{$struct->port}"
+                    : "{$addr}:{$struct->port}";
+                $this->doConnect($struct);
             });
         } else {
             $isIpv6 = isset($inAddr[15]);
@@ -100,24 +107,6 @@ class Connector {
         }
 
         return $struct->future->promise();
-    }
-
-    private function onDnsResolution(ConnectorStruct $struct, $resolvedIp, $ipType) {
-        if ($resolvedIp === null) {
-            $struct->future->fail(new DnsException(
-                sprintf(
-                    'DNS resolution failed for %s (error code: %d)',
-                    $struct->uri,
-                    $ipType
-                )
-            ));
-        } else {
-            $struct->resolvedAddress = ($ipType === AddressModes::INET6_ADDR)
-                ? "[{$resolvedIp}]:{$struct->port}"
-                : "{$resolvedIp}:{$struct->port}";
-
-            $this->doConnect($struct);
-        }
     }
 
     private function doConnect(ConnectorStruct $struct) {

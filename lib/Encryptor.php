@@ -1,11 +1,11 @@
 <?php
 
-namespace Acesync;
+namespace Nbsock;
 
-use Alert\Reactor,
-    After\Failure,
-    After\Success,
-    After\Future;
+use Amp\Reactor,
+    Amp\Failure,
+    Amp\Success,
+    Amp\Future;
 
 class Encryptor {
     private $reactor;
@@ -17,7 +17,7 @@ class Encryptor {
     private $msCryptoTimeout = 10000;
 
     /**
-     * @param \Alert\Reactor $reactor
+     * @param \Amp\Reactor $reactor
      */
     public function __construct(Reactor $reactor) {
         $this->reactor = $reactor;
@@ -71,7 +71,7 @@ class Encryptor {
      *
      * @param resource $socket
      * @param array $options
-     * @return \After\Promise
+     * @return \Amp\Promise
      */
     public function enable($socket, array $options) {
         $socketId = (int) $socket;
@@ -342,7 +342,7 @@ class Encryptor {
      * Disable crypto on the specified socket
      *
      * @param resource $socket
-     * @return \After\Promise
+     * @return \Amp\Promise
      */
     public function disable($socket) {
         $socketId = (int) $socket;

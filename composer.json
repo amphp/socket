@@ -1,14 +1,15 @@
 {
-    "name":           "rdlowrey/acesync",
-    "homepage":       "https://github.com/rdlowrey/Acesync",
-    "description":    "Non-blocking TCP socket connection/encryption tools",
+    "name":           "rdlowrey/nbsock",
+    "homepage":       "https://github.com/rdlowrey/nbsock",
+    "description":    "Non-blocking socket connection/encryption using the Amp concurrency framework",
     "keywords": [
         "tcp",
         "sockets",
         "tls",
         "encryption",
         "async",
-        "non-blocking"
+        "non-blocking",
+        "amp"
     ],
     "license":        "MIT",
     "authors": [
@@ -19,32 +20,33 @@
         }
     ],
     "require": {
-        "php": ">=5.4.0",
-        "rdlowrey/alert": "~0.10.0",
-        "rdlowrey/after": "~0.3.0",
-        "daverandom/addr": "~0.2.0"
+        "php": ">=5.5.0",
+        "amphp/amp": "~0.11",
+        "amphp/dns": "~0.3"
     },
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/rdlowrey/Alert.git"
+            "url": "https://github.com/amphp/amp.git"
         },
         {
             "type": "vcs",
-            "url": "https://github.com/rdlowrey/After.git"
+            "url": "https://github.com/amphp/dns.git"
         },
         {
             "type": "vcs",
-            "url": "https://github.com/DaveRandom/Addr.git"
+            "url": "https://github.com/rdlowrey/nbsock.git"
         }
     ],
     "autoload": {
         "psr-4": {
-            "Acesync\\": "lib/"
+            "Nbsock\\": "lib/"
         },
         "files": ["lib/functions.php"]
     },
-    "branch-alias": {
-        "dev-master": "0.1.x-dev"
+    "autoload-dev": {
+        "psr-4": {
+            "Nbsock\\Test\\": "test/"
+        }
     }
 }

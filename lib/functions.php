@@ -1,8 +1,8 @@
 <?php
 
-namespace Acesync;
+namespace Nbsock;
 
-use After\Future;
+use Amp\Future;
 
 /**
  * Asynchronously establish a TCP connection (non-blocking)
@@ -11,11 +11,11 @@ use After\Future;
  *
  * @param string $authority
  * @param array $options
- * @return \After\Promise
+ * @return \Amp\Promise
  */
 function connect($authority, array $options = []) {
     static $connector;
-    $connector = $connector ?: new Connector(\Alert\reactor());
+    $connector = $connector ?: new Connector(\Amp\reactor());
 
     return $connector->connect($authority, $options);
 }
@@ -27,7 +27,7 @@ function connect($authority, array $options = []) {
  *
  * @param string $authority
  * @param array $options
- * @return \After\Promise
+ * @return \Amp\Promise
  */
 function cryptoConnect($authority, array $options = []) {
     $future = new Future;
@@ -48,11 +48,11 @@ function cryptoConnect($authority, array $options = []) {
  *
  * @param resource $stream
  * @param array $options
- * @return \After\Promise
+ * @return \Amp\Promise
  */
 function encrypt($stream, array $options = []) {
     static $encryptor;
-    $encryptor = $encryptor ?: new Encryptor(\Alert\reactor());
+    $encryptor = $encryptor ?: new Encryptor(\Amp\reactor());
 
     return $encryptor->enable($stream, $options);
 }

@@ -1,8 +1,9 @@
-Acesync
-=======
+nbsock
+======
 
-Non-blocking sockets + secure userland TLS encryption. Acesync provides (almost all of) the new
-SSL/TLS encryption features found in PHP 5.6 for 5.4 and 5.5 users.
+Establish socket connections (encrypted or unencrypted) in a non-blocking way using the [Amp](https://github.com/amphp/amp)
+concurrency framework. `nbsock` provides (almost all of) the new SSL/TLS encryption features found
+in PHP 5.6 for 5.5 users.
 
 **What?**
 
@@ -20,10 +21,10 @@ SSL/TLS encryption features found in PHP 5.6 for 5.4 and 5.5 users.
 
 **How?**
 
-- Acesync relies on the `Alert` event reactor for its non-blocking event loop. Blocking
+- `nbsock` relies on the `Amp` event reactor for its non-blocking event loop. Blocking
   connect operations require no knowledge of the event reactor or the non-blocking
   concurrency paradigm. Async connections must be established inside a non-blocking
-  Alert event loop.
+  Amp event loop.
 - 5.6-specific TLS features such as SAN peer name matching and peer fingerprint
   verification are added in userland to normalize older APIs with new options
   found in 5.6.
@@ -34,8 +35,8 @@ SSL/TLS encryption features found in PHP 5.6 for 5.4 and 5.5 users.
 ### Installation
 
 ```bash
-$ git clone https://github.com/rdlowrey/Acesync.git
-$ cd Acesync
+$ git clone https://github.com/rdlowrey/nbsock.git
+$ cd nbsock
 $ composer.phar install
 ```
 
@@ -58,7 +59,7 @@ Or, to include in your projects:
 <?php
 
 // Get an unecrypted socket
-$sock = Acesync\connect('www.google.com:80')->wait();
+$sock = Nbsock\connect('www.google.com:80')->wait();
 
 // Make a simple HTTP/1.0 request and echo the response
 fwrite($sock, "GET / HTTP/1.0\r\n\r\n");
@@ -74,10 +75,10 @@ while (!feof($sock)) {
 <?php
 
 // Get an encrypted socket
-$sock = Acesync\cryptoConnect('raw.githubusercontent.com:443')->wait();
+$sock = Nbsock\cryptoConnect('raw.githubusercontent.com:443')->wait();
 
 // Make a simple HTTP/1.0 request and echo the response
-fwrite($sock, "GET /rdlowrey/Acesync/master/README.md HTTP/1.0\r\n\r\n");
+fwrite($sock, "GET /rdlowrey/nbsock/master/README.md HTTP/1.0\r\n\r\n");
 while (!feof($sock)) {
     echo fread($sock, 8192);
 }
@@ -96,7 +97,7 @@ $options = [
     'peer_fingerprint'  => 'a5e6b2d9ec52e6bc2aa5f18f249c01d403538224',
 ];
 
-$sock = Acesync\cryptoConnect('www.google.com:443', $options);
+$sock = Nbsock\cryptoConnect('www.google.com:443', $options);
 
 ```
 
@@ -124,7 +125,7 @@ you're doing it or you run the risk of strange, hard-to-debug failures.
 
 ##### Encrypted Connections
 
-The available SSL/TLS options available in Acesync are the same as those in PHP 5.6 regardless of
+The available SSL/TLS options available in `nbsock` are the same as those in PHP 5.6 regardless of
 your PHP version. The options listed below are described here because they are specifically new
 to 5.4/5.5 users. All other options can be found in [the relevant PHP manual section][man-ssl-ctx].
 
@@ -154,10 +155,10 @@ functionality still exists.
 
 ### Notes
 
-##### 5.6 Encryption Features Missing From Acesync
+##### 5.6 Encryption Features Missing From `nbsock`
 
 The following client encryption features added in PHP 5.6 are made available to older versions by
-Acesync:
+`nbsock`:
 
 - Peer verification enabled by default
 - SAN peer name matching

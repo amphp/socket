@@ -1,6 +1,6 @@
 <?php
 
-namespace Acesync;
+namespace Nbsock;
 
 class EncryptorStruct {
     public $id;

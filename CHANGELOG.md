@@ -1,3 +1,9 @@
+v0.4.0
+======
+
+- Migrate to amphp/amp for event reactor and promises
+- Migrate DaveRandom/Addr dependency to amphp/dns
+
 v0.3.0
 ======
 

@@ -1,12 +1,14 @@
 <?php
 
-class IntegrationTest extends PHPUnit_Framework_TestCase {
+namespace Nbsock\Test;
+
+class IntegrationTest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @dataProvider provideConnectArgs
      */
     public function testConnect($uri, $options) {
-        $sock = Acesync\connect($uri, $options)->wait();
+        $sock = \Nbsock\connect($uri, $options)->wait();
         $this->assertTrue(is_resource($sock));
     }
 
@@ -21,7 +23,7 @@ class IntegrationTest extends PHPUnit_Framework_TestCase {
      * @dataProvider provideCryptoConnectArgs
      */
     public function testCryptoConnect($uri, $options) {
-        $sock = Acesync\cryptoConnect($uri, $options)->wait();
+        $sock = \Nbsock\cryptoConnect($uri, $options)->wait();
         $this->assertTrue(is_resource($sock));
     }
 
