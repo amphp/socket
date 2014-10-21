@@ -20,24 +20,10 @@
         }
     ],
     "require": {
-        "php": ">=5.5.0",
+        "php": ">=5.4.0",
         "amphp/amp": "~0.11",
         "amphp/dns": "~0.3"
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/amphp/amp.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/amphp/dns.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/rdlowrey/nbsock.git"
-        }
-    ],
     "autoload": {
         "psr-4": {
             "Nbsock\\": "lib/"
