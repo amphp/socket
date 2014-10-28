@@ -14,13 +14,14 @@ class Encryptor {
     private $defaultCryptoMethod;
     private $defaultCaFile;
     private $defaultCiphers;
-    private $msCryptoTimeout = 10000;
+    private $msCryptoTimeout = 30000;
 
     /**
      * @param \Amp\Reactor $reactor
      */
     public function __construct(Reactor $reactor) {
         $this->reactor = $reactor;
+        $this->hasOpenssl = extension_loaded('openssl');
         $this->isLegacy = $isLegacy = (PHP_VERSION_ID < 50600);
         $this->defaultCaFile = __DIR__ . '/../var/ca-bundle.crt';
         $this->defaultCryptoMethod = $isLegacy
@@ -76,6 +77,12 @@ class Encryptor {
     public function enable($socket, array $options) {
         $socketId = (int) $socket;
 
+        if (!$this->hasOpenssl) {
+            return new Failure(new CryptoException(
+                'Cannot enable crypto: ext/openssl not enabled'
+            ));
+        }
+
         if (isset($this->pending[$socketId])) {
             return new Failure(new CryptoException(
                 'Cannot enable crypto: operation currently in progress for this socket'
@@ -117,12 +124,12 @@ class Encryptor {
 
     private function isContextOptionMatch(array $a, array $b) {
         unset(
-            $a['SNI_nb_hack'],
-            $b['SNI_nb_hack'],
-            $a['peer_certificate'],
-            $b['peer_certificate'],
-            $a['SNI_server_name'],
-            $b['SNI_server_name']
+        $a['SNI_nb_hack'],
+        $b['SNI_nb_hack'],
+        $a['peer_certificate'],
+        $b['peer_certificate'],
+        $a['SNI_server_name'],
+        $b['SNI_server_name']
         );
 
         return ($a == $b);
@@ -309,7 +316,7 @@ class Encryptor {
         $encryptorStruct->id = $socketId;
         $encryptorStruct->socket = $socket;
         $encryptorStruct->future = new Future;
-        $encryptorStruct->pendingWatcher = $this->reactor->onReadable($socket, function() use ($encryptorStruct, $func) {
+        $watcher = function() use ($encryptorStruct, $func) {
             $socket = $encryptorStruct->socket;
             if ($result = $this->{$func}($socket)) {
                 $encryptorStruct->future->succeed($socket);
@@ -318,7 +325,8 @@ class Encryptor {
                 $encryptorStruct->future->fail($this->generateErrorException());
                 $this->unloadPendingStruct($encryptorStruct);
             }
-        });
+        };
+        $encryptorStruct->pendingWatcher = $this->reactor->onReadable($socket, $watcher);
         $encryptorStruct->timeoutWatcher = $this->reactor->once(function() use ($encryptorStruct) {
             $encryptorStruct->future->fail(new TimeoutException(
                 sprintf('Crypto timeout exceeded: %d ms', $this->msCryptoTimeout)
@@ -335,6 +343,7 @@ class Encryptor {
         $socketId = $encryptorStruct->id;
         unset($this->pending[$socketId]);
         $this->reactor->cancel($encryptorStruct->pendingWatcher);
+        //$this->reactor->cancel($encryptorStruct->writeWatcher);
         $this->reactor->cancel($encryptorStruct->timeoutWatcher);
     }
 
