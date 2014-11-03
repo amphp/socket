@@ -53,7 +53,7 @@ class Connector {
         $struct->scheme = $scheme;
         $struct->uri = "{$scheme}:///" . ltrim($path, '/');
         $struct->options = $options ? array_merge($this->options, $options) : $this->options;
-        $struct->future = new Future;
+        $struct->future = new Future($this->reactor);
         $this->doConnect($struct);
 
         return $struct->future->promise();
@@ -87,7 +87,7 @@ class Connector {
         $struct->port = $port;
         $struct->uri = "{$scheme}://{$host}:{$port}";
         $struct->options = $options ? array_merge($this->options, $options) : $this->options;
-        $struct->future = new Future;
+        $struct->future = new Future($this->reactor);
 
         if (!$inAddr = @inet_pton($host)) {
             $this->dnsResolver->resolve($host)->when(function($error, $result) use ($struct) {

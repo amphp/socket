@@ -1,3 +1,19 @@
+#### v0.4.4
+
+- Use explicit reactor reference in futures
+
+#### v0.4.3
+
+- ???
+
+#### v0.4.2
+
+- ???
+
+#### v0.4.1
+
+- ???
+
 v0.4.0
 ======
 

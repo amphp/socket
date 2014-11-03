@@ -168,7 +168,7 @@ class Encryptor {
     }
 
     private function renegotiate($socket, $options) {
-        $deferred = new Future;
+        $deferred = new Future($this->reactor);
         $deferredDisable = $this->disable($socket);
         $deferredDisable->when(function($error, $result) use ($deferred, $options) {
             if ($error) {
@@ -315,7 +315,7 @@ class Encryptor {
         $encryptorStruct = new EncryptorStruct;
         $encryptorStruct->id = $socketId;
         $encryptorStruct->socket = $socket;
-        $encryptorStruct->future = new Future;
+        $encryptorStruct->future = new Future($this->reactor);
         $watcher = function() use ($encryptorStruct, $func) {
             $socket = $encryptorStruct->socket;
             if ($result = $this->{$func}($socket)) {
