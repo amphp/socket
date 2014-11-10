@@ -1,3 +1,7 @@
+#### v0.4.5
+
+- Improved error message for easier debugging
+
 #### v0.4.4
 
 - Use explicit reactor reference in futures

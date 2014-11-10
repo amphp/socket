@@ -172,7 +172,7 @@ class Connector {
         $this->reactor->cancel($struct->timeoutWatcher);
         $timeout = $struct->options[self::OP_MS_CONNECT_TIMEOUT];
         $struct->future->fail(new SocketException(
-            sprintf('Socket connect timeout exceeded: %d ms', $timeout)
+            sprintf('Connect timeout exceeded (%d ms): %s', $timeout, $struct->uri)
         ));
     }
 
