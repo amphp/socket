@@ -19,8 +19,8 @@ class Encryptor {
     /**
      * @param \Amp\Reactor $reactor
      */
-    public function __construct(Reactor $reactor) {
-        $this->reactor = $reactor;
+    public function __construct(Reactor $reactor = null) {
+        $this->reactor = $reactor ?: \Amp\getReactor();
         $this->hasOpenssl = extension_loaded('openssl');
         $this->isLegacy = $isLegacy = (PHP_VERSION_ID < 50600);
         $this->defaultCaFile = __DIR__ . '/../var/ca-bundle.crt';
@@ -168,7 +168,7 @@ class Encryptor {
     }
 
     private function renegotiate($socket, $options) {
-        $deferred = new Future($this->reactor);
+        $deferred = new Future;
         $deferredDisable = $this->disable($socket);
         $deferredDisable->when(function($error, $result) use ($deferred, $options) {
             if ($error) {
@@ -315,7 +315,7 @@ class Encryptor {
         $encryptorStruct = new EncryptorStruct;
         $encryptorStruct->id = $socketId;
         $encryptorStruct->socket = $socket;
-        $encryptorStruct->future = new Future($this->reactor);
+        $encryptorStruct->future = new Future;
         $watcher = function() use ($encryptorStruct, $func) {
             $socket = $encryptorStruct->socket;
             if ($result = $this->{$func}($socket)) {

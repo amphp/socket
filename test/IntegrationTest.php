@@ -8,7 +8,8 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
      * @dataProvider provideConnectArgs
      */
     public function testConnect($uri, $options) {
-        $sock = \Nbsock\connect($uri, $options)->wait();
+        $promise = \Nbsock\connect($uri, $options);
+        $sock = \Amp\wait($promise);
         $this->assertTrue(is_resource($sock));
     }
 
@@ -23,7 +24,8 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
      * @dataProvider provideCryptoConnectArgs
      */
     public function testCryptoConnect($uri, $options) {
-        $sock = \Nbsock\cryptoConnect($uri, $options)->wait();
+        $promise = \Nbsock\cryptoConnect($uri, $options);
+        $sock = \Amp\wait($promise);
         $this->assertTrue(is_resource($sock));
     }
 

@@ -58,8 +58,11 @@ Or, to include in your projects:
 ```php
 <?php
 
-// Get an unecrypted socket
-$sock = Nbsock\connect('www.google.com:80')->wait();
+// Get an unencrypted socket
+$promise = Nbsock\connect('www.google.com:80');
+
+// Synchronously wait for the promise to resolve
+$sock = Amp\wait($promise);
 
 // Make a simple HTTP/1.0 request and echo the response
 fwrite($sock, "GET / HTTP/1.0\r\n\r\n");
@@ -75,7 +78,10 @@ while (!feof($sock)) {
 <?php
 
 // Get an encrypted socket
-$sock = Nbsock\cryptoConnect('raw.githubusercontent.com:443')->wait();
+$promise = Nbsock\cryptoConnect('raw.githubusercontent.com:443');
+
+// Synchronously wait for the promise to resolve
+$sock = Amp\wait($promise);
 
 // Make a simple HTTP/1.0 request and echo the response
 fwrite($sock, "GET /rdlowrey/nbsock/master/README.md HTTP/1.0\r\n\r\n");

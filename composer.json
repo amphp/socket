@@ -21,8 +21,8 @@
     ],
     "require": {
         "php": ">=5.4.0",
-        "amphp/amp": "~0.12",
-        "amphp/dns": "~0.3"
+        "amphp/amp": "~0.15.0",
+        "amphp/dns": "~0.4.0"
     },
     "autoload": {
         "psr-4": {

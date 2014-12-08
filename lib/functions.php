@@ -15,7 +15,9 @@ use Amp\Future;
  */
 function connect($authority, array $options = []) {
     static $connector;
-    $connector = $connector ?: new Connector(\Amp\reactor());
+    if (empty($connector)) {
+        $connector = new Connector;
+    }
 
     return $connector->connect($authority, $options);
 }
@@ -30,17 +32,17 @@ function connect($authority, array $options = []) {
  * @return \Amp\Promise
  */
 function cryptoConnect($authority, array $options = []) {
-    $future = new Future;
+    $promisor = new Future;
     $promise = connect($authority, $options);
-    $promise->when(function($error, $result) use ($future, $options) {
+    $promise->when(function($error, $result) use ($promisor, $options) {
         if ($error) {
-            $future->fail($error);
+            $promisor->fail($error);
         } else {
-            $future->succeed(encrypt($result, $options));
+            $promisor->succeed(encrypt($result, $options));
         }
     });
 
-    return $future->promise();
+    return $promisor->promise();
 }
 
 /**
@@ -52,7 +54,9 @@ function cryptoConnect($authority, array $options = []) {
  */
 function encrypt($stream, array $options = []) {
     static $encryptor;
-    $encryptor = $encryptor ?: new Encryptor(\Amp\reactor());
+    if (empty($encryptor)) {
+        $encryptor = new Encryptor;
+    }
 
     return $encryptor->enable($stream, $options);
 }

@@ -22,8 +22,8 @@ class Connector {
         self::OP_DISABLE_SNI_HACK => false
     ];
 
-    public function __construct(Reactor $reactor, Resolver $dnsResolver = null) {
-        $this->reactor = $reactor;
+    public function __construct(Reactor $reactor = null, Resolver $dnsResolver = null) {
+        $this->reactor = $reactor ?: \Amp\getReactor();
         $this->dnsResolver = $dnsResolver ?: new Resolver(new Client($reactor));
     }
 
@@ -53,7 +53,7 @@ class Connector {
         $struct->scheme = $scheme;
         $struct->uri = "{$scheme}:///" . ltrim($path, '/');
         $struct->options = $options ? array_merge($this->options, $options) : $this->options;
-        $struct->future = new Future($this->reactor);
+        $struct->future = new Future;
         $this->doConnect($struct);
 
         return $struct->future->promise();
@@ -87,7 +87,7 @@ class Connector {
         $struct->port = $port;
         $struct->uri = "{$scheme}://{$host}:{$port}";
         $struct->options = $options ? array_merge($this->options, $options) : $this->options;
-        $struct->future = new Future($this->reactor);
+        $struct->future = new Future;
 
         if (!$inAddr = @inet_pton($host)) {
             $this->dnsResolver->resolve($host)->when(function($error, $result) use ($struct) {
