@@ -39,9 +39,7 @@ class Connector {
      */
     public function connect($uri, array $options = []) {
         if (stripos($uri, 'unix://') === 0 || stripos($uri, 'udg://') === 0) {
-            $colonPos = strpos($uri, ':');
-            $scheme = substr($uri, 0, $colonPos);
-            $path = substr($uri, $colonPos + 3);
+            list($scheme, $path) = explode('://', $uri, 2);
             return $this->doUnixConnect($scheme, $path, $options);
         } else {
             return $this->doInetConnect($uri, $options);

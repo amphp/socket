@@ -44,7 +44,7 @@ Or, to include in your projects:
 
 ```json
     "require": {
-        "rdlowrey/acesync": "~0.1.0",
+        "rdlowrey/nbsock": "~0.1.0",
     }
 ```
 
