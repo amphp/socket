@@ -16,7 +16,7 @@ use Amp\Future;
 function connect($authority, array $options = []) {
     static $connector;
     if (empty($connector)) {
-        $connector = new Connector;
+        $connector = new Connector(\Amp\getReactor());
     }
 
     return $connector->connect($authority, $options);
@@ -55,7 +55,7 @@ function cryptoConnect($authority, array $options = []) {
 function encrypt($stream, array $options = []) {
     static $encryptor;
     if (empty($encryptor)) {
-        $encryptor = new Encryptor;
+        $encryptor = new Encryptor(\Amp\getReactor());
     }
 
     return $encryptor->enable($stream, $options);
