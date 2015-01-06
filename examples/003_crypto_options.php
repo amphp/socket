@@ -11,7 +11,7 @@ $options = [
     'peer_fingerprint'  => 'a5e6b2d9ec52e6bc2aa5f18f249c01d403538224',
 ];
 
-$sock = Nbsock\cryptoConnect('www.google.com:443', $options)->wait();
+$sock = Amp\wait(Nbsock\cryptoConnect('www.google.com:443', $options));
 fwrite($sock, "GET / HTTP/1.0\r\n\r\n");
 while (!feof($sock)) {
     echo fread($sock, 8192);
