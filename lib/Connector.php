@@ -22,8 +22,8 @@ class Connector {
         self::OP_DISABLE_SNI_HACK => false
     ];
 
-    public function __construct(Reactor $reactor = null, Resolver $dnsResolver = null) {
-        $this->reactor = $reactor ?: \Amp\getReactor();
+    public function __construct(Reactor $reactor, Resolver $dnsResolver = null) {
+        $this->reactor = $reactor;
         $this->dnsResolver = $dnsResolver ?: new Resolver(new Client($reactor));
     }
 
