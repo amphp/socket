@@ -2,7 +2,7 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$sock = Nbsock\cryptoConnect('www.google.com:443')->wait();
+$sock = Amp\wait(Nbsock\cryptoConnect('www.google.com:443'));
 fwrite($sock, "GET / HTTP/1.0\r\n\r\n");
 while (!feof($sock)) {
     echo fread($sock, 8192);
