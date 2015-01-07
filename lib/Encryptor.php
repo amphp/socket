@@ -19,8 +19,8 @@ class Encryptor {
     /**
      * @param \Amp\Reactor $reactor
      */
-    public function __construct(Reactor $reactor = null) {
-        $this->reactor = $reactor ?: \Amp\getReactor();
+    public function __construct(Reactor $reactor) {
+        $this->reactor = $reactor;
         $this->hasOpenssl = extension_loaded('openssl');
         $this->isLegacy = $isLegacy = (PHP_VERSION_ID < 50600);
         $this->defaultCaFile = __DIR__ . '/../var/ca-bundle.crt';
