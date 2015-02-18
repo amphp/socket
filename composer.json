@@ -21,7 +21,7 @@
     ],
     "require": {
         "php": ">=5.4.0",
-        "amphp/amp": "~0.15.0",
+        "amphp/amp": "~0.16.0",
         "amphp/dns": "~0.4.0"
     },
     "autoload": {
