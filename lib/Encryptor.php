@@ -5,7 +5,7 @@ namespace Nbsock;
 use Amp\Reactor,
     Amp\Failure,
     Amp\Success,
-    Amp\Future;
+    Amp\Deferred;
 
 class Encryptor {
     private $reactor;
@@ -168,7 +168,7 @@ class Encryptor {
     }
 
     private function renegotiate($socket, $options) {
-        $deferred = new Future;
+        $deferred = new Deferred;
         $deferredDisable = $this->disable($socket);
         $deferredDisable->when(function($error, $result) use ($deferred, $options) {
             if ($error) {
@@ -315,7 +315,7 @@ class Encryptor {
         $encryptorStruct = new EncryptorStruct;
         $encryptorStruct->id = $socketId;
         $encryptorStruct->socket = $socket;
-        $encryptorStruct->future = new Future;
+        $encryptorStruct->future = new Deferred;
         $watcher = function() use ($encryptorStruct, $func) {
             $socket = $encryptorStruct->socket;
             if ($result = $this->{$func}($socket)) {
@@ -336,7 +336,7 @@ class Encryptor {
 
         $this->pending[$socketId] = $encryptorStruct;
 
-        return $encryptorStruct->future;
+        return $encryptorStruct->future->promise();
     }
 
     private function unloadPendingStruct(EncryptorStruct $encryptorStruct) {

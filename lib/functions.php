@@ -2,7 +2,7 @@
 
 namespace Nbsock;
 
-use Amp\Future;
+use Amp\Deferred;
 
 /**
  * Asynchronously establish a TCP connection (non-blocking)
@@ -16,7 +16,7 @@ use Amp\Future;
 function connect($authority, array $options = []) {
     static $connector;
     if (empty($connector)) {
-        $connector = new Connector(\Amp\getReactor());
+        $connector = new Connector(\Amp\reactor());
     }
 
     return $connector->connect($authority, $options);
@@ -32,8 +32,11 @@ function connect($authority, array $options = []) {
  * @return \Amp\Promise
  */
 function cryptoConnect($authority, array $options = []) {
-    $promisor = new Future;
+    $promisor = new Deferred;
     $promise = connect($authority, $options);
+    if (!isset($options["peer_name"])) {
+        $options["peer_name"] = parse_url($authority, PHP_URL_HOST);
+    }
     $promise->when(function($error, $result) use ($promisor, $options) {
         if ($error) {
             $promisor->fail($error);
@@ -55,7 +58,7 @@ function cryptoConnect($authority, array $options = []) {
 function encrypt($stream, array $options = []) {
     static $encryptor;
     if (empty($encryptor)) {
-        $encryptor = new Encryptor(\Amp\getReactor());
+        $encryptor = new Encryptor(\Amp\reactor());
     }
 
     return $encryptor->enable($stream, $options);
