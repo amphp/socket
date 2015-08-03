@@ -21,38 +21,12 @@ function __doConnect($uri, array $options) {
     $timeout = empty($options["timeout"]) ? 30000 : $options["timeout"];
 
     if (\stripos($uri, "unix://") === 0 || \stripos($uri, "udg://") === 0) {
-        $isUnix = true;
         list($scheme, $path) = explode("://", $uri, 2);
+        $isUnix = true;
         $resolvedUri = "{$scheme}:///" . \ltrim($path, "/");
     } else {
         $isUnix = false;
-        // TCP/UDP host names are always case-insensitive
-        if (!$uriParts = @\parse_url(strtolower($uri))) {
-            throw new \DomainException(
-                "Invalid URI: {$uri}"
-            );
-        }
-        // $scheme, $host, $port, $path
-        \extract($uriParts);
-        $scheme = empty($scheme) ? 'tcp' : $scheme;
-        if (!($scheme === 'tcp' || $scheme === 'udp')) {
-            throw new \DomainException(
-                "Invalid URI scheme ({$scheme}); tcp, udp, unix or udg scheme expected"
-            );
-        }
-        if (empty($host) || empty($port)) {
-            throw new \DomainException(
-                'Invalid URI ({$uri}); host and port components required'
-            );
-        }
-        if ($inAddr = @\inet_pton($host)) {
-            $isIpv6 = isset($inAddr[15]);
-        } else {
-            list($host, $mode) = (yield \Amp\Dns\resolve($host));
-            $isIpv6 = ($mode === MODE_INET6);
-        }
-
-        $resolvedUri = $isIpv6 ? "[{$host}]:{$port}" : "{$host}:{$port}";
+        $resolvedUri = (yield \Amp\resolve(__resolveUri($uri)));
     }
 
     $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
@@ -92,9 +66,8 @@ function __doConnect($uri, array $options) {
     try {
         yield ($options["timeout"] > 0) ? \Amp\timeout($promise, $options["timeout"]) : $promise;
         \Amp\cancel($watcherId);
-        // @TODO replace with actual return expression once PHP7 is required by the library
         yield new \Amp\CoroutineResult($socket);
-    } catch (\RuntimeException $e) {
+    } catch (\Amp\TimeoutException $e) {
         \Amp\cancel($watcherId);
         throw new ConnectException(
             "Connection to {$uri} failed: timeout exceeded ({$timeout} ms)",
@@ -102,6 +75,41 @@ function __doConnect($uri, array $options) {
             $e
         );
     }
+}
+
+function __resolveUri($uri) {
+    // TCP/UDP host names are always case-insensitive
+    if (!$uriParts = @\parse_url(strtolower($uri))) {
+        throw new \DomainException(
+            "Invalid URI: {$uri}"
+        );
+    }
+
+    // $scheme, $host, $port, $path
+    \extract($uriParts);
+    $scheme = empty($scheme) ? "tcp" : $scheme;
+    if (!($scheme === "tcp" || $scheme === "udp")) {
+        throw new \DomainException(
+            "Invalid URI scheme ({$scheme}); tcp, udp, unix or udg scheme expected"
+        );
+    }
+
+    if (empty($host) || empty($port)) {
+        throw new \DomainException(
+            "Invalid URI ({$uri}); host and port components required"
+        );
+    }
+
+    if ($inAddr = @\inet_pton($host)) {
+        $isIpv6 = isset($inAddr[15]);
+    } else {
+        list($host, $mode) = (yield \Amp\Dns\resolve($host));
+        $isIpv6 = ($mode === MODE_INET6);
+    }
+
+    $resolvedUri = $isIpv6 ? "[{$host}]:{$port}" : "{$host}:{$port}";
+
+    yield new \Amp\CoroutineResult($resolvedUri);
 }
 
 /**
