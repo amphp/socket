@@ -33,14 +33,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Amp\\": "lib/"
+            "Amp\\Socket\\": "lib/"
         },
         "files": ["lib/functions.php"]
     },
     "minimum-stability": "dev",
     "autoload-dev": {
         "psr-4": {
-            "Amp\\Test\\": "test/"
+            "Amp\\Socket\\Test\\": "test/"
         }
     }
 }

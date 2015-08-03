@@ -17,16 +17,42 @@ function connect($uri, array $options = []) {
 }
 
 function __doConnect($uri, array $options) {
-    $bindTo = empty($options["bind_to"]) ? "" : (string) $options["bind_to"];
-    $timeout = empty($options["timeout"]) ? 30000 : $options["timeout"];
-
     if (\stripos($uri, "unix://") === 0 || \stripos($uri, "udg://") === 0) {
         list($scheme, $path) = explode("://", $uri, 2);
-        $isUnix = true;
+        $isUnixSock = true;
         $resolvedUri = "{$scheme}:///" . \ltrim($path, "/");
     } else {
-        $isUnix = false;
-        $resolvedUri = (yield \Amp\resolve(__resolveUri($uri)));
+        $isUnixSock = false;
+        // TCP/UDP host names are always case-insensitive
+        if (!$uriParts = @\parse_url(strtolower($uri))) {
+            throw new \DomainException(
+                "Invalid URI: {$uri}"
+            );
+        }
+
+        // $scheme, $host, $port, $path
+        \extract($uriParts);
+        $scheme = empty($scheme) ? "tcp" : $scheme;
+        if (!($scheme === "tcp" || $scheme === "udp")) {
+            throw new \DomainException(
+                "Invalid URI scheme ({$scheme}); tcp, udp, unix or udg scheme expected"
+            );
+        }
+
+        if (empty($host) || empty($port)) {
+            throw new \DomainException(
+                "Invalid URI ({$uri}); host and port components required"
+            );
+        }
+
+        if ($inAddr = @\inet_pton($host)) {
+            $isIpv6 = isset($inAddr[15]);
+        } else {
+            list($host, $mode) = (yield \Amp\Dns\resolve($host));
+            $isIpv6 = ($mode === \Amp\Dns\MODE_INET6);
+        }
+
+        $resolvedUri = $isIpv6 ? "[{$host}]:{$port}" : "{$host}:{$port}";
     }
 
     $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
@@ -44,6 +70,7 @@ function __doConnect($uri, array $options) {
         $contextOptions = [];
     }
 
+    $bindTo = empty($options["bind_to"]) ? "" : (string) $options["bind_to"];
     if (!$isUnixSock && $bindTo) {
         $contextOptions["socket"]["bindto"] = $bindTo;
     }
@@ -62,9 +89,10 @@ function __doConnect($uri, array $options) {
     $promisor = new \Amp\Deferred;
     $promise = $promisor->promise();
     $watcherId = \Amp\onWritable($socket, [$promisor, "succeed"]);
+    $timeout = empty($options["timeout"]) ? 30000 : $options["timeout"];
 
     try {
-        yield ($options["timeout"] > 0) ? \Amp\timeout($promise, $options["timeout"]) : $promise;
+        yield ($timeout > 0) ? \Amp\timeout($promise, $timeout) : $promise;
         \Amp\cancel($watcherId);
         yield new \Amp\CoroutineResult($socket);
     } catch (\Amp\TimeoutException $e) {
@@ -75,41 +103,6 @@ function __doConnect($uri, array $options) {
             $e
         );
     }
-}
-
-function __resolveUri($uri) {
-    // TCP/UDP host names are always case-insensitive
-    if (!$uriParts = @\parse_url(strtolower($uri))) {
-        throw new \DomainException(
-            "Invalid URI: {$uri}"
-        );
-    }
-
-    // $scheme, $host, $port, $path
-    \extract($uriParts);
-    $scheme = empty($scheme) ? "tcp" : $scheme;
-    if (!($scheme === "tcp" || $scheme === "udp")) {
-        throw new \DomainException(
-            "Invalid URI scheme ({$scheme}); tcp, udp, unix or udg scheme expected"
-        );
-    }
-
-    if (empty($host) || empty($port)) {
-        throw new \DomainException(
-            "Invalid URI ({$uri}); host and port components required"
-        );
-    }
-
-    if ($inAddr = @\inet_pton($host)) {
-        $isIpv6 = isset($inAddr[15]);
-    } else {
-        list($host, $mode) = (yield \Amp\Dns\resolve($host));
-        $isIpv6 = ($mode === MODE_INET6);
-    }
-
-    $resolvedUri = $isIpv6 ? "[{$host}]:{$port}" : "{$host}:{$port}";
-
-    yield new \Amp\CoroutineResult($resolvedUri);
 }
 
 /**
@@ -127,6 +120,9 @@ function cryptoConnect($uri, array $options = []) {
 
 function __doCryptoConnect($uri, $options) {
     $socket = (yield \Amp\resolve(__doConnect($uri, $options)));
+    if (empty($options["peer_name"])) {
+        $options["peer_name"] = parse_url($uri, PHP_URL_HOST);
+    }
     yield cryptoEnable($socket, $options);
     yield new \Amp\CoroutineResult($socket);
 }
@@ -200,6 +196,8 @@ function cryptoEnable($socket, array $options = []) {
     if (isset($options["crypto_method"])) {
         $method = $options["crypto_method"];
         unset($options["crypto_method"]);
+    } elseif (PHP_VERSION_ID >= 50600 && PHP_VERSION_ID < 50606) {
+        $method = \STREAM_CRYPTO_METHOD_TLS_CLIENT;
     } else {
         $method = \STREAM_CRYPTO_METHOD_SSLv23_CLIENT;
     }
