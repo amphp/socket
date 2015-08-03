@@ -1,5 +1,5 @@
 <?php
 
-namespace Nbsock;
+namespace Amp\Socket;
 
-class TimeoutException extends \RuntimeException {}
+class TimeoutException extends SocketException {}

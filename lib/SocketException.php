@@ -1,5 +1,5 @@
 <?php
 
-namespace Nbsock;
+namespace Amp\Socket;
 
 class SocketException extends \RuntimeException {}

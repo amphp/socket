@@ -1,6 +1,6 @@
 <?php
 
-namespace Nbsock;
+namespace Amp\Socket;
 
 /**
  * Asynchronously establish a socket connection to the specified URI
@@ -234,7 +234,7 @@ function __watchCrypto($enable, $method, $socket) {
     } else {
         $promisor = new \Amp\Deferred;
         $cbData = [$promisor, $enable, $method];
-        \Amp\onReadable($socket, '\Nbsock\__onCryptoWatchReadability', $options = ["cb_data" => $cbData]);
+        \Amp\onReadable($socket, '\Amp\Socket\__onCryptoWatchReadability', $options = ["cb_data" => $cbData]);
         return $promisor->promise();
     }
 }

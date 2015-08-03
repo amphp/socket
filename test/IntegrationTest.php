@@ -1,6 +1,6 @@
 <?php
 
-namespace Nbsock\Test;
+namespace Amp\Socket\Test;
 
 class IntegrationTest extends \PHPUnit_Framework_TestCase {
 
@@ -8,7 +8,7 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
      * @dataProvider provideConnectArgs
      */
     public function testConnect($uri, $options) {
-        $promise = \Nbsock\connect($uri, $options);
+        $promise = \Amp\Socket\connect($uri, $options);
         $sock = \Amp\wait($promise);
         $this->assertTrue(is_resource($sock));
     }
@@ -24,7 +24,7 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
      * @dataProvider provideCryptoConnectArgs
      */
     public function testCryptoConnect($uri, $options) {
-        $promise = \Nbsock\cryptoConnect($uri, $options);
+        $promise = \Amp\Socket\cryptoConnect($uri, $options);
         $sock = \Amp\wait($promise);
         $this->assertTrue(is_resource($sock));
     }

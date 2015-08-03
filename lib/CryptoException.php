@@ -1,5 +1,5 @@
 <?php
 
-namespace Nbsock;
+namespace Amp\Socket;
 
-class CryptoException extends \RuntimeException {}
+class CryptoException extends SocketException {}
