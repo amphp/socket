@@ -2,4 +2,4 @@
 
 namespace Nbsock;
 
-class SocketException extends \Exception {}
+class SocketException extends \RuntimeException {}

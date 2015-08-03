@@ -2,4 +2,4 @@
 
 namespace Nbsock;
 
-class CryptoException extends \Exception {}
+class CryptoException extends \RuntimeException {}

@@ -1,7 +1,7 @@
 {
     "name":           "rdlowrey/nbsock",
     "homepage":       "https://github.com/rdlowrey/nbsock",
-    "description":    "Non-blocking socket connection/encryption using the Amp concurrency framework",
+    "description":    "Async socket tools built on the amp concurrency framework",
     "keywords": [
         "tcp",
         "sockets",
@@ -15,14 +15,16 @@
     "authors": [
         {
             "name": "Daniel Lowrey",
-            "email": "rdlowrey@gmail.com",
-            "role": "Creator / Lead Developer"
+            "email": "rdlowrey@gmail.com"
         }
     ],
     "require": {
         "php": ">=5.5",
-        "amphp/amp": "v1.0.x-dev",
-        "amphp/dns": "~0.6.0"
+        "amphp/amp": "^1",
+        "amphp/dns": "dev-master"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "4.8.x-dev"
     },
     "autoload": {
         "psr-4": {
@@ -30,6 +32,7 @@
         },
         "files": ["lib/functions.php"]
     },
+    "minimum-stability": "dev",
     "autoload-dev": {
         "psr-4": {
             "Nbsock\\Test\\": "test/"

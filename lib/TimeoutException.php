@@ -2,4 +2,4 @@
 
 namespace Nbsock;
 
-class TimeoutException extends \Exception {}
+class TimeoutException extends \RuntimeException {}
