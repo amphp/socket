@@ -3,6 +3,28 @@
 namespace Amp\Socket;
 
 /**
+ * Listen for client connections on the specified server $address
+ *
+ * @param string $address
+ * @return resource
+ */
+function listen($address) {
+    $flags = \STREAM_SERVER_BIND | \STREAM_SERVER_LISTEN;
+    if (!$socket = @\stream_socket_server($address, $errno, $errstr, $flags)) {
+        throw new SocketException(
+            \sprintf(
+                "Failed binding socket on %s: [Err# %s] %s",
+                $address,
+                $errno,
+                $errstr
+            )
+        );
+    }
+
+    return $socket;
+}
+
+/**
  * Asynchronously establish a socket connection to the specified URI
  *
  * If a scheme is not specified in the $uri parameter, TCP is assumed. Allowed schemes include:

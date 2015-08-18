@@ -2,13 +2,22 @@
 
 namespace Amp\Socket\Test;
 
+use Amp as amp;
+use Amp\Socket as socket;
+
 class IntegrationTest extends \PHPUnit_Framework_TestCase {
+
+    protected function setUp() {
+        if (amp\info()["state"]) {
+            amp\stop();
+        }
+    }
 
     /**
      * @dataProvider provideConnectArgs
      */
     public function testConnect($uri, $options) {
-        $promise = \Amp\Socket\connect($uri, $options);
+        $promise = socket\connect($uri, $options);
         $sock = \Amp\wait($promise);
         $this->assertTrue(is_resource($sock));
     }
@@ -24,7 +33,7 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
      * @dataProvider provideCryptoConnectArgs
      */
     public function testCryptoConnect($uri, $options) {
-        $promise = \Amp\Socket\cryptoConnect($uri, $options);
+        $promise = socket\cryptoConnect($uri, $options);
         $sock = \Amp\wait($promise);
         $this->assertTrue(is_resource($sock));
     }
