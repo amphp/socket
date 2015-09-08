@@ -26,7 +26,7 @@
     "require": {
         "php": ">=5.5",
         "amphp/amp": "^1",
-        "amphp/dns": "~0.7.0"
+        "amphp/dns": "~0.8.0"
     },
     "require-dev": {
         "phpunit/phpunit": "~4.8",

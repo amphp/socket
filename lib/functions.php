@@ -70,8 +70,9 @@ function __doConnect($uri, array $options) {
         if ($inAddr = @\inet_pton($host)) {
             $isIpv6 = isset($inAddr[15]);
         } else {
-            list($host, $mode) = (yield \Amp\Dns\resolve($host));
-            $isIpv6 = ($mode === \Amp\Dns\MODE_INET6);
+            $records = (yield \Amp\Dns\resolve($host));
+            list($host, $mode) = $records[0];
+            $isIpv6 = ($mode === \Amp\Dns\Record::AAAA);
         }
 
         $resolvedUri = $isIpv6 ? "[{$host}]:{$port}" : "{$host}:{$port}";
