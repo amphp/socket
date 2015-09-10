@@ -2,6 +2,9 @@
 
 namespace Amp\Socket;
 
+use Amp\Failure;
+use Amp\Success;
+
 /**
  * Listen for client connections on the specified server $address
  *
