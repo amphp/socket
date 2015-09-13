@@ -45,4 +45,14 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
             ['raw.githubusercontent.com:443', []]
         ];
     }
+
+    public function testRenegotiation() {
+        $this->markTestSkipped("Expected failure: proper renegotiation does not work yet");
+
+        $promise = \Amp\socket\cryptoConnect('www.google.com:443', []);
+        $sock = \Amp\wait($promise);
+        $promise = \Amp\socket\cryptoEnable($sock, ["verify_peer" => false]); // force renegotiation by different option...
+        $sock = \Amp\wait($promise);
+        $this->assertTrue(is_resource($sock));
+    }
 }

@@ -177,7 +177,6 @@ function cryptoEnable($socket, array $options = []) {
         }
     }
 
-    $options["SNI_nb_hack"] = false;
     if (empty($options["ciphers"])) {
         $options["ciphers"] = \implode(':', [
             "ECDHE-RSA-AES128-GCM-SHA256",
@@ -219,6 +218,22 @@ function cryptoEnable($socket, array $options = []) {
         ]);
     }
 
+    $ctx = \stream_context_get_options($socket);
+    if (!empty($ctx['ssl'])) {
+        $ctx = $ctx['ssl'];
+        $compare = $options;
+        $no_SNI_nb_hack = empty($ctx['SNI_nb_hack']);
+        unset($ctx['SNI_nb_hack'], $ctx['peer_certificate'], $ctx['SNI_server_name']);
+        unset($compare['SNI_nb_hack'], $compare['peer_certificate'], $compare['SNI_server_name']);
+        if ($ctx == $compare) {
+            return new Success($socket);
+        } elseif ($no_SNI_nb_hack) {
+            return \Amp\pipe(cryptoDisable($socket), function($socket) use ($options) {
+                return cryptoEnable($socket, $options);
+            });
+        }
+    }
+
     if (isset($options["crypto_method"])) {
         $method = $options["crypto_method"];
         unset($options["crypto_method"]);
@@ -228,12 +243,12 @@ function cryptoEnable($socket, array $options = []) {
         $method = \STREAM_CRYPTO_METHOD_SSLv23_CLIENT;
     }
 
-    \stream_context_set_option($socket, ["ssl"=> $options]);
-    $enable = true;
+    $options["SNI_nb_hack"] = false;
+    \stream_context_set_option($socket, ["ssl" => $options]);
 
     return $isLegacy
-        ? \Amp\resolve(__watchCryptoLegacy($enable, $method, $socket))
-        : __watchCrypto($enable, $method, $socket)
+        ? \Amp\resolve(__watchCryptoLegacy($method, $socket))
+        : __watchCrypto($method, $socket)
     ;
 }
 
@@ -244,11 +259,14 @@ function cryptoEnable($socket, array $options = []) {
  * @return \Amp\Promise
  */
 function cryptoDisable($socket) {
-    return __watchCrypto($enable = false, $method = null, $socket);
+    // note that disabling crypto *ALWAYS* returns false, immediately
+    \stream_context_set_option($socket, ["ssl" => ["SNI_nb_hack" => true]]);
+    \stream_socket_enable_crypto($socket, false);
+    return new Success($socket);
 }
 
-function __watchCrypto($enable, $method, $socket) {
-    $result = \stream_socket_enable_crypto($socket, $enable, $method);
+function __watchCrypto($method, $socket) {
+    $result = \stream_socket_enable_crypto($socket, $enable = true, $method);
     if ($result === true) {
         return new Success($socket);
     } elseif ($result === false) {
@@ -257,38 +275,36 @@ function __watchCrypto($enable, $method, $socket) {
         ));
     } else {
         $promisor = new \Amp\Deferred;
-        $cbData = [$promisor, $enable, $method];
+        $cbData = [$promisor, $method];
         \Amp\onReadable($socket, '\Amp\Socket\__onCryptoWatchReadability', $options = ["cb_data" => $cbData]);
         return $promisor->promise();
     }
 }
 
 function __onCryptoWatchReadability($watcherId, $socket, $cbData) {
-    list($promisor, $enable, $method) = $cbData;
-    $result = \stream_socket_enable_crypto($socket, $enable, $method);
+    list($promisor, $method) = $cbData;
+    $result = \stream_socket_enable_crypto($socket, $enable = true, $method);
     if ($result === true) {
         \Amp\cancel($watcherId);
         $promisor->succeed($socket);
     } elseif ($result === false) {
         \Amp\cancel($watcherId);
         $promisor->fail(new CryptoException(
-            "Crypto negotiation failed: " . \error_get_last()["message"]
+            "Crypto negotiation failed: " . (feof($socket) ? "Connection reset by peer" : \error_get_last()["message"])
         ));
     }
 }
 
-function __watchCryptoLegacy($enable, $method, $socket) {
-    yield __watchCrypto($enable, $method, $socket);
+function __watchCryptoLegacy($method, $socket) {
+    yield __watchCrypto($method, $socket);
     $cert = \stream_context_get_options($socket)["ssl"]["peer_certificate"];
     $options = \stream_context_get_options($socket)["ssl"];
     $peerFingerprint = isset($options["peer_fingerprint"])
         ? $options["peer_fingerprint"]
         : null
     ;
-    if ($peerFingerprint && !__verifyFingerprint($peerFingerprint, $cert)) {
-        throw new CryptoException(
-            "Peer fingerprint verification failed"
-        );
+    if ($peerFingerprint) {
+        __verifyFingerprint($peerFingerprint, $cert);
     }
     $peerName = isset($options["peer_name"])
         ? $options["peer_name"]
@@ -378,5 +394,5 @@ function __matchesWildcardName($peerName, $certName) {
     unset($peerName[0]);
     $peerName = implode(".", $peerName);
 
-    return ($peerName == $certName);
+    return $peerName === $certName;
 }
