@@ -253,7 +253,7 @@ class Client {
                 amp\immediately(self::$succeeder, $options);
             }
         } elseif (isset($op->eol)) {
-            if ($eolPos = \strpos($op->buffer, $op->eol)) {
+            if (false !== ($eolPos = \strpos($op->buffer, $op->eol))) {
                 \array_shift($state->readOperations);
                 $chunk = \substr($op->buffer, 0, $eolPos + \strlen($op->eol));
                 $op->buffer = \substr($op->buffer, $eolPos + \strlen($op->eol));
