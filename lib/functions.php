@@ -297,20 +297,27 @@ function __onCryptoWatchReadability($watcherId, $socket, $cbData) {
 
 function __watchCryptoLegacy($method, $socket) {
     yield __watchCrypto($method, $socket);
+
     $cert = \stream_context_get_options($socket)["ssl"]["peer_certificate"];
     $options = \stream_context_get_options($socket)["ssl"];
+
     $peerFingerprint = isset($options["peer_fingerprint"])
         ? $options["peer_fingerprint"]
-        : null
-    ;
+        : null;
+
     if ($peerFingerprint) {
         __verifyFingerprint($peerFingerprint, $cert);
     }
+
     $peerName = isset($options["peer_name"])
         ? $options["peer_name"]
-        : null
-    ;
-    if ($peerName && !__verifyPeerName($peerName, $cert)) {
+        : null;
+
+    $verifyPeer = isset($options["verify_peer_name"])
+        ? $options["verify_peer_name"]
+        : true;
+
+    if ($verifyPeer && $peerName && !__verifyPeerName($peerName, $cert)) {
         throw new CryptoException(
             "Peer name verification failed"
         );
