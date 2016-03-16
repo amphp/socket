@@ -285,7 +285,7 @@ class Client {
             $finalResult = isset($op->buffer[0]) ? $op->buffer : null;
             $op->promisor->succeed($finalResult);
             foreach ($state->readOperations as $op) {
-                $op->succeed();
+                $op->promisor->succeed();
             }
             $state->readOperations = [];
         }
