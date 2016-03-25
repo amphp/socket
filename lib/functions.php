@@ -4,7 +4,6 @@ namespace Amp\Socket;
 
 use Amp\Failure;
 use Amp\Success;
-use Phar;
 
 /**
  * Listen for client connections on the specified server $address
@@ -162,7 +161,7 @@ function __doCryptoConnect($uri, $options) {
  * @return \Amp\Promise
  */
 function cryptoEnable($socket, array $options = []) {
-    global $__amphp_artax_openssl_ca_bundle_file;
+    static $caBundleFile = null;
 
     $isLegacy = (PHP_VERSION_ID < 50600);
     if ($isLegacy) {
@@ -178,24 +177,22 @@ function cryptoEnable($socket, array $options = []) {
         if (empty($options["cafile"])) {
             $options["cafile"] = __DIR__ . "/../var/ca-bundle.crt";
 
-            if (class_exists("Phar") && !empty(Phar::running(true))) {
+            if (class_exists("Phar") && !empty(\Phar::running(true))) {
                 // Legacy PHP 5.5 needs bundle external from Phar,
                 // because we verify peers manually in amphp/socket.
                 // Yes, this is blocking but way better than just an error.
-                if (!isset($__amphp_artax_openssl_ca_bundle_file)) {
+                if (!isset($caBundleFile)) {
                     $bundle = __DIR__ . "/../var/ca-bundle.crt";
                     $bundleContent = file_get_contents($bundle);
-                    $__amphp_artax_openssl_ca_bundle_file = tempnam(sys_get_temp_dir(), "openssl-ca-bundle-");
-                    file_put_contents($__amphp_artax_openssl_ca_bundle_file, $bundleContent);
+                    $caBundleFile = tempnam(sys_get_temp_dir(), "openssl-ca-bundle-");
+                    file_put_contents($caBundleFile, $bundleContent);
 
-                    register_shutdown_function(function() use ($__amphp_artax_openssl_ca_bundle_file) {
-                        if (file_exists($__amphp_artax_openssl_ca_bundle_file)) {
-                            unlink($__amphp_artax_openssl_ca_bundle_file);
-                        }
+                    register_shutdown_function(function() use ($caBundleFile) {
+                        @unlink($caBundleFile);
                     });
                 }
 
-                $options["cafile"] = $__amphp_artax_openssl_ca_bundle_file;
+                $options["cafile"] = $caBundleFile;
             }
         }
     }
