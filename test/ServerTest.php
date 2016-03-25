@@ -27,7 +27,7 @@ class ServerTest extends \PHPUnit_Framework_TestCase {
             amp\resolve($server());
             $client = (yield socket\connect("tcp://127.0.0.1:12345"));
             $isRunning = false;
-            amp\once("\Amp\stop", 100);
+            amp\once('\Amp\stop', 100);
         });
     }
 }

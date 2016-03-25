@@ -161,6 +161,8 @@ function __doCryptoConnect($uri, $options) {
  * @return \Amp\Promise
  */
 function cryptoEnable($socket, array $options = []) {
+    static $caBundleFile = null;
+
     $isLegacy = (PHP_VERSION_ID < 50600);
     if ($isLegacy) {
         // For pre-5.6 we always manually verify names in userland
@@ -174,6 +176,24 @@ function cryptoEnable($socket, array $options = []) {
         }
         if (empty($options["cafile"])) {
             $options["cafile"] = __DIR__ . "/../var/ca-bundle.crt";
+
+            if (class_exists("Phar") && !empty(\Phar::running(true))) {
+                // Legacy PHP 5.5 needs bundle external from Phar,
+                // because we verify peers manually in amphp/socket.
+                // Yes, this is blocking but way better than just an error.
+                if (!isset($caBundleFile)) {
+                    $bundle = __DIR__ . "/../var/ca-bundle.crt";
+                    $bundleContent = file_get_contents($bundle);
+                    $caBundleFile = tempnam(sys_get_temp_dir(), "openssl-ca-bundle-");
+                    file_put_contents($caBundleFile, $bundleContent);
+
+                    register_shutdown_function(function() use ($caBundleFile) {
+                        @unlink($caBundleFile);
+                    });
+                }
+
+                $options["cafile"] = $caBundleFile;
+            }
         }
     }
 
