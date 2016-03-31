@@ -183,8 +183,12 @@ function cryptoEnable($socket, array $options = []) {
     }
 
     // Use default bundle if no bundle is configured, maybe because of missing php.ini
-    if (empty($options["cafile"]) && empty(ini_get("openssl.cafile")) && empty(ini_get("openssl.capath"))) {
-        $options["cafile"] = __DIR__ . "/../var/ca-bundle.crt";
+    if (!$isLegacy && empty($options["cafile"])) {
+        $locations = \openssl_get_cert_locations();
+
+        if (empty($locations["default_cert_file"]) && empty($locations["default_cert_dir"]) && empty($locations["ini_cafile"]) && empty($locations["ini_capath"])) {
+            $options["cafile"] = __DIR__ . "/../var/ca-bundle.crt";
+        }
     }
 
     // Externalize any bundle inside a Phar, because OpenSSL doesn't support the stream wrapper.
