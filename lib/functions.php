@@ -188,7 +188,7 @@ function cryptoEnable($socket, array $options = []) {
     }
 
     // Externalize any bundle inside a Phar, because OpenSSL doesn't support the stream wrapper.
-    if (strpos($options["cafile"], "phar://") === 0) {
+    if (isset($options["cafile"]) && strpos($options["cafile"], "phar://") === 0) {
         // Yes, this is blocking but way better than just an error.
         if (!isset($caBundleFiles[$options["cafile"]])) {
             $bundleContent = file_get_contents($options["cafile"]);
