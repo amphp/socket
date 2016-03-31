@@ -161,39 +161,45 @@ function __doCryptoConnect($uri, $options) {
  * @return \Amp\Promise
  */
 function cryptoEnable($socket, array $options = []) {
-    static $caBundleFile = null;
+    static $caBundleFiles = [];
 
     $isLegacy = (PHP_VERSION_ID < 50600);
+
     if ($isLegacy) {
         // For pre-5.6 we always manually verify names in userland
         // using the captured peer certificate.
         $options["capture_peer_cert"] = true;
         $options["verify_peer"] = isset($options["verify_peer"]) ? $options["verify_peer"] : true;
+
         if (isset($options["CN_match"])) {
             $peerName = $options["CN_match"];
             $options["peer_name"] = $peerName;
             unset($options["CN_match"]);
         }
+
         if (empty($options["cafile"])) {
             $options["cafile"] = __DIR__ . "/../var/ca-bundle.crt";
+        }
+    }
 
-            if (class_exists("Phar") && !empty(\Phar::running(true))) {
-                // Legacy PHP 5.5 needs bundle external from Phar,
-                // because we verify peers manually in amphp/socket.
-                // Yes, this is blocking but way better than just an error.
-                if (!isset($caBundleFile)) {
-                    $bundle = __DIR__ . "/../var/ca-bundle.crt";
-                    $bundleContent = file_get_contents($bundle);
-                    $caBundleFile = tempnam(sys_get_temp_dir(), "openssl-ca-bundle-");
-                    file_put_contents($caBundleFile, $bundleContent);
+    // Use default bundle if no bundle is configured, maybe because of missing php.ini
+    if (empty($options["cafile"]) && empty(ini_get("openssl.cafile")) && empty(ini_get("openssl.capath"))) {
+        $options["cafile"] = __DIR__ . "/../var/ca-bundle.crt";
+    }
 
-                    register_shutdown_function(function() use ($caBundleFile) {
-                        @unlink($caBundleFile);
-                    });
-                }
+    // Externalize any bundle inside a Phar, because OpenSSL doesn't support the stream wrapper.
+    if (strpos($options["cafile"], "phar://") === 0) {
+        // Yes, this is blocking but way better than just an error.
+        if (!isset($caBundleFiles[$options["cafile"]])) {
+            $bundleContent = file_get_contents($options["cafile"]);
+            $caBundleFile = tempnam(sys_get_temp_dir(), "openssl-ca-bundle-");
+            file_put_contents($caBundleFile, $bundleContent);
 
-                $options["cafile"] = $caBundleFile;
-            }
+            register_shutdown_function(function() use ($caBundleFile) {
+                @unlink($caBundleFile);
+            });
+
+            $caBundleFiles[$options["cafile"]] = $caBundleFile;
         }
     }
 
