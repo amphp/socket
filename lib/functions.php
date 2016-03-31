@@ -183,7 +183,7 @@ function cryptoEnable($socket, array $options = []) {
     }
 
     // Use default bundle if no bundle is configured, maybe because of missing php.ini
-    if (empty(ini_get("openssl.cafile")) && empty(ini_get("openssl.capath"))) {
+    if (empty($options["cafile"]) && empty(ini_get("openssl.cafile")) && empty(ini_get("openssl.capath"))) {
         $options["cafile"] = __DIR__ . "/../var/ca-bundle.crt";
     }
 
