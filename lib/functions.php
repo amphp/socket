@@ -180,21 +180,21 @@ function cryptoEnable($socket, array $options = []) {
         if (empty($options["cafile"])) {
             $options["cafile"] = __DIR__ . "/../var/ca-bundle.crt";
         }
+    }
 
-        // Externalize any bundle inside a Phar, because OpenSSL doesn't support the stream wrapper.
-        if (strpos($options["cafile"], "phar://") === 0) {
-            // Yes, this is blocking but way better than just an error.
-            if (!isset($caBundleFiles[$options["cafile"]])) {
-                $bundleContent = file_get_contents($options["cafile"]);
-                $caBundleFile = tempnam(sys_get_temp_dir(), "openssl-ca-bundle-");
-                file_put_contents($caBundleFile, $bundleContent);
+    // Externalize any bundle inside a Phar, because OpenSSL doesn't support the stream wrapper.
+    if (!empty($options["cafile"]) && strpos($options["cafile"], "phar://") === 0) {
+        // Yes, this is blocking but way better than just an error.
+        if (!isset($caBundleFiles[$options["cafile"]])) {
+            $bundleContent = file_get_contents($options["cafile"]);
+            $caBundleFile = tempnam(sys_get_temp_dir(), "openssl-ca-bundle-");
+            file_put_contents($caBundleFile, $bundleContent);
 
-                register_shutdown_function(function() use ($caBundleFile) {
-                    @unlink($caBundleFile);
-                });
+            register_shutdown_function(function() use ($caBundleFile) {
+                @unlink($caBundleFile);
+            });
 
-                $caBundleFiles[$options["cafile"]] = $caBundleFile;
-            }
+            $caBundleFiles[$options["cafile"]] = $caBundleFile;
         }
     }
 
