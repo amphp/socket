@@ -40,7 +40,7 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
 
     public function provideCryptoConnectArgs() {
         return [
-            ['stackoverflow:443', []],
+            ['stackoverflow.com:443', []],
             ['github.com:443', []],
             ['raw.githubusercontent.com:443', []]
         ];
