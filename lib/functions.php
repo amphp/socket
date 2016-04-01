@@ -201,8 +201,12 @@ function cryptoEnable($socket, array $options = []) {
     if (empty($options["ciphers"])) {
         // See https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28default.29
         // DES ciphers have been explicitly removed from that list
+
         // TODO: We're using the recommended settings for servers here, we need a good resource for clients.
         // Then we might be able to use a more restrictive list.
+
+        // The following cipher suites have been explicitly disabled, taken from previous configuration:
+        // !aNULL:!eNULL:!EXPORT:!DES:!DSS:!3DES:!MD5:!PSK
         $options["ciphers"] = \implode(':', [
             "ECDHE-ECDSA-CHACHA20-POLY1305",
             "ECDHE-RSA-CHACHA20-POLY1305",
@@ -230,7 +234,14 @@ function cryptoEnable($socket, array $options = []) {
             "AES256-SHA256",
             "AES128-SHA",
             "AES256-SHA",
-            "!DSS"
+            "!aNULL",
+            "!eNULL",
+            "!EXPORT",
+            "!DES",
+            "!DSS",
+            "!3DES",
+            "!MD5",
+            "!PSK",
         ]);
     }
 
