@@ -180,30 +180,21 @@ function cryptoEnable($socket, array $options = []) {
         if (empty($options["cafile"])) {
             $options["cafile"] = __DIR__ . "/../var/ca-bundle.crt";
         }
-    }
 
-    // Use default bundle if no bundle is configured, maybe because of missing php.ini
-    if (!$isLegacy && empty($options["cafile"])) {
-        $locations = \openssl_get_cert_locations();
+        // Externalize any bundle inside a Phar, because OpenSSL doesn't support the stream wrapper.
+        if (strpos($options["cafile"], "phar://") === 0) {
+            // Yes, this is blocking but way better than just an error.
+            if (!isset($caBundleFiles[$options["cafile"]])) {
+                $bundleContent = file_get_contents($options["cafile"]);
+                $caBundleFile = tempnam(sys_get_temp_dir(), "openssl-ca-bundle-");
+                file_put_contents($caBundleFile, $bundleContent);
 
-        if (empty($locations["default_cert_file"]) && empty($locations["default_cert_dir"]) && empty($locations["ini_cafile"]) && empty($locations["ini_capath"])) {
-            $options["cafile"] = __DIR__ . "/../var/ca-bundle.crt";
-        }
-    }
+                register_shutdown_function(function() use ($caBundleFile) {
+                    @unlink($caBundleFile);
+                });
 
-    // Externalize any bundle inside a Phar, because OpenSSL doesn't support the stream wrapper.
-    if (isset($options["cafile"]) && strpos($options["cafile"], "phar://") === 0) {
-        // Yes, this is blocking but way better than just an error.
-        if (!isset($caBundleFiles[$options["cafile"]])) {
-            $bundleContent = file_get_contents($options["cafile"]);
-            $caBundleFile = tempnam(sys_get_temp_dir(), "openssl-ca-bundle-");
-            file_put_contents($caBundleFile, $bundleContent);
-
-            register_shutdown_function(function() use ($caBundleFile) {
-                @unlink($caBundleFile);
-            });
-
-            $caBundleFiles[$options["cafile"]] = $caBundleFile;
+                $caBundleFiles[$options["cafile"]] = $caBundleFile;
+            }
         }
     }
 
