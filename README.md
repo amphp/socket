@@ -13,6 +13,8 @@ concurrency framework.
 
 - PHP 5.5+
 
+**Important Note**: If you are using PHP 5.5, we ship with our own certificate bundle, since PHP 5.5 doesn't use the systems trust store yet. Our default trust store doesn't include any 1024-bit root certificates. Due to a bug in OpenSSL 1.0.1 (and lower), certificates with a root, which is signed by another 1024-bit root, will fail to validate as the signing 1024-bit root is not in the trust store. See also the [release notes for v0.9.6](https://github.com/amphp/socket/releases/tag/v0.9.6).
+
 **Installation**
 
 ```bash
