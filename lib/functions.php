@@ -199,43 +199,38 @@ function cryptoEnable($socket, array $options = []) {
     }
 
     if (empty($options["ciphers"])) {
+        // See https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28default.29
+        // DES ciphers have been explicitly removed from that list
+        // TODO: We're using the recommended settings for servers here, we need a good resource for clients.
+        // Then we might be able to use a more restrictive list.
         $options["ciphers"] = \implode(':', [
-            "ECDHE-RSA-AES128-GCM-SHA256",
+            "ECDHE-ECDSA-CHACHA20-POLY1305",
+            "ECDHE-RSA-CHACHA20-POLY1305",
             "ECDHE-ECDSA-AES128-GCM-SHA256",
-            "ECDHE-RSA-AES256-GCM-SHA384",
+            "ECDHE-RSA-AES128-GCM-SHA256",
             "ECDHE-ECDSA-AES256-GCM-SHA384",
+            "ECDHE-RSA-AES256-GCM-SHA384",
             "DHE-RSA-AES128-GCM-SHA256",
-            "DHE-DSS-AES128-GCM-SHA256",
-            "kEDH+AESGCM",
-            "ECDHE-RSA-AES128-SHA256",
+            "DHE-RSA-AES256-GCM-SHA384",
             "ECDHE-ECDSA-AES128-SHA256",
-            "ECDHE-RSA-AES128-SHA",
+            "ECDHE-RSA-AES128-SHA256",
             "ECDHE-ECDSA-AES128-SHA",
             "ECDHE-RSA-AES256-SHA384",
+            "ECDHE-RSA-AES128-SHA",
             "ECDHE-ECDSA-AES256-SHA384",
-            "ECDHE-RSA-AES256-SHA",
             "ECDHE-ECDSA-AES256-SHA",
+            "ECDHE-RSA-AES256-SHA",
             "DHE-RSA-AES128-SHA256",
             "DHE-RSA-AES128-SHA",
-            "DHE-DSS-AES128-SHA256",
             "DHE-RSA-AES256-SHA256",
-            "DHE-DSS-AES256-SHA",
             "DHE-RSA-AES256-SHA",
             "AES128-GCM-SHA256",
             "AES256-GCM-SHA384",
-            "ECDHE-RSA-RC4-SHA",
-            "ECDHE-ECDSA-RC4-SHA",
-            "AES128",
-            "AES256",
-            "RC4-SHA",
-            "HIGH",
-            "!aNULL",
-            "!eNULL",
-            "!EXPORT",
-            "!DES",
-            "!3DES",
-            "!MD5",
-            "!PSK"
+            "AES128-SHA256",
+            "AES256-SHA256",
+            "AES128-SHA",
+            "AES256-SHA",
+            "!DSS"
         ]);
     }
 
