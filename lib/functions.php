@@ -263,9 +263,11 @@ function cryptoEnable($socket, array $options = []) {
     if (isset($options["crypto_method"])) {
         $method = $options["crypto_method"];
         unset($options["crypto_method"]);
-    } elseif (PHP_VERSION_ID >= 50600 && PHP_VERSION_ID < 50606) {
+    } elseif (PHP_VERSION_ID >= 50600 && PHP_VERSION_ID <= 50606) {
+        /** @link https://bugs.php.net/69195 */
         $method = \STREAM_CRYPTO_METHOD_TLS_CLIENT;
     } else {
+        // note that this constant actually means "Any TLS version EXCEPT SSL v2 and v3"
         $method = \STREAM_CRYPTO_METHOD_SSLv23_CLIENT;
     }
 
