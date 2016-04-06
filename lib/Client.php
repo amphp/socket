@@ -226,12 +226,13 @@ class Client {
      */
     public function close() {
         $state = $this->state;
-        if ($state->isDead) {
-            return;
-        }
         if (\is_resource($state->socket)) {
             @\fclose($state->socket);
         }
+        if ($state->isDead) {
+            return;
+        }
+
         amp\cancel($state->readWatcherId);
         amp\cancel($state->writeWatcherId);
         foreach ($state->readOperations as $op) {
