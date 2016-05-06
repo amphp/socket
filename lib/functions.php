@@ -80,8 +80,12 @@ function __doConnect($uri, array $options) {
 
         $resolvedUri = $isIpv6 ? "[{$host}]:{$port}" : "{$host}:{$port}";
     }
-
-    $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
+    
+    if (!empty($options['persistent'])) {
+        $flags = $options['persistent'];
+    } else {
+        $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
+    }
     $timeout = 42; // <--- timeout not applicable for async connects
     if (PHP_VERSION_ID < 50600 && $scheme === "tcp") {
         // Prior to PHP 5.6 the SNI_server_name only registers if assigned to the stream
