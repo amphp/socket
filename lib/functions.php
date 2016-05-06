@@ -83,7 +83,7 @@ function __doConnect($uri, array $options) {
 
     $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
     if (!empty($options["persistent"])) {
-        $flags |= STREAM_CLIENT_PERSISTENT;
+        $flags |= \STREAM_CLIENT_PERSISTENT;
     }
     $timeout = 42; // <--- timeout not applicable for async connects
     if (PHP_VERSION_ID < 50600 && $scheme === "tcp") {
