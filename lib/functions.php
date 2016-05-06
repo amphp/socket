@@ -80,11 +80,10 @@ function __doConnect($uri, array $options) {
 
         $resolvedUri = $isIpv6 ? "[{$host}]:{$port}" : "{$host}:{$port}";
     }
-    
-    if (!empty($options['persistent'])) {
-        $flags = $options['persistent'];
-    } else {
-        $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
+
+    $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
+    if (!empty($options["persistent"])) {
+        $flags |= STREAM_CLIENT_PERSISTENT;
     }
     $timeout = 42; // <--- timeout not applicable for async connects
     if (PHP_VERSION_ID < 50600 && $scheme === "tcp") {
