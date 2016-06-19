@@ -196,6 +196,8 @@ function cryptoEnable($socket, array $options = []) {
 
             $caBundleFiles[$options["cafile"]] = $caBundleFile;
         }
+
+        $options["cafile"] = $caBundleFiles[$options["cafile"]];
     }
 
     if (empty($options["ciphers"])) {
