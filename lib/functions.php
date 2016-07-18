@@ -42,6 +42,8 @@ function connect($uri, array $options = []) {
 }
 
 function __doConnect($uri, array $options) {
+    $contextOptions = [];
+
     if (\stripos($uri, "unix://") === 0 || \stripos($uri, "udg://") === 0) {
         list($scheme, $path) = explode("://", $uri, 2);
         $isUnixSock = true;
@@ -70,6 +72,17 @@ function __doConnect($uri, array $options) {
             );
         }
 
+        if (PHP_VERSION_ID < 50600 && $scheme === "tcp") {
+            // Prior to PHP 5.6 the SNI_server_name only registers if assigned to the stream
+            // context at the time the socket is first connected (NOT with stream_socket_enable_crypto()).
+            // So we always add the necessary ctx option here along with our own custom SNI_nb_hack
+            // key to communicate our intent to the CryptoBroker if it's subsequently used
+            $contextOptions = ["ssl" => [
+                "SNI_server_name" => $host,
+                "SNI_nb_hack" => true,
+            ]];
+        }
+
         if ($inAddr = @\inet_pton($host)) {
             $isIpv6 = isset($inAddr[15]);
         } else {
@@ -83,18 +96,6 @@ function __doConnect($uri, array $options) {
 
     $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
     $timeout = 42; // <--- timeout not applicable for async connects
-    if (PHP_VERSION_ID < 50600 && $scheme === "tcp") {
-        // Prior to PHP 5.6 the SNI_server_name only registers if assigned to the stream
-        // context at the time the socket is first connected (NOT with stream_socket_enable_crypto()).
-        // So we always add the necessary ctx option here along with our own custom SNI_nb_hack
-        // key to communicate our intent to the CryptoBroker if it's subsequently used
-        $contextOptions = ["ssl" => [
-            "SNI_server_name" => $host,
-            "SNI_nb_hack" => true,
-        ]];
-    } else {
-        $contextOptions = [];
-    }
 
     $bindTo = empty($options["bind_to"]) ? "" : (string) $options["bind_to"];
     if (!$isUnixSock && $bindTo) {
