@@ -62,18 +62,18 @@ class Socket implements Stream {
                 list($bytes, $delimiter, $future) = $reads->shift();
                 
                 // Error reporting suppressed since fread() produces a warning if the stream unexpectedly closes.
-                $data = @\fread($stream, self::CHUNK_SIZE);
+                $data = @\fread($stream, $bytes !== null ? $bytes - $buffer->getLength() : self::CHUNK_SIZE);
                 
                 if ($data === '' && (\feof($stream) || !\is_resource($stream))) {
                     $this->close();
                     
-                    if ($bytes !== null || $delimiter !== null) {
+                    if ($bytes !== null || $delimiter !== null) { // Fail bounded reads.
                         $future->fail(new ClosedException("The stream unexpectedly closed"));
                         return;
                     }
                     
-                    $future->resolve('');
-                    continue;
+                    $future->resolve(''); // Succeed unbounded reads with an empty string.
+                    return;
                 }
                 
                 $buffer->push($data);
