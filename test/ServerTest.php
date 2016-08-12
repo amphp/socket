@@ -2,32 +2,30 @@
 
 namespace Amp\Socket\Test;
 
-use Amp as amp;
-use Amp\Socket as socket;
+use Amp\Coroutine;
+use Amp\Socket;
+use Amp\Socket\Server;
+use Interop\Async\Loop;
 
 class ServerTest extends \PHPUnit_Framework_TestCase {
-
-    protected function setUp() {
-        if (amp\info()["state"]) {
-            amp\stop();
-        }
-    }
-
     public function testAccept() {
-        amp\run(function () {
+        \Amp\execute(function () {
             $isRunning = true;
-            $server = static function () use (&$isRunning) {
-                $serverSock = socket\listen("tcp://127.0.0.1:12345");
-                $server = new socket\Server($serverSock);
+            $server = function () use (&$isRunning) {
+                $serverSock = Socket\listen("tcp://127.0.0.1:12345");
+                $server = new Server($serverSock);
                 while ($isRunning) {
                     $clientSock = (yield $server->accept());
+                    $this->assertInternalType('resource', $clientSock);
                 }
-                $server->stop();
             };
-            amp\resolve($server());
-            $client = (yield socket\connect("tcp://127.0.0.1:12345"));
+            $coroutine = new Coroutine($server());
+            \Amp\rethrow($coroutine);
+            
+            $client = (yield Socket\connect("tcp://127.0.0.1:12345"));
             $isRunning = false;
-            amp\once('\Amp\stop', 100);
+            
+            Loop::delay(100, [Loop::class, 'stop']);
         });
     }
 }

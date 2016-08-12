@@ -2,42 +2,59 @@
 
 namespace Amp\Socket;
 
-use Amp as amp;
+use Amp\Deferred;
+use Interop\Async\Loop;
 
 class Server {
-    private $state;
+    /** @var resource Stream socket server resource. */
+    private $socket;
+    
+    /** @var \SplQueue Queue of pending Deferreds to accept clients. */
+    private $queue;
+    
+    /** @var string Watcher ID. */
+    private $watcher;
 
     /**
-     * @param resource A bound socket server resource
+     * @param resource $socket A bound socket server resource
      */
     public function __construct($socket) {
-        \stream_set_blocking($socket, false);
-        $this->state = $state = new \StdClass;
-        $state->promisor = new amp\Deferred;
-        $state->socket = $socket;
-        $state->watcherId = amp\onReadable($socket, static function () use ($state) {
-            if ($client = \stream_socket_accept($state->socket, $timeout = 0)) {
-                \stream_set_blocking($client, false);
-                $promisor = $state->promisor;
-                $state->promisor = new amp\Deferred;
-                $promisor->succeed(new Client($client));
+        $this->socket = $socket;
+        \stream_set_blocking($this->socket, 0);
+        
+        $this->queue = $queue = new \SplQueue;
+        
+        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use ($queue) {
+            while (!$queue->isEmpty()) {
+                // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
+                $socket = @\stream_socket_accept($socket, 0); // Timeout of 0 to be non-blocking.
+    
+                if (!$socket) {
+                    return; // Accept failed, queue not empty, do not disable watcher.
+                }
+                
+                /** @var \Amp\Deferred $deferred */
+                $deferred = $queue->shift();
+                $deferred->resolve($socket);
             }
+            
+            Loop::disable($watcher);
         });
+        
+        Loop::disable($this->watcher);
     }
 
     /**
      * Accept new clients
      *
-     * @return \Amp\Promise<Amp\Socket\Client>
+     * @return \Interop\Async\Awaitable<resource>
      */
     public function accept() {
-        return $this->state->promisor->promise();
+        $this->queue->push($deferred = new Deferred);
+        Loop::enable($this->watcher);
+        return $deferred->getAwaitable();
     }
     
-    public function stop() {
-        amp\cancel($this->state->watcherId);
-    }
-
     /**
      * The server will automatically stop listening if this object
      * is garbage collected. However, socket clients accepted by the
@@ -45,6 +62,19 @@ class Server {
      * Accepted clients must be manually closed or garbage collected.
      */
     public function __destruct() {
-        amp\cancel($this->state->watcherId);
+        Loop::cancel($this->watcher);
+        
+        if (\is_resource($this->socket)) {
+            @\fclose($this->socket);
+        }
+    
+        if (!$this->queue->isEmpty()) {
+            $exception = new SocketException("The server was unexpectedly closed");
+            do {
+                /** @var \Amp\Deferred $deferred */
+                $deferred = $this->queue->shift();
+                $deferred->fail($exception);
+            } while (!$this->queue->isEmpty());
+        }
     }
 }

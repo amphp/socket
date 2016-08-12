@@ -2,8 +2,11 @@
 
 namespace Amp\Socket;
 
+use Amp\Coroutine;
+use Amp\Deferred;
 use Amp\Failure;
 use Amp\Success;
+use Interop\Async\Loop;
 
 /**
  * Listen for client connections on the specified server $address
@@ -12,19 +15,54 @@ use Amp\Success;
  * @return resource
  */
 function listen($address) {
-    $flags = \STREAM_SERVER_BIND | \STREAM_SERVER_LISTEN;
-    if (!$socket = @\stream_socket_server($address, $errno, $errstr, $flags)) {
-        throw new SocketException(
-            \sprintf(
-                "Failed binding socket on %s: [Err# %s] %s",
-                $address,
-                $errno,
-                $errstr
-            )
-        );
+    $queue = isset($options["backlog"]) ? (int) $options["backlog"] : (\defined("SOMAXCONN") ? SOMAXCONN : 128);
+    $pem = isset($options["pem"]) ? (string) $options["pem"] : null;
+    $passphrase = isset($options["passphrase"]) ? (string) $options["passphrase"] : null;
+    $name = isset($options["name"]) ? (string) $options["name"] : null;
+    
+    $verify = isset($options["verify_peer"]) ? (string) $options["verify_peer"] : true;
+    $allowSelfSigned = isset($options["allow_self_signed"]) ? (bool) $options["allow_self_signed"] : false;
+    $verifyDepth = isset($options["verify_depth"]) ? (int) $options["verify_depth"] : 10;
+    
+    $context = [];
+    
+    $context["socket"] = [
+        "backlog" => $queue,
+        "ipv6_v6only" => true,
+    ];
+    
+    if (null !== $pem) {
+        if (!\file_exists($pem)) {
+            throw new \InvalidArgumentException("No file found at given PEM path.");
+        }
+        
+        $context["ssl"] = [
+            "verify_peer" => $verify,
+            "verify_peer_name" => $verify,
+            "allow_self_signed" => $allowSelfSigned,
+            "verify_depth" => $verifyDepth,
+            "local_cert" => $pem,
+            "disable_compression" => true,
+            "SNI_enabled" => true,
+            "SNI_server_name" => $name,
+            "peer_name" => $name,
+        ];
+        
+        if (null !== $passphrase) {
+            $context["ssl"]["passphrase"] = $passphrase;
+        }
     }
-
-    return $socket;
+    
+    $context = \stream_context_create($context);
+    
+    // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
+    $server = @\stream_socket_server($address, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $context);
+    
+    if (!$server || $errno) {
+        throw new SocketException(\sprintf("Could not create server %s: [Errno: #%d] %s", $address, $errno, $errstr));
+    }
+    
+    return $server;
 }
 
 /**
@@ -35,30 +73,33 @@ function listen($address) {
  *
  * @param string $uri
  * @param array $options
- * @return \Amp\Promise
+ *
+ * @return \Interop\Async\Awaitable
  */
 function connect($uri, array $options = []) {
-    return \Amp\resolve(__doConnect($uri, $options));
+    return new Coroutine(__doConnect($uri, $options));
 }
 
 function __doConnect($uri, array $options) {
-    $contextOptions = [];
+    $context = [];
 
     if (\stripos($uri, "unix://") === 0 || \stripos($uri, "udg://") === 0) {
-        list($scheme, $path) = explode("://", $uri, 2);
+        list($scheme, $path) = \explode("://", $uri, 2);
         $isUnixSock = true;
         $resolvedUri = "{$scheme}:///" . \ltrim($path, "/");
     } else {
         $isUnixSock = false;
         // TCP/UDP host names are always case-insensitive
-        if (!$uriParts = @\parse_url(strtolower($uri))) {
+        if (!$uriParts = @\parse_url(\strtolower($uri))) {
             throw new \DomainException(
                 "Invalid URI: {$uri}"
             );
         }
-
-        // $scheme, $host, $port, $path
-        \extract($uriParts);
+        
+        $scheme = isset($uriParts["scheme"]) ? $uriParts["scheme"] : '';
+        $host =   isset($uriParts["host"]) ? $uriParts["host"] : '';
+        $port =   isset($uriParts["port"]) ? $uriParts["port"] : 0;
+        
         $scheme = empty($scheme) ? "tcp" : $scheme;
         if (!($scheme === "tcp" || $scheme === "udp")) {
             throw new \DomainException(
@@ -76,8 +117,8 @@ function __doConnect($uri, array $options) {
             // Prior to PHP 5.6 the SNI_server_name only registers if assigned to the stream
             // context at the time the socket is first connected (NOT with stream_socket_enable_crypto()).
             // So we always add the necessary ctx option here along with our own custom SNI_nb_hack
-            // key to communicate our intent to the CryptoBroker if it's subsequently used
-            $contextOptions = ["ssl" => [
+            // key to communicate our intent to the CryptoBroker if it"s subsequently used
+            $context = ["ssl" => [
                 "SNI_server_name" => $host,
                 "SNI_nb_hack" => true,
             ]];
@@ -91,7 +132,7 @@ function __doConnect($uri, array $options) {
             $isIpv6 = ($mode === \Amp\Dns\Record::AAAA);
         }
 
-        $resolvedUri = $isIpv6 ? "[{$host}]:{$port}" : "{$host}:{$port}";
+        $resolvedUri = \sprintf($isIpv6 ? "[%s]:%d" : "%s:%d", $host, $port);
     }
 
     $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
@@ -99,11 +140,11 @@ function __doConnect($uri, array $options) {
 
     $bindTo = empty($options["bind_to"]) ? "" : (string) $options["bind_to"];
     if (!$isUnixSock && $bindTo) {
-        $contextOptions["socket"]["bindto"] = $bindTo;
+        $context["socket"]["bindto"] = $bindTo;
     }
 
-    $ctx = \stream_context_create($contextOptions);
-    if (!$socket = @\stream_socket_client($resolvedUri, $errno, $errstr, $timeout, $flags, $ctx)) {
+    $context = \stream_context_create($context);
+    if (!$socket = @\stream_socket_client($resolvedUri, $errno, $errstr, $timeout, $flags, $context)) {
         throw new ConnectException(\sprintf(
             "Connection to %s failed: [Error #%d] %s",
             $uri,
@@ -111,25 +152,43 @@ function __doConnect($uri, array $options) {
             $errstr
         ));
     }
-
-    \stream_set_blocking($socket, false);
-    $promisor = new \Amp\Deferred;
-    $promise = $promisor->promise();
-    $watcherId = \Amp\onWritable($socket, [$promisor, "succeed"]);
-    $timeout = empty($options["timeout"]) ? 30000 : $options["timeout"];
+    
+    \stream_set_blocking($socket, 0);
+    $timeout = isset($options["timeout"]) ? (int) $options["timeout"] : 30000;
+    
+    $deferred = new Deferred;
+    $watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
+    
+    $awaitable = $deferred->getAwaitable();
 
     try {
-        yield ($timeout > 0) ? \Amp\timeout($promise, $timeout) : $promise;
-        \Amp\cancel($watcherId);
-        yield new \Amp\CoroutineResult($socket);
-    } catch (\Amp\TimeoutException $e) {
-        \Amp\cancel($watcherId);
-        throw new ConnectException(
-            "Connection to {$uri} failed: timeout exceeded ({$timeout} ms)",
-            0,
-            $e
-        );
+        yield $timeout > 0 ? \Amp\timeout($awaitable, $timeout) : $awaitable;
+    } catch (\Amp\TimeoutException $exception) {
+        throw new ConnectException(\sprintf("Connecting to %s failed: timeout exceeded (%d ms)", $uri, $timeout));
+    } finally {
+        Loop::cancel($watcher);
     }
+    
+    yield Coroutine::result($socket);
+}
+
+/**
+ * Returns a pair of connected unix domain stream socket resources.
+ *
+ * @return resource[] Pair of socket resources.
+ *
+ * @throws \Amp\Socket\SocketException If creating the sockets fails.
+ */
+function pair() {
+    if (($sockets = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP)) === false) {
+        $message = "Failed to create socket pair.";
+        if ($error = \error_get_last()) {
+            $message .= sprintf(" Errno: %d; %s", $error["type"], $error["message"]);
+        }
+        throw new SocketException($message);
+    }
+    
+    return $sockets;
 }
 
 /**
@@ -139,19 +198,20 @@ function __doConnect($uri, array $options) {
  *
  * @param string $authority
  * @param array $options
- * @return \Amp\Promise
+ *
+ * @return \Interop\Async\Awaitable
  */
 function cryptoConnect($uri, array $options = []) {
-    return \Amp\resolve(__doCryptoConnect($uri, $options));
+    return new Coroutine(__doCryptoConnect($uri, $options));
 }
 
 function __doCryptoConnect($uri, $options) {
-    $socket = (yield \Amp\resolve(__doConnect($uri, $options)));
+    $socket = (yield new Coroutine(__doConnect($uri, $options)));
     if (empty($options["peer_name"])) {
-        $options["peer_name"] = parse_url($uri, PHP_URL_HOST);
+        $options["peer_name"] = \parse_url($uri, PHP_URL_HOST);
     }
     yield cryptoEnable($socket, $options);
-    yield new \Amp\CoroutineResult($socket);
+    yield Coroutine::result($socket);
 }
 
 /**
@@ -159,7 +219,8 @@ function __doCryptoConnect($uri, $options) {
  *
  * @param resource $socket
  * @param array $options
- * @return \Amp\Promise
+ *
+ * @return \Interop\Async\Awaitable
  */
 function cryptoEnable($socket, array $options = []) {
     static $caBundleFiles = [];
@@ -279,7 +340,7 @@ function cryptoEnable($socket, array $options = []) {
     \stream_context_set_option($socket, ["ssl" => $options]);
 
     return $isLegacy
-        ? \Amp\resolve(__watchCryptoLegacy($method, $socket))
+        ? new Coroutine(__watchCryptoLegacy($method, $socket))
         : __watchCrypto($method, $socket)
     ;
 }
@@ -288,7 +349,8 @@ function cryptoEnable($socket, array $options = []) {
  * Disable encryption on an existing socket stream
  *
  * @param resource $socket
- * @return \Amp\Promise
+ *
+ * @return \Interop\Async\Awaitable
  */
 function cryptoDisable($socket) {
     // note that disabling crypto *ALWAYS* returns false, immediately
@@ -306,23 +368,24 @@ function __watchCrypto($method, $socket) {
             "Crypto negotiation failed: " . \error_get_last()["message"]
         ));
     } else {
-        $promisor = new \Amp\Deferred;
-        $cbData = [$promisor, $method];
-        \Amp\onReadable($socket, '\Amp\Socket\__onCryptoWatchReadability', $options = ["cb_data" => $cbData]);
-        return $promisor->promise();
+        $deferred = new Deferred;
+        $cbData = [$deferred, $method];
+        Loop::onReadable($socket, 'Amp\Socket\__onCryptoWatchReadability', $cbData);
+        return $deferred->getAwaitable();
     }
 }
 
 function __onCryptoWatchReadability($watcherId, $socket, $cbData) {
-    list($promisor, $method) = $cbData;
+    /** @var \Amp\Deferred $deferred */
+    list($deferred, $method) = $cbData;
     $result = \stream_socket_enable_crypto($socket, $enable = true, $method);
     if ($result === true) {
-        \Amp\cancel($watcherId);
-        $promisor->succeed($socket);
+        Loop::cancel($watcherId);
+        $deferred->resolve($socket);
     } elseif ($result === false) {
-        \Amp\cancel($watcherId);
-        $promisor->fail(new CryptoException(
-            "Crypto negotiation failed: " . (feof($socket) ? "Connection reset by peer" : \error_get_last()["message"])
+        Loop::cancel($watcherId);
+        $deferred->fail(new CryptoException(
+            "Crypto negotiation failed: " . (\feof($socket) ? "Connection reset by peer" : \error_get_last()["message"])
         ));
     }
 }
@@ -355,7 +418,7 @@ function __watchCryptoLegacy($method, $socket) {
         );
     }
 
-    yield new \Amp\CoroutineResult($socket);
+    yield Coroutine::result($socket);
 }
 
 function __verifyFingerprint($peerFingerprint, $cert) {

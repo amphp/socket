@@ -1,7 +1,7 @@
 {
-    "name":           "amphp/socket",
-    "homepage":       "https://github.com/amphp/socket",
-    "description":    "Async socket connection tools for the amp concurrency framework",
+    "name": "amphp/socket",
+    "homepage":  "https://github.com/amphp/socket",
+    "description": "Async socket connection tools for the amp concurrency framework",
     "support": {
         "issues": "https://github.com/amphp/socket/issues"
     },
@@ -14,22 +14,28 @@
         "non-blocking",
         "amp"
     ],
-    "license":        "MIT",
+    "license": "MIT",
     "authors": [
         {
             "name": "Daniel Lowrey",
             "email": "rdlowrey@gmail.com"
+        },
+        {
+            "name": "Aaron Piotrowski",
+            "email": "aaron@trowski.com"
         }
     ],
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
         "php": ">=5.5",
-        "amphp/amp": "^1",
-        "amphp/dns": "^0.8"
+        "amphp/amp": "dev-master as 2.0",
+        "amphp/dns": "dev-amp_v2 as 2.0",
+        "amphp/stream": "dev-master"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4.8",
+        "amphp/loop": "dev-master",
+        "phpunit/phpunit": "^4|^5",
         "friendsofphp/php-cs-fixer": "~1.9"
     },
     "autoload": {
