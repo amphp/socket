@@ -28,7 +28,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "php": ">=5.5",
+        "php": ">=7.0",
         "amphp/amp": "dev-master as 2.0",
         "amphp/dns": "dev-amp_v2 as 2.0",
         "amphp/stream": "dev-master"

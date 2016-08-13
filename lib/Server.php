@@ -37,7 +37,6 @@ class Server {
                 $deferred = $queue->shift();
                 $deferred->resolve($socket);
             }
-            
             Loop::disable($watcher);
         });
         
@@ -62,7 +61,11 @@ class Server {
      * Accepted clients must be manually closed or garbage collected.
      */
     public function __destruct() {
-        Loop::cancel($this->watcher);
+        // defer this, else the Loop::disable() inside onReadable may be invalid
+        $watcher = $this->watcher;
+        Loop::defer(static function() use ($watcher) {
+            Loop::cancel($watcher);
+        });
         
         if (\is_resource($this->socket)) {
             @\fclose($this->socket);

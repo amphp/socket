@@ -200,12 +200,12 @@ class Socket implements Stream {
     public function read($bytes = null, $delimiter = null) {
         if ($bytes !== null) {
             if (!\is_int($bytes) || $bytes <= 0) {
-                throw new \InvalidArgumentException("The number of bytes to read should be a positive integer or null");
+                throw new \TypeError("The number of bytes to read should be a positive integer or null");
             }
         }
         
         if (!$this->readable) {
-            return new Failure(new \LogicException("The stream is not readable"));
+            return new Failure(new SocketException("The stream is not readable"));
         }
         
         if (!$this->buffer->isEmpty() && $this->reads->isEmpty()) {
@@ -236,8 +236,8 @@ class Socket implements Stream {
         Loop::enable($this->readWatcher);
         
         try {
-            $result = (yield $future);
-        } catch (\Exception $exception) {
+            $result = yield $future;
+        } catch (\Throwable $exception) {
             $this->close();
             throw $exception;
         } finally {
@@ -246,7 +246,7 @@ class Socket implements Stream {
             }
         }
         
-        yield Coroutine::result($result);
+        return $result;
     }
     
     /**
@@ -271,7 +271,7 @@ class Socket implements Stream {
      */
     protected function send($data, $end = false) {
         if (!$this->writable) {
-            return new Failure(new \LogicException("The stream is not writable"));
+            return new Failure(new SocketException("The stream is not writable"));
         }
         
         $data = (string) $data;
@@ -321,8 +321,8 @@ class Socket implements Stream {
         Loop::enable($this->writeWatcher);
         
         try {
-            $written = (yield $future);
-        } catch (\Exception $exception) {
+            $written = yield $future;
+        } catch (\Throwable $exception) {
             $this->close();
             throw $exception;
         } finally {
@@ -335,6 +335,6 @@ class Socket implements Stream {
             }
         }
         
-        yield Coroutine::result($written);
+        return $written;
     }
 }

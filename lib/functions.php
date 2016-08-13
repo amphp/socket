@@ -14,7 +14,7 @@ use Interop\Async\Loop;
  * @param string $address
  * @return resource
  */
-function listen($address) {
+function listen(string $address) {
     $queue = isset($options["backlog"]) ? (int) $options["backlog"] : (\defined("SOMAXCONN") ? SOMAXCONN : 128);
     $pem = isset($options["pem"]) ? (string) $options["pem"] : null;
     $passphrase = isset($options["passphrase"]) ? (string) $options["passphrase"] : null;
@@ -76,7 +76,7 @@ function listen($address) {
  *
  * @return \Interop\Async\Awaitable
  */
-function connect($uri, array $options = []) {
+function connect(string $uri, array $options = []) {
     return new Coroutine(__doConnect($uri, $options));
 }
 
@@ -113,21 +113,10 @@ function __doConnect($uri, array $options) {
             );
         }
 
-        if (PHP_VERSION_ID < 50600 && $scheme === "tcp") {
-            // Prior to PHP 5.6 the SNI_server_name only registers if assigned to the stream
-            // context at the time the socket is first connected (NOT with stream_socket_enable_crypto()).
-            // So we always add the necessary ctx option here along with our own custom SNI_nb_hack
-            // key to communicate our intent to the CryptoBroker if it"s subsequently used
-            $context = ["ssl" => [
-                "SNI_server_name" => $host,
-                "SNI_nb_hack" => true,
-            ]];
-        }
-
         if ($inAddr = @\inet_pton($host)) {
             $isIpv6 = isset($inAddr[15]);
         } else {
-            $records = (yield \Amp\Dns\resolve($host));
+            $records = yield \Amp\Dns\resolve($host);
             list($host, $mode) = $records[0];
             $isIpv6 = ($mode === \Amp\Dns\Record::AAAA);
         }
@@ -169,7 +158,7 @@ function __doConnect($uri, array $options) {
         Loop::cancel($watcher);
     }
     
-    yield Coroutine::result($socket);
+    return $socket;
 }
 
 /**
@@ -180,7 +169,7 @@ function __doConnect($uri, array $options) {
  * @throws \Amp\Socket\SocketException If creating the sockets fails.
  */
 function pair() {
-    if (($sockets = \stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP)) === false) {
+    if (($sockets = @\stream_socket_pair(\stripos(PHP_OS, "win") === 0 ? STREAM_PF_INET : STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP)) === false) {
         $message = "Failed to create socket pair.";
         if ($error = \error_get_last()) {
             $message .= sprintf(" Errno: %d; %s", $error["type"], $error["message"]);
@@ -196,22 +185,22 @@ function pair() {
  *
  * NOTE: Once resolved the socket stream will already be set to non-blocking mode.
  *
- * @param string $authority
+ * @param string $uri
  * @param array $options
  *
  * @return \Interop\Async\Awaitable
  */
-function cryptoConnect($uri, array $options = []) {
+function cryptoConnect(string $uri, array $options = []) {
     return new Coroutine(__doCryptoConnect($uri, $options));
 }
 
 function __doCryptoConnect($uri, $options) {
-    $socket = (yield new Coroutine(__doConnect($uri, $options)));
+    $socket = yield from __doConnect($uri, $options);
     if (empty($options["peer_name"])) {
         $options["peer_name"] = \parse_url($uri, PHP_URL_HOST);
     }
     yield cryptoEnable($socket, $options);
-    yield Coroutine::result($socket);
+    return $socket;
 }
 
 /**
@@ -224,25 +213,6 @@ function __doCryptoConnect($uri, $options) {
  */
 function cryptoEnable($socket, array $options = []) {
     static $caBundleFiles = [];
-
-    $isLegacy = (PHP_VERSION_ID < 50600);
-
-    if ($isLegacy) {
-        // For pre-5.6 we always manually verify names in userland
-        // using the captured peer certificate.
-        $options["capture_peer_cert"] = true;
-        $options["verify_peer"] = isset($options["verify_peer"]) ? $options["verify_peer"] : true;
-
-        if (isset($options["CN_match"])) {
-            $peerName = $options["CN_match"];
-            $options["peer_name"] = $peerName;
-            unset($options["CN_match"]);
-        }
-
-        if (empty($options["cafile"])) {
-            $options["cafile"] = __DIR__ . "/../var/ca-bundle.crt";
-        }
-    }
 
     // Externalize any bundle inside a Phar, because OpenSSL doesn't support the stream wrapper.
     if (!empty($options["cafile"]) && strpos($options["cafile"], "phar://") === 0) {
@@ -310,15 +280,14 @@ function cryptoEnable($socket, array $options = []) {
     }
 
     $ctx = \stream_context_get_options($socket);
-    if (!empty($ctx['ssl'])) {
+    if (!empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
         $ctx = $ctx['ssl'];
         $compare = $options;
-        $no_SNI_nb_hack = empty($ctx['SNI_nb_hack']);
-        unset($ctx['SNI_nb_hack'], $ctx['peer_certificate'], $ctx['SNI_server_name']);
-        unset($compare['SNI_nb_hack'], $compare['peer_certificate'], $compare['SNI_server_name']);
+        unset($ctx['peer_certificate'], $ctx['SNI_server_name']);
+        unset($compare['peer_certificate'], $compare['SNI_server_name']);
         if ($ctx == $compare) {
             return new Success($socket);
-        } elseif ($no_SNI_nb_hack) {
+        } else {
             return \Amp\pipe(cryptoDisable($socket), function($socket) use ($options) {
                 return cryptoEnable($socket, $options);
             });
@@ -328,21 +297,16 @@ function cryptoEnable($socket, array $options = []) {
     if (isset($options["crypto_method"])) {
         $method = $options["crypto_method"];
         unset($options["crypto_method"]);
-    } elseif (PHP_VERSION_ID >= 50600 && PHP_VERSION_ID <= 50606) {
-        /** @link https://bugs.php.net/69195 */
-        $method = \STREAM_CRYPTO_METHOD_TLS_CLIENT;
     } else {
         // note that this constant actually means "Any TLS version EXCEPT SSL v2 and v3"
         $method = \STREAM_CRYPTO_METHOD_SSLv23_CLIENT;
     }
 
-    $options["SNI_nb_hack"] = false;
+    $options["_enabled"] = true; // avoid recursion
+    
     \stream_context_set_option($socket, ["ssl" => $options]);
 
-    return $isLegacy
-        ? new Coroutine(__watchCryptoLegacy($method, $socket))
-        : __watchCrypto($method, $socket)
-    ;
+    return __watchCrypto($method, $socket);
 }
 
 /**
@@ -354,7 +318,7 @@ function cryptoEnable($socket, array $options = []) {
  */
 function cryptoDisable($socket) {
     // note that disabling crypto *ALWAYS* returns false, immediately
-    \stream_context_set_option($socket, ["ssl" => ["SNI_nb_hack" => true]]);
+    \stream_context_set_option($socket, ["ssl" => ["_enabled" => false]]);
     \stream_socket_enable_crypto($socket, false);
     return new Success($socket);
 }
@@ -388,113 +352,4 @@ function __onCryptoWatchReadability($watcherId, $socket, $cbData) {
             "Crypto negotiation failed: " . (\feof($socket) ? "Connection reset by peer" : \error_get_last()["message"])
         ));
     }
-}
-
-function __watchCryptoLegacy($method, $socket) {
-    yield __watchCrypto($method, $socket);
-
-    $cert = \stream_context_get_options($socket)["ssl"]["peer_certificate"];
-    $options = \stream_context_get_options($socket)["ssl"];
-
-    $peerFingerprint = isset($options["peer_fingerprint"])
-        ? $options["peer_fingerprint"]
-        : null;
-
-    if ($peerFingerprint) {
-        __verifyFingerprint($peerFingerprint, $cert);
-    }
-
-    $peerName = isset($options["peer_name"])
-        ? $options["peer_name"]
-        : null;
-
-    $verifyPeer = isset($options["verify_peer_name"])
-        ? $options["verify_peer_name"]
-        : true;
-
-    if ($verifyPeer && $peerName && !__verifyPeerName($peerName, $cert)) {
-        throw new CryptoException(
-            "Peer name verification failed"
-        );
-    }
-
-    yield Coroutine::result($socket);
-}
-
-function __verifyFingerprint($peerFingerprint, $cert) {
-    if (\is_string($peerFingerprint)) {
-        $peerFingerprint = [$peerFingerprint];
-    } elseif (!\is_array($peerFingerprint)) {
-        throw new CryptoException(
-            "Invalid peer_fingerprint; string or array required"
-        );
-    }
-
-    if (!\openssl_x509_export($cert, $str, false)) {
-        throw new CryptoException(
-            "Failed exporting peer cert for fingerprint verification"
-        );
-    }
-
-    if (!\preg_match("/-+BEGIN CERTIFICATE-+(.+)-+END CERTIFICATE-+/s", $str, $matches)) {
-        throw new CryptoException(
-            "Failed parsing cert PEM for fingerprint verification"
-        );
-    }
-
-    $pem = $matches[1];
-    $pem = \base64_decode($pem);
-
-    foreach ($peerFingerprint as $expectedFingerprint) {
-        $algo = (\strlen($expectedFingerprint) === 40) ? 'sha1' : 'md5';
-        $actualFingerprint = \openssl_digest($pem, $algo);
-        if ($expectedFingerprint === $actualFingerprint) {
-            return;
-        }
-    }
-
-    throw new CryptoException(
-        "Peer fingerprint(s) did not match"
-    );
-}
-
-function __verifyPeerName($peerName, $cert) {
-    $certInfo = \openssl_x509_parse($cert);
-    if (__matchesWildcardName($peerName, $certInfo["subject"]["CN"])) {
-        return true;
-    }
-
-    if (empty($certInfo["extensions"]["subjectAltName"])) {
-        return false;
-    }
-
-    $subjectAltNames = array_map("trim", explode(",", $certInfo["extensions"]["subjectAltName"]));
-
-    foreach ($subjectAltNames as $san) {
-        if (\stripos($san, "DNS:") !== 0) {
-            continue;
-        }
-        $sanName = substr($san, 4);
-
-        if (__matchesWildcardName($peerName, $sanName)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-function __matchesWildcardName($peerName, $certName) {
-    if (\strcasecmp($peerName, $certName) === 0) {
-        return true;
-    }
-    if (!(\stripos($certName, "*.") === 0 && \stripos($peerName, "."))) {
-        return false;
-    }
-    $certName = \substr($certName, 2);
-    $peerName = explode(".", $peerName);
-    unset($peerName[0]);
-    $peerName = implode(".", $peerName);
-
-    return $peerName === $certName;
 }

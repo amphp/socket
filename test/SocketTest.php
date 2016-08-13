@@ -7,12 +7,11 @@ use Amp\Socket\Socket;
 class SocketTest extends \PHPUnit_Framework_TestCase {
     /**
      * @dataProvider provideInvalidLengthParameters
-     * @expectedException \InvalidArgumentException
+     * @expectedException \TypeError
      */
     public function testReadFailsOnInvalidLengthParameter($badLen) {
         \Amp\execute(function () use ($badLen) {
-            $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
-            list($serverSock, $clientSock) = $sockets;
+            list($serverSock, $clientSock) = \Amp\Socket\pair();
             $client = new Socket($clientSock);
             yield $client->read($badLen);
         });
