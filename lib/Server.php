@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Amp\Socket;
 
 use Amp\Deferred;
-use Interop\Async\Loop;
+use Interop\Async\{ Awaitable, Loop };
 
 class Server {
     /** @var resource Stream socket server resource. */
@@ -19,8 +21,12 @@ class Server {
      * @param resource $socket A bound socket server resource
      */
     public function __construct($socket) {
+        if (!\is_resource($socket) ||\get_resource_type($socket) !== 'stream') {
+            throw new \Error('Invalid resource given to constructor!');
+        }
+    
         $this->socket = $socket;
-        \stream_set_blocking($this->socket, 0);
+        \stream_set_blocking($this->socket, false);
         
         $this->queue = $queue = new \SplQueue;
         
@@ -48,7 +54,7 @@ class Server {
      *
      * @return \Interop\Async\Awaitable<resource>
      */
-    public function accept() {
+    public function accept(): Awaitable {
         $this->queue->push($deferred = new Deferred);
         Loop::enable($this->watcher);
         return $deferred->getAwaitable();

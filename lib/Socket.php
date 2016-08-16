@@ -1,15 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Amp\Socket;
 
-use Amp\Coroutine;
-use Amp\Future;
-use Amp\Failure;
-use Amp\Stream\ClosedException;
-use Amp\Stream\Stream;
-use Amp\Stream\Buffer;
-use Amp\Success;
-use Interop\Async\Loop;
+use Amp\{ Coroutine, Future, Failure, Success };
+use Amp\Stream\{ Buffer, ClosedException, Stream };
+use Interop\Async\{ Awaitable, Loop };
 
 class Socket implements Stream {
     const CHUNK_SIZE = 8192;
@@ -43,11 +40,11 @@ class Socket implements Stream {
      */
     public function __construct($resource) {
         if (!\is_resource($resource) ||\get_resource_type($resource) !== 'stream') {
-            throw new \InvalidArgumentException('Invalid resource given to constructor!');
+            throw new \Error('Invalid resource given to constructor!');
         }
         
         $this->resource = $resource;
-        \stream_set_blocking($this->resource, 0);
+        \stream_set_blocking($this->resource, false);
         \stream_set_read_buffer($this->resource, 0);
         \stream_set_write_buffer($this->resource, 0);
         \stream_set_chunk_size($this->resource, self::CHUNK_SIZE);
@@ -149,14 +146,14 @@ class Socket implements Stream {
     /**
      * {@inheritdoc}
      */
-    public function isReadable() {
+    public function isReadable(): bool {
         return $this->readable;
     }
     
     /**
      * {@inheritdoc}
      */
-    public function isWritable() {
+    public function isWritable(): bool {
         return $this->writable;
     }
     
@@ -197,11 +194,9 @@ class Socket implements Stream {
     /**
      * {@inheritdoc}
      */
-    public function read($bytes = null, $delimiter = null) {
-        if ($bytes !== null) {
-            if (!\is_int($bytes) || $bytes <= 0) {
-                throw new \TypeError("The number of bytes to read should be a positive integer or null");
-            }
+    public function read(int $bytes = null, string $delimiter = null): Awaitable {
+        if ($bytes !== null && $bytes <= 0) {
+            throw new \TypeError("The number of bytes to read should be a positive integer or null");
         }
         
         if (!$this->readable) {
@@ -229,7 +224,7 @@ class Socket implements Stream {
         return new Coroutine($this->doRead($bytes, $delimiter));
     }
     
-    private function doRead($bytes = null, $delimiter = null) {
+    private function doRead(int $bytes = null, string $delimiter = null): \Generator {
         $future = new Future;
         $this->reads->push([$bytes, $delimiter, $future]);
         
@@ -252,14 +247,14 @@ class Socket implements Stream {
     /**
      * {@inheritdoc}
      */
-    public function write($data) {
+    public function write(string $data): Awaitable {
         return $this->send($data, false);
     }
     
     /**
      * {@inheritdoc}
      */
-    public function end($data = '') {
+    public function end(string $data = ''): Awaitable {
         return $this->send($data, true);
     }
     
@@ -269,7 +264,7 @@ class Socket implements Stream {
      *
      * @return \Interop\Async\Awaitable
      */
-    protected function send($data, $end = false) {
+    protected function send(string $data, bool $end = false): Awaitable {
         if (!$this->writable) {
             return new Failure(new SocketException("The stream is not writable"));
         }
@@ -314,7 +309,7 @@ class Socket implements Stream {
         return new Coroutine($this->doSend($data, $written));
     }
     
-    private function doSend($data, $written) {
+    private function doSend(string $data, int $written): \Generator {
         $future = new Future;
         $this->writes->push([$data, $written, $future]);
         
