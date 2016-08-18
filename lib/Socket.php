@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Amp\Socket;
 
-use Amp\{ Coroutine, Future, Failure, Success };
+use Amp\{ Coroutine, Deferred, Failure, Success };
 use Amp\Stream\{ Buffer, ClosedException, Stream };
 use Interop\Async\{ Awaitable, Loop };
 
@@ -55,8 +55,8 @@ class Socket implements Stream {
         
         $this->readWatcher = Loop::onReadable($this->resource, static function ($watcher, $stream) use ($buffer, $reads) {
             while (!$reads->isEmpty()) {
-                /** @var \Amp\Future $future */
-                list($bytes, $delimiter, $future) = $reads->shift();
+                /** @var \Amp\Deferred $deferred */
+                list($bytes, $delimiter, $deferred) = $reads->shift();
                 
                 // Error reporting suppressed since fread() produces a warning if the stream unexpectedly closes.
                 $data = @\fread($stream, $bytes !== null ? $bytes - $buffer->getLength() : self::CHUNK_SIZE);
@@ -65,11 +65,11 @@ class Socket implements Stream {
                     $this->close();
                     
                     if ($bytes !== null || $delimiter !== null) { // Fail bounded reads.
-                        $future->fail(new ClosedException("The stream unexpectedly closed"));
+                        $deferred->fail(new ClosedException("The stream unexpectedly closed"));
                         return;
                     }
                     
-                    $future->resolve(''); // Succeed unbounded reads with an empty string.
+                    $deferred->resolve(''); // Succeed unbounded reads with an empty string.
                     return;
                 }
                 
@@ -79,34 +79,34 @@ class Socket implements Stream {
                     $length = $position + \strlen($delimiter);
                     
                     if ($bytes === null || $length < $bytes) {
-                        $future->resolve($buffer->shift($length));
+                        $deferred->resolve($buffer->shift($length));
                         continue;
                     }
                 }
                 
                 if ($bytes !== null && $buffer->getLength() >= $bytes) {
-                    $future->resolve($buffer->shift($bytes));
+                    $deferred->resolve($buffer->shift($bytes));
                     continue;
                 }
                 
                 if ($bytes === null) {
-                    $future->resolve($buffer->drain());
+                    $deferred->resolve($buffer->drain());
                     continue;
                 }
                 
-                $reads->unshift([$bytes, $delimiter, $future]);
+                $reads->unshift([$bytes, $delimiter, $deferred]);
                 return;
             }
         });
         
         $this->writeWatcher = Loop::onWritable($this->resource, static function ($watcher, $stream) use ($writes) {
             while (!$writes->isEmpty()) {
-                /** @var \Amp\Future $future */
-                list($data, $previous, $future) = $writes->shift();
+                /** @var \Amp\Deferred $deferred */
+                list($data, $previous, $deferred) = $writes->shift();
                 $length = \strlen($data);
                 
                 if ($length === 0) {
-                    $future->resolve(0);
+                    $deferred->resolve(0);
                     continue;
                 }
                 
@@ -118,17 +118,17 @@ class Socket implements Stream {
                     if ($error = \error_get_last()) {
                         $message .= \sprintf(" Errno: %d; %s", $error["type"], $error["message"]);
                     }
-                    $future->fail(new SocketException($message));
+                    $deferred->fail(new SocketException($message));
                     return;
                 }
                 
                 if ($length <= $written) {
-                    $future->resolve($written + $previous);
+                    $deferred->resolve($written + $previous);
                     continue;
                 }
                 
                 $data = \substr($data, $written);
-                $writes->unshift([$data, $written + $previous, $future]);
+                $writes->unshift([$data, $written + $previous, $deferred]);
                 return;
             }
         });
@@ -172,18 +172,18 @@ class Socket implements Stream {
         if (!$this->reads->isEmpty()) {
             $exception = new ClosedException("The connection was unexpectedly closed before reading completed");
             do {
-                /** @var \Amp\Future $future */
-                list( , , $future) = $this->reads->shift();
-                $future->fail($exception);
+                /** @var \Amp\Deferred $deferred */
+                list( , , $deferred) = $this->reads->shift();
+                $deferred->fail($exception);
             } while (!$this->reads->isEmpty());
         }
         
         if (!$this->writes->isEmpty()) {
             $exception = new ClosedException("The connection was unexpectedly writing completed");
             do {
-                /** @var \Amp\Future $future */
-                list( , , $future) = $this->writes->shift();
-                $future->fail($exception);
+                /** @var \Amp\Deferred $deferred */
+                list( , , $deferred) = $this->writes->shift();
+                $deferred->fail($exception);
             } while (!$this->writes->isEmpty());
         }
         
@@ -225,13 +225,13 @@ class Socket implements Stream {
     }
     
     private function doRead(int $bytes = null, string $delimiter = null): \Generator {
-        $future = new Future;
-        $this->reads->push([$bytes, $delimiter, $future]);
+        $deferred = new Deferred;
+        $this->reads->push([$bytes, $delimiter, $deferred]);
         
         Loop::enable($this->readWatcher);
         
         try {
-            $result = yield $future;
+            $result = yield $deferred->getAwaitable();
         } catch (\Throwable $exception) {
             $this->close();
             throw $exception;
@@ -310,13 +310,13 @@ class Socket implements Stream {
     }
     
     private function doSend(string $data, int $written): \Generator {
-        $future = new Future;
-        $this->writes->push([$data, $written, $future]);
+        $deferred = new Deferred;
+        $this->writes->push([$data, $written, $deferred]);
         
         Loop::enable($this->writeWatcher);
         
         try {
-            $written = yield $future;
+            $written = yield $deferred->getAwaitable();
         } catch (\Throwable $exception) {
             $this->close();
             throw $exception;
