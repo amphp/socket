@@ -186,9 +186,14 @@ class Socket implements Stream {
                 $deferred->fail($exception);
             } while (!$this->writes->isEmpty());
         }
-        
-        Loop::cancel($this->readWatcher);
-        Loop::cancel($this->writeWatcher);
+    
+        // defer this, else the Loop::disable() may be invalid
+        $read = $this->readWatcher;
+        $write = $this->writeWatcher;
+        Loop::defer(function () use ($read, $write) {
+            Loop::cancel($this->readWatcher);
+            Loop::cancel($this->writeWatcher);
+        });
     }
     
     /**
