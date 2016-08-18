@@ -14,11 +14,17 @@ class Server {
     
     /** @var string Watcher ID. */
     private $watcher;
-
+    
+    /** @var bool */
+    private $autoClose = true;
+    
     /**
      * @param resource $socket A bound socket server resource
+     * @param bool $autoClose True to close the stream resource when this object is destroyed, false to leave open.
+     *
+     * @throws \Error If a stream resource is not given for $socket.
      */
-    public function __construct($socket) {
+    public function __construct($socket, bool $autoClose = true) {
         if (!\is_resource($socket) ||\get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
         }
@@ -72,7 +78,9 @@ class Server {
         });
         
         if (\is_resource($this->socket)) {
-            @\fclose($this->socket);
+            if ($this->autoClose) {
+                @\fclose($this->socket);
+            }
         }
     
         if (!$this->queue->isEmpty()) {

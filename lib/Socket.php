@@ -33,15 +33,22 @@ class Socket implements Stream {
     /** @var bool */
     private $writable = true;
     
+    /** @var bool */
+    private $autoClose = true;
+    
     /**
      * @param resource $resource Stream resource.
+     * @param bool $autoClose True to close the stream resource when this object is destroyed, false to leave open.
+     *
+     * @throws \Error If a stream resource is not given for $resource.
      */
-    public function __construct($resource) {
+    public function __construct($resource, bool $autoClose = true) {
         if (!\is_resource($resource) ||\get_resource_type($resource) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
         }
         
         $this->resource = $resource;
+        $this->autoClose = $autoClose;
         \stream_set_blocking($this->resource, false);
         \stream_set_read_buffer($this->resource, 0);
         \stream_set_write_buffer($this->resource, 0);
@@ -160,7 +167,9 @@ class Socket implements Stream {
      */
     public function close() {
         if (\is_resource($this->resource)) {
-            @\fclose($this->resource);
+            if ($this->autoClose) {
+                @\fclose($this->resource);
+            }
             $this->resource = null;
         }
         
