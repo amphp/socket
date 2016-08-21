@@ -113,27 +113,27 @@ function __doConnect(string $uri, array $options): \Generator {
     foreach ($hosts as $host) {
         $builtUri = \sprintf("%s://%s:%d", $scheme, $host, $port);
     
-        $context = \stream_context_create($context);
-        if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, $timeout, $flags, $context)) {
-            throw new ConnectException(\sprintf(
-                "Connection to %s failed: [Error #%d] %s",
-                $uri,
-                $errno,
-                $errstr
-            ));
-        }
-    
-        \stream_set_blocking($socket, false);
-        $timeout = (int) ($options["timeout"] ?? 10000);
-    
-        $deferred = new Deferred;
-        $watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
-    
-        $awaitable = $deferred->getAwaitable();
-    
         try {
+            $context = \stream_context_create($context);
+            if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, $timeout, $flags, $context)) {
+                throw new ConnectException(\sprintf(
+                    "Connection to %s failed: [Error #%d] %s",
+                    $uri,
+                    $errno,
+                    $errstr
+                ));
+            }
+    
+            \stream_set_blocking($socket, false);
+            $timeout = (int) ($options["timeout"] ?? 10000);
+    
+            $deferred = new Deferred;
+            $watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
+    
+            $awaitable = $deferred->getAwaitable();
+            
             yield $timeout > 0 ? \Amp\timeout($awaitable, $timeout) : $awaitable;
-        } catch (\Amp\TimeoutException $exception) {
+        } catch (\Exception $exception) {
             continue; // Could not connect to host, try next host in the list.
         } finally {
             Loop::cancel($watcher);
@@ -192,7 +192,7 @@ function pair(): array {
     if (($sockets = @\stream_socket_pair(\stripos(PHP_OS, "win") === 0 ? STREAM_PF_INET : STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP)) === false) {
         $message = "Failed to create socket pair.";
         if ($error = \error_get_last()) {
-            $message .= sprintf(" Errno: %d; %s", $error["type"], $error["message"]);
+            $message .= \sprintf(" Errno: %d; %s", $error["type"], $error["message"]);
         }
         throw new SocketException($message);
     }
@@ -235,15 +235,15 @@ function cryptoEnable($socket, array $options = []): Awaitable {
     static $caBundleFiles = [];
 
     // Externalize any bundle inside a Phar, because OpenSSL doesn't support the stream wrapper.
-    if (!empty($options["cafile"]) && strpos($options["cafile"], "phar://") === 0) {
+    if (!empty($options["cafile"]) && \strpos($options["cafile"], "phar://") === 0) {
         // Yes, this is blocking but way better than just an error.
         if (!isset($caBundleFiles[$options["cafile"]])) {
-            $bundleContent = file_get_contents($options["cafile"]);
-            $caBundleFile = tempnam(sys_get_temp_dir(), "openssl-ca-bundle-");
-            file_put_contents($caBundleFile, $bundleContent);
+            $bundleContent = \file_get_contents($options["cafile"]);
+            $caBundleFile = \tempnam(\sys_get_temp_dir(), "openssl-ca-bundle-");
+            \file_put_contents($caBundleFile, $bundleContent);
 
-            register_shutdown_function(function() use ($caBundleFile) {
-                @unlink($caBundleFile);
+            \register_shutdown_function(function() use ($caBundleFile) {
+                @\unlink($caBundleFile);
             });
 
             $caBundleFiles[$options["cafile"]] = $caBundleFile;
