@@ -66,9 +66,7 @@ class Socket implements Stream {
                 // Error reporting suppressed since fread() produces a warning if the stream unexpectedly closes.
                 $data = @\fread($stream, $bytes !== null ? $bytes - $buffer->getLength() : self::CHUNK_SIZE);
                 
-                if ($data === '' && (\feof($stream) || !\is_resource($stream))) {
-                    $this->close();
-                    
+                if ($data === false || ($data === '' && (\feof($stream) || !\is_resource($stream)))) {
                     if ($bytes !== null || $delimiter !== null) { // Fail bounded reads.
                         $deferred->fail(new ClosedException("The stream unexpectedly closed"));
                         return;
@@ -281,7 +279,6 @@ class Socket implements Stream {
             return new Failure(new SocketException("The stream is not writable"));
         }
         
-        $data = (string) $data;
         $length = \strlen($data);
         $written = 0;
         
