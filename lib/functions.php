@@ -84,59 +84,67 @@ function connect(string $uri, array $options = []): Awaitable {
 }
 
 function __doConnect(string $uri, array $options): \Generator {
-    list($scheme, $host, $port) = __parseUri($uri);
-    
-    $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
-    $timeout = 42; // <--- timeout not applicable for async connects
+	list($scheme, $host, $port) = __parseUri($uri);
 
-    $context = [];
-    
-    $hosts = [];
-    
-    if ($port === 0 || @\inet_pton($uri)) {
-        // Host is already an IP address or file path.
-        $hosts = [$host];
-    } else {
-        // Host is not an IP address, so resolve the domain name.
-        $records = yield \Amp\Dns\resolve($host);
-        foreach ($records as $record) {
-            $hosts[] = $record[1] === \Amp\Dns\Record::AAAA ? \sprintf("[%s]", $record[0]) : $record[0];
-        }
-    }
-    
-    foreach ($hosts as $host) {
-        $builtUri = \sprintf("%s://%s:%d", $scheme, $host, $port);
-    
-        try {
-            $context = \stream_context_create($context);
-            if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, $timeout, $flags, $context)) {
-                throw new ConnectException(\sprintf(
-                    "Connection to %s failed: [Error #%d] %s",
-                    $uri,
-                    $errno,
-                    $errstr
-                ));
-            }
-    
-            \stream_set_blocking($socket, false);
-            $timeout = (int) ($options["timeout"] ?? 10000);
-    
-            $deferred = new Deferred;
-            $watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
-    
-            $awaitable = $deferred->getAwaitable();
-            
-            yield $timeout > 0 ? \Amp\timeout($awaitable, $timeout) : $awaitable;
-        } catch (\Exception $exception) {
-            continue; // Could not connect to host, try next host in the list.
-        } finally {
-            Loop::cancel($watcher);
-        }
-        
-        return $socket;
-    }
-    
-    throw new ConnectException(\sprintf("Connecting to %s failed: timeout exceeded (%d ms)", $uri, $timeout));
+	$context = [];
+
+	$uris = [];
+
+	if ($port === 0 || @\inet_pton($uri)) {
+		// Host is already an IP address or file path.
+		$uris = [$uri];
+	} else {
+		// Host is not an IP address, so resolve the domain name.
+		$records = yield \Amp\Dns\resolve($host);
+		foreach ($records as $record) {
+			if ($record[1] === \Amp\Dns\Record::AAAA) {
+				$uris[] = \sprintf("%s://[%s]:%d", $scheme, $record[0], $port);
+			} else {
+				$uris[] = \sprintf("%s://%s:%d", $scheme, $record[0], $port);
+			}
+		}
+	}
+
+	$flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
+	$timeout = 42; // <--- timeout not applicable for async connects
+
+	foreach ($uris as $builtUri) {
+		try {
+			$context = \stream_context_create($context);
+			if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, $timeout, $flags, $context)) {
+				throw new ConnectException(\sprintf(
+					"Connection to %s failed: [Error #%d] %s",
+					$uri,
+					$errno,
+					$errstr
+				));
+			}
+
+			\stream_set_blocking($socket, false);
+			$timeout = (int) ($options["timeout"] ?? 10000);
+
+			$deferred = new Deferred;
+			$watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
+
+			$awaitable = $deferred->getAwaitable();
+
+			yield $timeout > 0 ? \Amp\timeout($awaitable, $timeout) : $awaitable;
+		} catch (\Exception $e) {
+			continue; // Could not connect to host, try next host in the list.
+		} finally {
+			if (isset($watcher)) {
+				Loop::cancel($watcher);
+			}
+		}
+
+		return $socket;
+	}
+
+	if ($socket) {
+		throw new ConnectException(\sprintf("Connecting to %s failed: timeout exceeded (%d ms)", $uri, $timeout));
+	} else {
+		throw $e;
+	}
 }
 
 function __parseUri(string $uri): array {
