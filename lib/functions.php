@@ -21,24 +21,24 @@ function listen(string $uri, array $options = []) {
     $allowSelfSigned = (bool) ($options["allow_self_signed"] ?? false);
     $verifyDepth = (int) ($options["verify_depth"] ?? 10);
     
-    list($scheme, $host, $port) = __parseUri($uri);
-    
     $context = [];
     
     $context["socket"] = [
         "backlog" => $queue,
         "ipv6_v6only" => true,
     ];
-    
-    if ($port !== 0 && isset($options["bind_to"])) {
-        $context["socket"]["bindto"] = (string) $options["bind_to"];
-    }
-    
+
+	$scheme = strstr($uri, "://", true);
+	if (!in_array($scheme, ["tcp", "udp", "unix", "udg"])) {
+		throw new \Error("Only tcp, udp, unix and udg schemes allowed for server creation");
+	}
+
     if ($pem !== "") {
-        if (!\file_exists($pem)) {
-            throw new \Error("No file found at given PEM path.");
-        }
-        
+    	/* listen() is not returning an Awaitable - hence a blocking file_exists() for the rare case where we start an encrypted server socket */
+    	if (!\file_exists($pem)) {
+    		throw new SocketException("PEM file $pem for creating server does not exist");
+		}
+
         $context["ssl"] = [
             "verify_peer" => $verify,
             "verify_peer_name" => $verify,
@@ -57,11 +57,9 @@ function listen(string $uri, array $options = []) {
     }
     
     $context = \stream_context_create($context);
-    
-    $builtUri = \sprintf("%s://%s:%d", $scheme, $host, $port);
-    
+
     // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
-    $server = @\stream_socket_server($builtUri, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $context);
+    $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $context);
     
     if (!$server || $errno) {
         throw new SocketException(\sprintf("Could not create server %s: [Errno: #%d] %s", $uri, $errno, $errstr));
@@ -93,15 +91,11 @@ function __doConnect(string $uri, array $options): \Generator {
 
     $context = [];
     
-    if ($port !== 0 && isset($options["bind_to"])) {
-        $context["socket"]["bindto"] = (string) $options["bind_to"];
-    }
-    
     $hosts = [];
     
-    if (\preg_match('/^(?:\d{1,3}\.){3}\d{1,3}$|^\[?[\dA-Fa-f:]+:[\dA-Fa-f]{1,4}\]?$/', $host)) {
-        // Host is already an IP address.
-        $hosts[] = $host;
+    if ($port === 0 || @\inet_pton($uri)) {
+        // Host is already an IP address or file path.
+        $hosts = [$host];
     } else {
         // Host is not an IP address, so resolve the domain name.
         $records = yield \Amp\Dns\resolve($host);
@@ -233,24 +227,6 @@ function __doCryptoConnect(string $uri, array $options): \Generator {
  */
 function cryptoEnable($socket, array $options = []): Awaitable {
     static $caBundleFiles = [];
-
-    // Externalize any bundle inside a Phar, because OpenSSL doesn't support the stream wrapper.
-    if (!empty($options["cafile"]) && \strpos($options["cafile"], "phar://") === 0) {
-        // Yes, this is blocking but way better than just an error.
-        if (!isset($caBundleFiles[$options["cafile"]])) {
-            $bundleContent = \file_get_contents($options["cafile"]);
-            $caBundleFile = \tempnam(\sys_get_temp_dir(), "openssl-ca-bundle-");
-            \file_put_contents($caBundleFile, $bundleContent);
-
-            \register_shutdown_function(function() use ($caBundleFile) {
-                @\unlink($caBundleFile);
-            });
-
-            $caBundleFiles[$options["cafile"]] = $caBundleFile;
-        }
-
-        $options["cafile"] = $caBundleFiles[$options["cafile"]];
-    }
 
     if (empty($options["ciphers"])) {
         // See https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28default.29
