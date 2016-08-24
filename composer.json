@@ -30,8 +30,8 @@
     "require": {
         "php": ">=7.0",
         "amphp/amp": "dev-master as 2.0",
-        "amphp/dns": "dev-amp_v2 as 2.0",
-        "amphp/stream": "dev-master"
+        "amphp/dns": "dev-amp_v2 as 0.2",
+        "amphp/stream": "dev-master as 0.1"
     },
     "require-dev": {
         "amphp/loop": "dev-master",
