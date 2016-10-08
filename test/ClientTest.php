@@ -7,6 +7,8 @@ use Amp\Socket as socket;
 
 class ClientTest extends \PHPUnit_Framework_TestCase {
 
+    private $socketDomain;
+
     protected function setUp() {
         if (\stripos(PHP_OS, "win") === 0) {
             $this->markTestSkipped("cannot run in windows");
@@ -15,6 +17,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
                 amp\stop();
             }
         }
+
+        $this->socketDomain = \stripos(PHP_OS, "win") === 0 ? STREAM_PF_INET : STREAM_PF_UNIX;
     }
 
     /**
@@ -24,7 +28,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
      */
     public function testReadFailsOnInvalidLengthParameter($badLen) {
         amp\run(function () use ($badLen) {
-            $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+            $sockets = stream_socket_pair($this->socketDomain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
             list($serverSock, $clientSock) = $sockets;
             $client = new socket\Client($clientSock);
             yield $client->read($badLen);
@@ -41,7 +45,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testReadLine() {
-        $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $sockets = stream_socket_pair($this->socketDomain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         list($serverSock, $clientSock) = $sockets;
 
         $expected = "woot!";
@@ -70,7 +74,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testUnbufferedRead() {
-        $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $sockets = stream_socket_pair($this->socketDomain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         list($serverSock, $clientSock) = $sockets;
 
         $expected = "foo";
@@ -84,7 +88,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 
         $clientCoroutine = function () use ($clientSock, $expected) {
             $client = new socket\Client($clientSock);
-            (yield $client->write("foo"));
+            (yield $client->write($expected));
             $client->close();
         };
         amp\resolve($clientCoroutine());
@@ -95,7 +99,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testBufferedRead() {
-        $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $sockets = stream_socket_pair($this->socketDomain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         list($serverSock, $clientSock) = $sockets;
 
         $expected = "12345";
@@ -123,15 +127,98 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
         $this->assertSame($expected, $actual);
     }
 
+    public function testSegmentedRead() {
+        list($serverSock, $clientSock) = stream_socket_pair($this->socketDomain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+
+        $expected = ["1", "2", "3", "4", "5"];
+        $actual = [];
+
+        $serverCoroutine = function () use ($serverSock, &$actual) {
+            $client = new socket\Client($serverSock);
+            foreach (range(1, 5) as $_) {
+                $actual[] = (yield $client->read(1));
+            }
+        };
+        amp\resolve($serverCoroutine());
+
+        $clientCoroutine = function () use ($clientSock, $expected) {
+            $client = new socket\Client($clientSock);
+            yield $client->write("12345");
+            $client->close();
+        };
+        amp\resolve($clientCoroutine());
+
+        amp\run();
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testSegmentedReadWithReadOpQueue() {
+        list($serverSock, $clientSock) = stream_socket_pair($this->socketDomain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+
+        $expected = ["1", "2", "3", "4", "5"];
+        $actual = [];
+
+        $serverCoroutine = function () use ($serverSock, &$actual) {
+            $client = new socket\Client($serverSock);
+            $promises = [];
+            foreach (range(1, 5) as $_) {
+                $promises[] = $client->read(1);
+            }
+            foreach ($promises as $promise) {
+                $actual[] = (yield $promise);
+            }
+        };
+        amp\resolve($serverCoroutine());
+
+        $clientCoroutine = function () use ($clientSock, $expected) {
+            $client = new socket\Client($clientSock);
+            yield $client->write("12345");
+            $client->close();
+        };
+        amp\resolve($clientCoroutine());
+
+        amp\run();
+
+        $this->assertSame($expected, $actual);
+    }
+
+    public function testSegmentedReadLine() {
+        list($serverSock, $clientSock) = stream_socket_pair($this->socketDomain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+
+        $e = PHP_EOL;
+        $expected = ["1$e", "2$e", "3$e", "4$e", "5$e"];
+        $actual = [];
+
+        $serverCoroutine = function () use ($serverSock, &$actual) {
+            $client = new socket\Client($serverSock);
+            foreach (range(1, 5) as $_) {
+                $actual[] = (yield $client->readLine());
+            }
+        };
+        amp\resolve($serverCoroutine());
+
+        $clientCoroutine = function () use ($clientSock, $expected, $e) {
+            $client = new socket\Client($clientSock);
+            yield $client->write("1{$e}2{$e}3{$e}4{$e}5{$e}");
+            $client->close();
+        };
+        amp\resolve($clientCoroutine());
+
+        amp\run();
+
+        $this->assertSame($expected, $actual);
+    }
+
     public function testId() {
-        $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $sockets = stream_socket_pair($this->socketDomain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         list($serverSock, $clientSock) = $sockets;
         $client = new socket\Client($clientSock);
         $this->assertSame((int)$clientSock, $client->id());
     }
 
     public function testInfo() {
-        $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $sockets = stream_socket_pair($this->socketDomain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         list($serverSock, $clientSock) = $sockets;
 
         $expected = "12345";
@@ -168,7 +255,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testEmptyWrite() {
-        $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $sockets = stream_socket_pair($this->socketDomain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         list($serverSock, $clientSock) = $sockets;
         fclose($serverSock);
 

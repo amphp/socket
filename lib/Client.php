@@ -18,8 +18,7 @@ class Client {
             $data = @\fread($socket, 8192);
             if ($data != "") {
                 $state->bytesRead += \strlen($data);
-                $op = \reset($state->readOperations);
-                $op->buffer .= $data;
+                $state->buffer .= $data;
                 Client::onRead($state);
             } else {
                 Client::onEmptyRead($state);
@@ -44,6 +43,7 @@ class Client {
         $state->writeOperations = [];
         $state->bytesRead = 0;
         $state->bytesSent = 0;
+        $state->buffer = "";
 
         // We avoid instantiating a closure every time a socket read/write completes
         // without exposing a method in the public API this way ... it may look hacky
@@ -117,6 +117,12 @@ class Client {
         }
 
         $state = $this->state;
+        if (!$state->readOperations && isset($state->buffer[$size === null ? 0 : $size-1])) {
+            $data = \substr($state->buffer, 0, $size);
+            $state->buffer = \substr($state->buffer, $size);
+
+            return new amp\Success($data);
+        }
         if (!$this->alive()) {
             return new amp\Success(null);
         }
@@ -128,7 +134,6 @@ class Client {
         $op->size = $size;
         $op->promisor = $promisor = new amp\Deferred;
         $op->eol = null;
-        $op->buffer = "";
 
         $state->readOperations[] = $op;
 
@@ -156,6 +161,15 @@ class Client {
             ));
         }
         $state = $this->state;
+        if (!$state->readOperations && (false !== ($eolPos = \strpos($state->buffer, \PHP_EOL)) || ($limit >= 0 && isset($state->buffer[$limit-1])))) {
+            $length = $eolPos !== false ? $eolPos + \strlen(PHP_EOL) : false;
+            $length = $length === false || ($limit > 0 && $length > $limit) ? $limit : $length;
+
+            $data = \substr($state->buffer, 0, $length);
+            $state->buffer = substr($state->buffer, $length);
+
+            return new amp\Success($data);
+        }
         if (!$this->alive()) {
             return new amp\Success(null);
         }
@@ -167,7 +181,6 @@ class Client {
         $op->size = ($limit > 0) ? $limit : null;
         $op->promisor = $promisor = new amp\Deferred;
         $op->eol = \PHP_EOL;
-        $op->buffer = "";
 
         $state->readOperations[] = $op;
         $promise = $promisor->promise();
@@ -244,28 +257,41 @@ class Client {
     }
 
     private static function onRead($state) {
-        $op = \current($state->readOperations);
-        if ($op->size) {
-            if (isset($op->buffer[$op->size-1])) {
-                \array_shift($state->readOperations);
-                $chunk = \substr($op->buffer, 0, $op->size);
-                $op->buffer = \substr($op->buffer, $op->size);
-                $options = ["cb_data" => [$state, $op, $chunk]];
-                amp\immediately(self::$succeeder, $options);
+        $resolved = 0;
+        foreach ($state->readOperations as $op) {
+            if ($op->size) {
+                if (isset($state->buffer[$op->size-1])) {
+                    $chunk = \substr($state->buffer, 0, $op->size);
+                    $state->buffer = \substr($state->buffer, $op->size);
+                    $options = ["cb_data" => [$state, $op, $chunk]];
+                    amp\immediately(self::$succeeder, $options);
+                } else {
+                    break;
+                }
+            } elseif (isset($op->eol)) {
+                if (false !== ($eolPos = \strpos($state->buffer, $op->eol))) {
+                    $chunk = \substr($state->buffer, 0, $eolPos + \strlen($op->eol));
+                    $state->buffer = \substr($state->buffer, $eolPos + \strlen($op->eol));
+                    $options = ["cb_data" => [$state, $op, $chunk]];
+                    amp\immediately(self::$succeeder, $options);
+                } else {
+                    break;
+                }
+            } else {
+                if (isset($state->buffer[0])) {
+                    $buffer = $state->buffer;
+                    $state->buffer = "";
+                    $options = ["cb_data" => [$state, $op, $buffer]];
+                    amp\immediately(self::$succeeder, $options);
+                } else {
+                    break;
+                }
             }
-        } elseif (isset($op->eol)) {
-            if (false !== ($eolPos = \strpos($op->buffer, $op->eol))) {
-                \array_shift($state->readOperations);
-                $chunk = \substr($op->buffer, 0, $eolPos + \strlen($op->eol));
-                $op->buffer = \substr($op->buffer, $eolPos + \strlen($op->eol));
-                $options = ["cb_data" => [$state, $op, $chunk]];
-                amp\immediately(self::$succeeder, $options);
-            }
-        } else {
-            \array_shift($state->readOperations);
-            $options = ["cb_data" => [$state, $op, $op->buffer]];
-            amp\immediately(self::$succeeder, $options);
+
+            ++$resolved;
         }
+
+        $state->readOperations = array_slice($state->readOperations, $resolved);
 
         if (empty($state->readOperations)) {
             $state->isReadEnabled = false;
@@ -282,9 +308,10 @@ class Client {
         if (!\is_resource($state->socket) || @\feof($state->socket)) {
             $state->isDead = true;
             amp\cancel($state->readWatcherId);
-            $op = \array_shift($state->readOperations);
-            $finalResult = isset($op->buffer[0]) ? $op->buffer : null;
-            $op->promisor->succeed($finalResult);
+
+            // sink the buffer
+            Client::onRead($state);
+            // discard all readOperations that were left after buffer is empty
             foreach ($state->readOperations as $op) {
                 $op->promisor->succeed();
             }
@@ -295,6 +322,7 @@ class Client {
     private static function onWrite($state, $op, $bytes) {
         $op->bytesWritten += $bytes;
         if ($op->bytesWritten < $op->size) {
+            $op->buffer = \substr($op->buffer, $bytes);
             return;
         }
         \array_shift($state->writeOperations);
