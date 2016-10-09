@@ -259,19 +259,25 @@ class Client {
     private static function onRead($state) {
         $resolved = 0;
         foreach ($state->readOperations as $op) {
-            if ($op->size) {
-                if (isset($state->buffer[$op->size-1])) {
-                    $chunk = \substr($state->buffer, 0, $op->size);
-                    $state->buffer = \substr($state->buffer, $op->size);
+            if (isset($op->eol)) {
+                $eolPos = \strpos($state->buffer, $op->eol);
+                if ($eolPos !== false || ($op->size && \strlen($state->buffer) >= $op->size)) {
+                    $length = $eolPos + \strlen($op->eol);
+                    if ($op->size && $length > $op->size) {
+                        $length = $op->size;
+                    }
+
+                    $chunk = \substr($state->buffer, 0, $length);
+                    $state->buffer = \substr($state->buffer, $length);
                     $options = ["cb_data" => [$state, $op, $chunk]];
                     amp\immediately(self::$succeeder, $options);
                 } else {
                     break;
                 }
-            } elseif (isset($op->eol)) {
-                if (false !== ($eolPos = \strpos($state->buffer, $op->eol))) {
-                    $chunk = \substr($state->buffer, 0, $eolPos + \strlen($op->eol));
-                    $state->buffer = \substr($state->buffer, $eolPos + \strlen($op->eol));
+            } elseif ($op->size) {
+                if (isset($state->buffer[$op->size-1])) {
+                    $chunk = \substr($state->buffer, 0, $op->size);
+                    $state->buffer = \substr($state->buffer, $op->size);
                     $options = ["cb_data" => [$state, $op, $chunk]];
                     amp\immediately(self::$succeeder, $options);
                 } else {
