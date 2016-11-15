@@ -3,7 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\{ Coroutine, Deferred, Failure, Success };
-use Interop\Async\{ Awaitable, Loop };
+use Interop\Async\{ Loop, Promise };
 
 /**
  * Listen for client connections on the specified server $address
@@ -34,7 +34,7 @@ function listen(string $uri, array $options = []) {
 	}
 
     if ($pem !== "") {
-    	/* listen() is not returning an Awaitable - hence a blocking file_exists() for the rare case where we start an encrypted server socket */
+    	/* listen() is not returning an Promise - hence a blocking file_exists() for the rare case where we start an encrypted server socket */
     	if (!\file_exists($pem)) {
     		throw new SocketException("PEM file $pem for creating server does not exist");
 		}
@@ -77,9 +77,9 @@ function listen(string $uri, array $options = []) {
  * @param string $uri
  * @param array $options
  *
- * @return \Interop\Async\Awaitable<resource>
+ * @return \Interop\Async\Promise<resource>
  */
-function connect(string $uri, array $options = []): Awaitable {
+function connect(string $uri, array $options = []): Promise {
     return new Coroutine(__doConnect($uri, $options));
 }
 
@@ -126,9 +126,9 @@ function __doConnect(string $uri, array $options): \Generator {
 			$deferred = new Deferred;
 			$watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
 
-			$awaitable = $deferred->getAwaitable();
+			$promise = $deferred->promise();
 
-			yield $timeout > 0 ? \Amp\timeout($awaitable, $timeout) : $awaitable;
+			yield $timeout > 0 ? \Amp\timeout($promise, $timeout) : $promise;
 		} catch (\Exception $e) {
 			continue; // Could not connect to host, try next host in the list.
 		} finally {
@@ -210,9 +210,9 @@ function pair(): array {
  * @param string $uri
  * @param array $options
  *
- * @return \Interop\Async\Awaitable
+ * @return \Interop\Async\Promise
  */
-function cryptoConnect(string $uri, array $options = []): Awaitable {
+function cryptoConnect(string $uri, array $options = []): Promise {
     return new Coroutine(__doCryptoConnect($uri, $options));
 }
 
@@ -231,9 +231,9 @@ function __doCryptoConnect(string $uri, array $options): \Generator {
  * @param resource $socket
  * @param array $options
  *
- * @return \Interop\Async\Awaitable
+ * @return \Interop\Async\Promise
  */
-function cryptoEnable($socket, array $options = []): Awaitable {
+function cryptoEnable($socket, array $options = []): Promise {
     static $caBundleFiles = [];
 
     if (empty($options["ciphers"])) {
@@ -322,7 +322,7 @@ function cryptoEnable($socket, array $options = []): Awaitable {
         $deferred = new Deferred;
         $cbData = [$deferred, $method];
         Loop::onReadable($socket, 'Amp\Socket\__onCryptoWatchReadability', $cbData);
-        return $deferred->getAwaitable();
+        return $deferred->promise();
     }
 }
 
@@ -331,9 +331,9 @@ function cryptoEnable($socket, array $options = []): Awaitable {
  *
  * @param resource $socket
  *
- * @return \Interop\Async\Awaitable
+ * @return \Interop\Async\Promise
  */
-function cryptoDisable($socket): Awaitable {
+function cryptoDisable($socket): Promise {
     // note that disabling crypto *ALWAYS* returns false, immediately
     \stream_context_set_option($socket, ["ssl" => ["_enabled" => false]]);
     \stream_socket_enable_crypto($socket, false);

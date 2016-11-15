@@ -3,7 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\Deferred;
-use Interop\Async\{ Awaitable, Loop };
+use Interop\Async\{ Loop, Promise };
 
 class Server {
     /** @var resource Stream socket server resource. */
@@ -56,12 +56,12 @@ class Server {
     /**
      * Accept new clients
      *
-     * @return \Interop\Async\Awaitable<resource>
+     * @return \Interop\Async\Promise<resource>
      */
-    public function accept(): Awaitable {
+    public function accept(): Promise {
         $this->queue->push($deferred = new Deferred);
         Loop::enable($this->watcher);
-        return $deferred->getAwaitable();
+        return $deferred->promise();
     }
     
     /**

@@ -4,7 +4,7 @@ namespace Amp\Socket;
 
 use Amp\{ Coroutine, Deferred, Failure, Success };
 use Amp\Stream\{ Buffer, ClosedException, Stream };
-use Interop\Async\{ Awaitable, Loop };
+use Interop\Async\{ Loop, Promise };
 
 class Socket implements Stream {
     const CHUNK_SIZE = 8192;
@@ -204,7 +204,7 @@ class Socket implements Stream {
     /**
      * {@inheritdoc}
      */
-    public function read(int $bytes = null, string $delimiter = null): Awaitable {
+    public function read(int $bytes = null, string $delimiter = null): Promise {
         if ($bytes !== null && $bytes <= 0) {
             throw new \TypeError("The number of bytes to read should be a positive integer or null");
         }
@@ -241,7 +241,7 @@ class Socket implements Stream {
         Loop::enable($this->readWatcher);
         
         try {
-            $result = yield $deferred->getAwaitable();
+            $result = yield $deferred->promise();
         } catch (\Throwable $exception) {
             $this->close();
             throw $exception;
@@ -257,14 +257,14 @@ class Socket implements Stream {
     /**
      * {@inheritdoc}
      */
-    public function write(string $data): Awaitable {
+    public function write(string $data): Promise {
         return $this->send($data, false);
     }
     
     /**
      * {@inheritdoc}
      */
-    public function end(string $data = ''): Awaitable {
+    public function end(string $data = ''): Promise {
         return $this->send($data, true);
     }
     
@@ -272,9 +272,9 @@ class Socket implements Stream {
      * @param string $data
      * @param bool $end
      *
-     * @return \Interop\Async\Awaitable
+     * @return \Interop\Async\Promise
      */
-    protected function send(string $data, bool $end = false): Awaitable {
+    protected function send(string $data, bool $end = false): Promise {
         if (!$this->writable) {
             return new Failure(new SocketException("The stream is not writable"));
         }
@@ -325,7 +325,7 @@ class Socket implements Stream {
         Loop::enable($this->writeWatcher);
         
         try {
-            $written = yield $deferred->getAwaitable();
+            $written = yield $deferred->promise();
         } catch (\Throwable $exception) {
             $this->close();
             throw $exception;
