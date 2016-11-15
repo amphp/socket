@@ -36,7 +36,7 @@ class Client {
         $state->readWatcherId = $readWatcherId;
         $state->writeWatcherId = $writeWatcherId;
         $state->socket = $socket;
-        $state->isDead = false;
+        $state->isDead = 0;
         $state->localName = \stream_socket_get_name($socket, $wantPeer = false);
         $state->remoteName = \stream_socket_get_name($socket, $wantPeer = true);
         $state->readOperations = [];
@@ -88,10 +88,9 @@ class Client {
         if ($state->isDead) {
             return false;
         } elseif (!is_resource($state->socket)) {
-            $state->isDead = true;
+            $this->close();
             return false;
         } elseif (@feof($state->socket)) {
-            $state->isDead = true;
             return false;
         }
 
@@ -242,17 +241,17 @@ class Client {
         if (\is_resource($state->socket)) {
             @\fclose($state->socket);
         }
-        if ($state->isDead) {
-            return;
+        if (!($state->isDead & STREAM_SHUT_RD)) {
+            amp\cancel($state->readWatcherId);
+            foreach ($state->readOperations as $op) {
+                $op->promisor->succeed(null);
+            }
         }
-
-        amp\cancel($state->readWatcherId);
-        amp\cancel($state->writeWatcherId);
-        foreach ($state->readOperations as $op) {
-            $op->promisor->succeed(null);
-        }
-        foreach ($state->writeOperations as $op) {
-            $op->promisor->succeed($op->bytesWritten);
+        if (!($state->isDead & STREAM_SHUT_WR)) {
+            amp\cancel($state->writeWatcherId);
+            foreach ($state->writeOperations as $op) {
+                $op->promisor->succeed($op->bytesWritten);
+            }
         }
     }
 
@@ -312,7 +311,7 @@ class Client {
 
     private static function onEmptyRead($state) {
         if (!\is_resource($state->socket) || @\feof($state->socket)) {
-            $state->isDead = true;
+            $state->isDead |= STREAM_SHUT_RD;
             amp\cancel($state->readWatcherId);
 
             // sink the buffer
@@ -342,7 +341,7 @@ class Client {
 
     private static function onEmptyWrite($state) {
         if (!\is_resource($state->socket) || @\feof($state->socket)) {
-            $state->isDead = true;
+            $state->isDead |= STREAM_SHUT_WR;
             amp\cancel($state->writeWatcherId);
             foreach ($state->writeOperations as $op) {
                 $op->promisor->succeed($op->bytesWritten);
