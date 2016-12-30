@@ -3,6 +3,7 @@
 namespace Amp\Socket\Test;
 
 use Amp\Socket\Socket;
+use Interop\Async\Loop;
 
 class SocketTest extends \PHPUnit_Framework_TestCase {
     /**
@@ -10,11 +11,11 @@ class SocketTest extends \PHPUnit_Framework_TestCase {
      * @expectedException \TypeError
      */
     public function testReadFailsOnInvalidLengthParameter($badLen) {
-        \Amp\execute(function () use ($badLen) {
+        Loop::execute(\Amp\wrap(function () use ($badLen) {
             list($serverSock, $clientSock) = \Amp\Socket\pair();
             $client = new Socket($clientSock);
             yield $client->read($badLen);
-        });
+        }));
     }
 
     public function provideInvalidLengthParameters() {

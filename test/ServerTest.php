@@ -9,7 +9,7 @@ use Interop\Async\Loop;
 
 class ServerTest extends \PHPUnit_Framework_TestCase {
     public function testAccept() {
-        \Amp\execute(function () {
+        Loop::execute(\Amp\wrap(function () {
             $isRunning = true;
             $server = function () use (&$isRunning) {
                 $serverSock = Socket\listen("tcp://127.0.0.1:12345");
@@ -26,6 +26,6 @@ class ServerTest extends \PHPUnit_Framework_TestCase {
             $isRunning = false;
             
             Loop::delay(100, [Loop::class, 'stop']);
-        });
+        }));
     }
 }
