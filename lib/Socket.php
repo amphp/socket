@@ -2,7 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\{ Coroutine, Deferred, Failure, Success };
+use Amp\{ Deferred, Failure, Success };
 use Amp\Stream\{ Buffer, ByteStream, ClosedException };
 use AsyncInterop\{ Loop, Promise };
 
@@ -43,7 +43,7 @@ class Socket implements ByteStream {
      * @throws \Error If a stream resource is not given for $resource.
      */
     public function __construct($resource, bool $autoClose = true) {
-        if (!\is_resource($resource) ||\get_resource_type($resource) !== 'stream') {
+        if (!\is_resource($resource) || \get_resource_type($resource) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
         }
         
@@ -57,82 +57,108 @@ class Socket implements ByteStream {
         $this->buffer = $buffer = new Buffer;
         $this->reads = $reads = new \SplQueue;
         $this->writes = $writes = new \SplQueue;
-        
+
         $this->readWatcher = Loop::onReadable($this->resource, static function ($watcher, $stream) use ($buffer, $reads) {
-            while (!$reads->isEmpty()) {
-                /** @var \Amp\Deferred $deferred */
-                list($bytes, $delimiter, $deferred) = $reads->shift();
-                
-                // Error reporting suppressed since fread() produces a warning if the stream unexpectedly closes.
-                $data = @\fread($stream, $bytes !== null ? $bytes - $buffer->getLength() : self::CHUNK_SIZE);
-                
-                if ($data === false || ($data === '' && (\feof($stream) || !\is_resource($stream)))) {
-                    if ($bytes !== null || $delimiter !== null) { // Fail bounded reads.
-                        $deferred->fail(new ClosedException("The stream unexpectedly closed"));
+            try {
+                while (!$reads->isEmpty()) {
+                    /** @var \Amp\Deferred $deferred */
+                    list($bytes, $delimiter, $deferred) = $reads->shift();
+
+                    // Error reporting suppressed since fread() produces a warning if the stream unexpectedly closes.
+                    $data = @\fread($stream, $bytes !== null ? $bytes - $buffer->getLength() : self::CHUNK_SIZE);
+
+                    if ($data === false || ($data === '' && (\feof($stream) || !\is_resource($stream)))) {
+                        if ($bytes !== null || $delimiter !== null) { // Fail bounded reads.
+                            $exception = new ClosedException("Reading from the socket failed");
+                            $deferred->fail($exception);
+                            while (!$reads->isEmpty()) {
+                                list(, , $deferred) = $reads->shift();
+                                $deferred->fail($exception);
+                            }
+                            return;
+                        }
+
+                        $deferred->resolve(''); // Succeed unbounded reads with an empty string.
                         return;
                     }
-                    
-                    $deferred->resolve(''); // Succeed unbounded reads with an empty string.
-                    return;
-                }
-                
-                $buffer->push($data);
-                
-                if ($delimiter !== null && ($position = $buffer->search($delimiter)) !== false) {
-                    $length = $position + \strlen($delimiter);
-                    
-                    if ($bytes === null || $length < $bytes) {
-                        $deferred->resolve($buffer->shift($length));
+
+                    $buffer->push($data);
+
+                    if ($delimiter !== null && ($position = $buffer->search($delimiter)) !== false) {
+                        $length = $position + \strlen($delimiter);
+
+                        if ($bytes === null || $length < $bytes) {
+                            $deferred->resolve($buffer->shift($length));
+                            continue;
+                        }
+                    }
+
+                    if ($bytes !== null && $buffer->getLength() >= $bytes) {
+                        $deferred->resolve($buffer->shift($bytes));
                         continue;
                     }
-                }
-                
-                if ($bytes !== null && $buffer->getLength() >= $bytes) {
-                    $deferred->resolve($buffer->shift($bytes));
-                    continue;
-                }
-                
-                if ($bytes === null) {
-                    $deferred->resolve($buffer->drain());
-                    continue;
-                }
-                
-                $reads->unshift([$bytes, $delimiter, $deferred]);
-                return;
-            }
-        });
-        
-        $this->writeWatcher = Loop::onWritable($this->resource, static function ($watcher, $stream) use ($writes) {
-            while (!$writes->isEmpty()) {
-                /** @var \Amp\Deferred $deferred */
-                list($data, $previous, $deferred) = $writes->shift();
-                $length = \strlen($data);
-                
-                if ($length === 0) {
-                    $deferred->resolve(0);
-                    continue;
-                }
-                
-                // Error reporting suppressed since fwrite() emits E_WARNING if the pipe is broken or the buffer is full.
-                $written = @\fwrite($stream, $data, self::CHUNK_SIZE);
-                
-                if ($written === false || $written === 0) {
-                    $message = "Failed to write to stream";
-                    if ($error = \error_get_last()) {
-                        $message .= \sprintf(" Errno: %d; %s", $error["type"], $error["message"]);
+
+                    if ($bytes === null) {
+                        $deferred->resolve($buffer->drain());
+                        continue;
                     }
-                    $deferred->fail(new SocketException($message));
+
+                    $reads->unshift([$bytes, $delimiter, $deferred]);
                     return;
                 }
-                
-                if ($length <= $written) {
-                    $deferred->resolve($written + $previous);
-                    continue;
+            } finally {
+                if ($reads->isEmpty()) {
+                    Loop::disable($watcher);
                 }
-                
-                $data = \substr($data, $written);
-                $writes->unshift([$data, $written + $previous, $deferred]);
-                return;
+            }
+        });
+
+        $writable = &$this->writable;
+        $this->writeWatcher = Loop::onWritable($this->resource, static function ($watcher, $stream) use (&$writable, $writes) {
+            try {
+                while (!$writes->isEmpty()) {
+                    /** @var \Amp\Deferred $deferred */
+                    list($data, $previous, $deferred) = $writes->shift();
+                    $length = \strlen($data);
+
+                    if ($length === 0) {
+                        $deferred->resolve(0);
+                        continue;
+                    }
+
+                    // Error reporting suppressed since fwrite() emits E_WARNING if the pipe is broken or the buffer is full.
+                    $written = @\fwrite($stream, $data);
+
+                    if ($written === false || $written === 0) {
+                        $message = "Failed to write to socket";
+                        if ($error = \error_get_last()) {
+                            $message .= \sprintf(" Errno: %d; %s", $error["type"], $error["message"]);
+                        }
+                        $exception = new SocketException($message);
+                        $deferred->fail($exception);
+                        while (!$writes->isEmpty()) {
+                            list(, , $deferred) = $writes->shift();
+                            $deferred->fail($exception);
+                        }
+                        return;
+                    }
+
+                    if ($length <= $written) {
+                        $deferred->resolve($written + $previous);
+                        continue;
+                    }
+
+                    $data = \substr($data, $written);
+                    $writes->unshift([$data, $written + $previous, $deferred]);
+                    return;
+                }
+            } finally {
+                if ($writes->isEmpty()) {
+                    Loop::disable($watcher);
+                    if (!$writable && \is_resource($this->resource)) {
+                        \stream_socket_shutdown($this->resource, STREAM_SHUT_WR);
+                    }
+                }
             }
         });
         
@@ -175,7 +201,7 @@ class Socket implements ByteStream {
         $this->writable = false;
         
         if (!$this->reads->isEmpty()) {
-            $exception = new ClosedException("The connection was unexpectedly closed before reading completed");
+            $exception = new ClosedException("The socket was unexpectedly closed before reading completed");
             do {
                 /** @var \Amp\Deferred $deferred */
                 list( , , $deferred) = $this->reads->shift();
@@ -184,7 +210,7 @@ class Socket implements ByteStream {
         }
         
         if (!$this->writes->isEmpty()) {
-            $exception = new ClosedException("The connection was unexpectedly writing completed");
+            $exception = new ClosedException("The socket was unexpectedly writing completed");
             do {
                 /** @var \Amp\Deferred $deferred */
                 list( , , $deferred) = $this->writes->shift();
@@ -192,13 +218,8 @@ class Socket implements ByteStream {
             } while (!$this->writes->isEmpty());
         }
     
-        // defer this, else the Loop::disable() may be invalid
-        $read = $this->readWatcher;
-        $write = $this->writeWatcher;
-        Loop::defer(static function () use ($read, $write) {
-            Loop::cancel($read);
-            Loop::cancel($write);
-        });
+        Loop::cancel($this->readWatcher);
+        Loop::cancel($this->writeWatcher);
     }
     
     /**
@@ -222,7 +243,7 @@ class Socket implements ByteStream {
                 }
             }
             
-            if ($bytes !== null && strlen($this->buffer) >= $bytes) {
+            if ($bytes !== null && \strlen($this->buffer) >= $bytes) {
                 return new Success($this->buffer->shift($bytes));
             }
             
@@ -230,30 +251,13 @@ class Socket implements ByteStream {
                 return new Success($this->buffer->drain());
             }
         }
-        
-        return new Coroutine($this->doRead($bytes, $delimiter));
-    }
-    
-    private function doRead(int $bytes = null, string $delimiter = null): \Generator {
+
         $deferred = new Deferred;
         $this->reads->push([$bytes, $delimiter, $deferred]);
-        
         Loop::enable($this->readWatcher);
-        
-        try {
-            $result = yield $deferred->promise();
-        } catch (\Throwable $exception) {
-            $this->close();
-            throw $exception;
-        } finally {
-            if ($this->reads->isEmpty()) {
-                Loop::disable($this->readWatcher);
-            }
-        }
-        
-        return $result;
+        return $deferred->promise();
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -314,31 +318,10 @@ class Socket implements ByteStream {
             
             $data = \substr($data, $written);
         }
-        
-        return new Coroutine($this->doSend($data, $written));
-    }
-    
-    private function doSend(string $data, int $written): \Generator {
+
         $deferred = new Deferred;
         $this->writes->push([$data, $written, $deferred]);
-        
         Loop::enable($this->writeWatcher);
-        
-        try {
-            $written = yield $deferred->promise();
-        } catch (\Throwable $exception) {
-            $this->close();
-            throw $exception;
-        } finally {
-            if ($this->writes->isEmpty()) {
-                Loop::disable($this->writeWatcher);
-            }
-            
-            if (!$this->writable && \is_resource($this->resource)) {
-                \stream_socket_shutdown($this->resource, STREAM_SHUT_WR);
-            }
-        }
-        
-        return $written;
+        return $deferred->promise();
     }
 }
