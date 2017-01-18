@@ -3,7 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\Deferred;
-use Interop\Async\{ Loop, Promise };
+use AsyncInterop\{ Loop, Promise };
 
 class Server {
     /** @var resource Stream socket server resource. */
@@ -56,7 +56,7 @@ class Server {
     /**
      * Accept new clients
      *
-     * @return \Interop\Async\Promise<resource>
+     * @return \AsyncInterop\Promise<resource>
      */
     public function accept(): Promise {
         $this->queue->push($deferred = new Deferred);

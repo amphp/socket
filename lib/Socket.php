@@ -3,10 +3,10 @@
 namespace Amp\Socket;
 
 use Amp\{ Coroutine, Deferred, Failure, Success };
-use Amp\Stream\{ Buffer, ClosedException, Stream };
-use Interop\Async\{ Loop, Promise };
+use Amp\Stream\{ Buffer, ByteStream, ClosedException };
+use AsyncInterop\{ Loop, Promise };
 
-class Socket implements Stream {
+class Socket implements ByteStream {
     const CHUNK_SIZE = 8192;
     
     /** @var resource Stream resource. */
@@ -272,7 +272,7 @@ class Socket implements Stream {
      * @param string $data
      * @param bool $end
      *
-     * @return \Interop\Async\Promise
+     * @return \AsyncInterop\Promise
      */
     protected function send(string $data, bool $end = false): Promise {
         if (!$this->writable) {

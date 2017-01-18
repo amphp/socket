@@ -3,7 +3,7 @@
 namespace Amp\Socket\Test;
 
 use Amp\Socket\Socket;
-use Interop\Async\Loop;
+use AsyncInterop\Loop;
 
 class SocketTest extends \PHPUnit_Framework_TestCase {
     /**
@@ -22,7 +22,7 @@ class SocketTest extends \PHPUnit_Framework_TestCase {
         return [
             [-1],
             [0],
-            [true],
+            [[]],
             [new \StdClass],
         ];
     }

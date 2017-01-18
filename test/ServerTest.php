@@ -5,7 +5,7 @@ namespace Amp\Socket\Test;
 use Amp\Coroutine;
 use Amp\Socket;
 use Amp\Socket\Server;
-use Interop\Async\Loop;
+use AsyncInterop\Loop;
 
 class ServerTest extends \PHPUnit_Framework_TestCase {
     public function testAccept() {
