@@ -243,7 +243,7 @@ class Socket implements ByteStream {
                 }
             }
             
-            if ($bytes !== null && \strlen($this->buffer) >= $bytes) {
+            if ($bytes !== null && $this->buffer->getLength() >= $bytes) {
                 return new Success($this->buffer->shift($bytes));
             }
             
@@ -278,7 +278,7 @@ class Socket implements ByteStream {
      *
      * @return \AsyncInterop\Promise
      */
-    protected function send(string $data, bool $end = false): Promise {
+    private function send(string $data, bool $end = false): Promise {
         if (!$this->writable) {
             return new Failure(new SocketException("The stream is not writable"));
         }
