@@ -2,9 +2,8 @@
 
 namespace Amp\Socket\Internal;
 
-use Amp\Deferred;
+use Amp\{ Deferred, Loop, Promise };
 use Amp\Socket\{ ConnectException, CryptoException, function cryptoEnable };
-use AsyncInterop\Loop;
 
 /** @internal */
 function connect(string $uri, array $options): \Generator {
@@ -52,7 +51,7 @@ function connect(string $uri, array $options): \Generator {
 
             $promise = $deferred->promise();
 
-            yield $timeout > 0 ? \Amp\timeout($promise, $timeout) : $promise;
+            yield $timeout > 0 ? Promise\timeout($promise, $timeout) : $promise;
         } catch (\Exception $e) {
             continue; // Could not connect to host, try next host in the list.
         } finally {

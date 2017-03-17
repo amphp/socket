@@ -2,8 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\{ Coroutine, Deferred, Failure, Success };
-use AsyncInterop\{ Loop, Promise };
+use Amp\{ Coroutine, Deferred, Failure, Loop, Promise, Success };
 
 /**
  * Listen for client connections on the specified server $address
@@ -77,7 +76,7 @@ function listen(string $uri, array $options = []) {
  * @param string $uri
  * @param array $options
  *
- * @return \AsyncInterop\Promise<resource>
+ * @return \Amp\Promise<resource>
  */
 function connect(string $uri, array $options = []): Promise {
     return new Coroutine(Internal\connect($uri, $options));
@@ -110,7 +109,7 @@ function pair(): array {
  * @param string $uri
  * @param array $options
  *
- * @return \AsyncInterop\Promise
+ * @return \Amp\Promise
  */
 function cryptoConnect(string $uri, array $options = []): Promise {
     return new Coroutine(Internal\cryptoConnect($uri, $options));
@@ -122,7 +121,7 @@ function cryptoConnect(string $uri, array $options = []): Promise {
  * @param resource $socket
  * @param array $options
  *
- * @return \AsyncInterop\Promise
+ * @return \Amp\Promise
  */
 function cryptoEnable($socket, array $options = []): Promise {
     static $caBundleFiles = [];
@@ -183,7 +182,7 @@ function cryptoEnable($socket, array $options = []): Promise {
         if ($ctx == $compare) {
             return new Success($socket);
         } else {
-            return \Amp\pipe(cryptoDisable($socket), function($socket) use ($options) {
+            return Promise\pipe(cryptoDisable($socket), function($socket) use ($options) {
                 return cryptoEnable($socket, $options);
             });
         }
@@ -222,7 +221,7 @@ function cryptoEnable($socket, array $options = []): Promise {
  *
  * @param resource $socket
  *
- * @return \AsyncInterop\Promise
+ * @return \Amp\Promise
  */
 function cryptoDisable($socket): Promise {
     // note that disabling crypto *ALWAYS* returns false, immediately

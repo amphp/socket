@@ -8,7 +8,7 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
      */
     public function testConnect($uri, $options) {
         $promise = \Amp\Socket\connect($uri, $options);
-        $sock = \Amp\wait($promise);
+        $sock = \Amp\Promise\wait($promise);
         $this->assertTrue(is_resource($sock));
     }
 
@@ -24,7 +24,7 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
      */
     public function testCryptoConnect($uri, $options) {
         $promise = \Amp\Socket\cryptoConnect($uri, $options);
-        $sock = \Amp\wait($promise);
+        $sock = \Amp\Promise\wait($promise);
         $this->assertTrue(is_resource($sock));
     }
 
@@ -40,9 +40,9 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
         $this->markTestSkipped("Expected failure: proper renegotiation does not work yet");
 
         $promise = \Amp\Socket\cryptoConnect('www.google.com:443', []);
-        $sock = \Amp\wait($promise);
+        $sock = \Amp\Promise\wait($promise);
         $promise = \Amp\Socket\cryptoEnable($sock, ["verify_peer" => false]); // force renegotiation by different option...
-        $sock = \Amp\wait($promise);
+        $sock = \Amp\Promise\wait($promise);
         $this->assertTrue(is_resource($sock));
     }
 }
