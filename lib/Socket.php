@@ -23,7 +23,7 @@ class Socket implements ByteStream {
     /** @var \SplQueue Queue of pending writes. */
     private $writes;
     
-    /** @var \Amp\Stream\Buffer Read buffer. */
+    /** @var \Amp\ByteStream\Buffer Read buffer. */
     private $buffer;
     
     /** @var bool */
@@ -57,7 +57,7 @@ class Socket implements ByteStream {
         $this->reads = $reads = new \SplQueue;
         $this->writes = $writes = new \SplQueue;
 
-        $this->readWatcher = Loop::onReadable($this->resource, static function ($watcher, $stream) use ($buffer, $reads) {
+        $this->readWatcher = Loop::onReadable($this->resource, static function ($watcher, $stream) use (&$readable, $buffer, $reads) {
             try {
                 while (!$reads->isEmpty()) {
                     /** @var \Amp\Deferred $deferred */
@@ -67,7 +67,7 @@ class Socket implements ByteStream {
                     $data = @\fread($stream, $bytes !== null ? $bytes - $buffer->getLength() : self::CHUNK_SIZE);
 
                     if ($data === false || ($data === '' && (\feof($stream) || !\is_resource($stream)))) {
-                        $this->readable = false;
+                        $readable = false;
 
                         if ($bytes !== null || $delimiter !== null) { // Fail bounded reads.
                             $exception = new ClosedException("Reading from the socket failed");
@@ -131,6 +131,8 @@ class Socket implements ByteStream {
                     $written = @\fwrite($stream, $data);
 
                     if ($written === false || $written === 0) {
+                        $writable = false;
+
                         $message = "Failed to write to socket";
                         if ($error = \error_get_last()) {
                             $message .= \sprintf(" Errno: %d; %s", $error["type"], $error["message"]);
