@@ -67,6 +67,8 @@ class Socket implements ByteStream {
                     $data = @\fread($stream, $bytes !== null ? $bytes - $buffer->getLength() : self::CHUNK_SIZE);
 
                     if ($data === false || ($data === '' && (\feof($stream) || !\is_resource($stream)))) {
+                        $this->readable = false;
+
                         if ($bytes !== null || $delimiter !== null) { // Fail bounded reads.
                             $exception = new ClosedException("Reading from the socket failed");
                             $deferred->fail($exception);
@@ -99,7 +101,7 @@ class Socket implements ByteStream {
 
                     if ($bytes === null) {
                         $deferred->resolve($buffer->drain());
-                        continue;
+                        return;
                     }
 
                     $reads->unshift([$bytes, $delimiter, $deferred]);
