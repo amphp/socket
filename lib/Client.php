@@ -245,8 +245,8 @@ class Client {
         $state->isDead = STREAM_SHUT_RDWR;
         if (!($isDead & STREAM_SHUT_RD)) {
             amp\cancel($state->readWatcherId);
-            $readOps = $this->readOperations;
-            $this->readOperations = [];
+            $readOps = $state->readOperations;
+            $state->readOperations = [];
             foreach ($readOps as $op) {
                 $op->promisor->succeed(null);
             }
@@ -254,7 +254,7 @@ class Client {
         if (!($isDead & STREAM_SHUT_WR)) {
             amp\cancel($state->writeWatcherId);
             $writeOps = $state->writeOperations;
-            $this->writeOperations = [];
+            $state->writeOperations = [];
             foreach ($writeOps as $op) {
                 $op->promisor->succeed($op->bytesWritten);
             }
