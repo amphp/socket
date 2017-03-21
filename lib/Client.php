@@ -245,13 +245,17 @@ class Client {
         $state->isDead = STREAM_SHUT_RDWR;
         if (!($isDead & STREAM_SHUT_RD)) {
             amp\cancel($state->readWatcherId);
-            foreach ($state->readOperations as $op) {
+            $readOps = $this->readOperations;
+            $this->readOperations = [];
+            foreach ($readOps as $op) {
                 $op->promisor->succeed(null);
             }
         }
         if (!($isDead & STREAM_SHUT_WR)) {
             amp\cancel($state->writeWatcherId);
-            foreach ($state->writeOperations as $op) {
+            $writeOps = $state->writeOperations;
+            $this->writeOperations = [];
+            foreach ($writeOps as $op) {
                 $op->promisor->succeed($op->bytesWritten);
             }
         }
