@@ -95,6 +95,9 @@ function __doConnect($uri, array $options) {
     }
 
     $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
+    if (!empty($options["persistent"])) {
+        $flags |= \STREAM_CLIENT_PERSISTENT;
+    }
     $timeout = 42; // <--- timeout not applicable for async connects
 
     $bindTo = empty($options["bind_to"]) ? "" : (string) $options["bind_to"];
