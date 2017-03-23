@@ -158,8 +158,8 @@ class Socket implements ByteStream {
             } finally {
                 if ($writes->isEmpty()) {
                     Loop::disable($watcher);
-                    if (!$writable && \is_resource($this->resource)) {
-                        \stream_socket_shutdown($this->resource, STREAM_SHUT_WR);
+                    if (!$writable && \is_resource($stream)) {
+                        \stream_socket_shutdown($stream, STREAM_SHUT_WR);
                     }
                 }
             }
