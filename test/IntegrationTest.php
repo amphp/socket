@@ -2,6 +2,8 @@
 
 namespace Amp\Socket\Test;
 
+use Amp\Socket\Socket;
+
 class IntegrationTest extends \PHPUnit_Framework_TestCase {
     /**
      * @dataProvider provideConnectArgs
@@ -9,7 +11,7 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
     public function testConnect($uri, $options) {
         $promise = \Amp\Socket\connect($uri, $options);
         $sock = \Amp\Promise\wait($promise);
-        $this->assertTrue(is_resource($sock));
+        $this->assertInstanceOf(Socket::class, $sock);
     }
 
     public function provideConnectArgs() {
@@ -25,7 +27,7 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
     public function testCryptoConnect($uri, $options) {
         $promise = \Amp\Socket\cryptoConnect($uri, $options);
         $sock = \Amp\Promise\wait($promise);
-        $this->assertTrue(is_resource($sock));
+        $this->assertInstanceOf(Socket::class, $sock);
     }
 
     public function provideCryptoConnectArgs() {
@@ -43,6 +45,6 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
         $sock = \Amp\Promise\wait($promise);
         $promise = \Amp\Socket\cryptoEnable($sock, ["verify_peer" => false]); // force renegotiation by different option...
         $sock = \Amp\Promise\wait($promise);
-        $this->assertTrue(is_resource($sock));
+        $this->assertInstanceOf(Socket::class, $sock);
     }
 }

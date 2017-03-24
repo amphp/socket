@@ -5,12 +5,25 @@ namespace Amp\Socket;
 use Amp\{ Coroutine, Deferred, Failure, Loop, Promise, Success };
 
 /**
+ * @param string $uri
+ * @param callable(\Amp\Socket\Socket $socket): mixed $handler
+ * @param array $options
+ *
+ * @return \Amp\Socket\Server
+ */
+function listen(string $uri, callable $handler, array $options = []): Server {
+    return new Server(rawListen($uri, $options), $handler);
+}
+
+/**
  * Listen for client connections on the specified server $address
  *
  * @param string $uri
+ * @param array $options
+ *
  * @return resource
  */
-function listen(string $uri, array $options = []) {
+function rawListen(string $uri, array $options = []) {
     $queue = (int) ($options["backlog"] ?? (\defined("SOMAXCONN") ? SOMAXCONN : 128));
     $pem = (string) ($options["pem"] ?? "");
     $passphrase = (string) ($options["passphrase"] ?? "");
@@ -68,6 +81,18 @@ function listen(string $uri, array $options = []) {
 }
 
 /**
+ * @param string $uri
+ * @param array $options
+ *
+ * @return \Amp\Promise<\Amp\Socket\Socket>
+ */
+function connect(string $uri, array $options = []): Promise {
+    return Promise\pipe(rawConnect($uri, $options), function ($socket): Socket {
+        return new Socket($socket);
+    });
+}
+
+/**
  * Asynchronously establish a socket connection to the specified URI
  *
  * If a scheme is not specified in the $uri parameter, TCP is assumed. Allowed schemes include:
@@ -78,7 +103,7 @@ function listen(string $uri, array $options = []) {
  *
  * @return \Amp\Promise<resource>
  */
-function connect(string $uri, array $options = []): Promise {
+function rawConnect(string $uri, array $options = []): Promise {
     return new Coroutine(Internal\connect($uri, $options));
 }
 
@@ -102,6 +127,18 @@ function pair(): array {
 }
 
 /**
+ * @param string $uri
+ * @param array $options
+ *
+ * @return \Amp\Promise<\Amp\Socket\Socket>
+ */
+function cryptoConnect(string $uri, array $options = []): Promise {
+    return Promise\pipe(rawCryptoConnect($uri, $options), function ($socket): Socket {
+        return new Socket($socket);
+    });
+}
+
+/**
  * Asynchronously establish an encrypted TCP connection (non-blocking)
  *
  * NOTE: Once resolved the socket stream will already be set to non-blocking mode.
@@ -111,7 +148,7 @@ function pair(): array {
  *
  * @return \Amp\Promise
  */
-function cryptoConnect(string $uri, array $options = []): Promise {
+function rawCryptoConnect(string $uri, array $options = []): Promise {
     return new Coroutine(Internal\cryptoConnect($uri, $options));
 }
 
