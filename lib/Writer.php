@@ -95,6 +95,21 @@ class Writer implements WritableStream {
         Loop::disable($this->watcher);
     }
 
+    public function __destruct() {
+        if ($this->resource !== null) {
+            $this->close();
+        }
+    }
+
+    /**
+     * Raw stream socket resource.
+     *
+     * @return resource
+     */
+    public function getResource() {
+        return $this->resource;
+    }
+
     public function isWritable(): bool {
         return $this->writable;
     }

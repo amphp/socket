@@ -112,6 +112,15 @@ class Reader implements ReadableStream {
     }
 
     /**
+     * Raw stream socket resource.
+     *
+     * @return resource
+     */
+    public function getResource() {
+        return $this->resource;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function isReadable(): bool {

@@ -24,6 +24,35 @@ class Socket implements DuplexStream {
     }
 
     /**
+     * Raw stream socket resource.
+     *
+     * @return resource
+     */
+    public function getResource() {
+        return $this->reader->getResource();
+    }
+
+    /**
+     * @see \Amp\Socket\cryptoEnable()
+     *
+     * @param array $options
+     *
+     * @return \Amp\Promise
+     */
+    public function cryptoEnable(array $options = []): Promise {
+        return cryptoEnable($this->reader->getResource(), $options);
+    }
+
+    /**
+     * @see \Amp\Socket\cryptoDisable()
+     *
+     * @return \Amp\Promise
+     */
+    public function cryptoDisable(): Promise {
+        return cryptoDisable($this->reader->getResource());
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function close() {
