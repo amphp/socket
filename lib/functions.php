@@ -160,7 +160,7 @@ function rawCryptoConnect(string $uri, array $options = []): Promise {
  *
  * @return \Amp\Promise
  */
-function cryptoEnable($socket, array $options = []): Promise {
+function enableCrypto($socket, array $options = []): Promise {
     static $caBundleFiles = [];
 
     if (empty($options["ciphers"])) {
@@ -219,8 +219,8 @@ function cryptoEnable($socket, array $options = []): Promise {
         if ($ctx == $compare) {
             return new Success($socket);
         } else {
-            return Promise\pipe(cryptoDisable($socket), function($socket) use ($options) {
-                return cryptoEnable($socket, $options);
+            return Promise\pipe(disableCrypto($socket), function($socket) use ($options) {
+                return enableCrypto($socket, $options);
             });
         }
     }
@@ -260,7 +260,7 @@ function cryptoEnable($socket, array $options = []): Promise {
  *
  * @return \Amp\Promise
  */
-function cryptoDisable($socket): Promise {
+function disableCrypto($socket): Promise {
     // note that disabling crypto *ALWAYS* returns false, immediately
     \stream_context_set_option($socket, ["ssl" => ["_enabled" => false]]);
     \stream_socket_enable_crypto($socket, false);

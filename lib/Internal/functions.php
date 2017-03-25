@@ -3,7 +3,7 @@
 namespace Amp\Socket\Internal;
 
 use Amp\{ Deferred, Loop, Promise };
-use Amp\Socket\{ ConnectException, CryptoException, function cryptoEnable };
+use Amp\Socket\{ ConnectException, CryptoException, function enableCrypto };
 
 /** @internal */
 function connect(string $uri, array $options): \Generator {
@@ -65,9 +65,9 @@ function connect(string $uri, array $options): \Generator {
 
     if ($socket) {
         throw new ConnectException(\sprintf("Connecting to %s failed: timeout exceeded (%d ms)", $uri, $timeout));
-    } else {
-        throw $e;
     }
+
+    throw $e;
 }
 
 /** @internal */
@@ -76,7 +76,7 @@ function cryptoConnect(string $uri, array $options): \Generator {
     if (empty($options["peer_name"])) {
         $options["peer_name"] = \parse_url($uri, PHP_URL_HOST);
     }
-    yield cryptoEnable($socket, $options);
+    yield enableCrypto($socket, $options);
     return $socket;
 }
 

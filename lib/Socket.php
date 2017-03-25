@@ -39,8 +39,8 @@ class Socket implements DuplexStream {
      *
      * @return \Amp\Promise
      */
-    public function cryptoEnable(array $options = []): Promise {
-        return cryptoEnable($this->reader->getResource(), $options);
+    public function enableCrypto(array $options = []): Promise {
+        return enableCrypto($this->reader->getResource(), $options);
     }
 
     /**
@@ -48,8 +48,8 @@ class Socket implements DuplexStream {
      *
      * @return \Amp\Promise
      */
-    public function cryptoDisable(): Promise {
-        return cryptoDisable($this->reader->getResource());
+    public function disableCrypto(): Promise {
+        return disableCrypto($this->reader->getResource());
     }
 
     /**
