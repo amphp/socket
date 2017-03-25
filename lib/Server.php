@@ -13,9 +13,12 @@ class Server {
 
     /** @var bool */
     private $autoClose = true;
-    
+
     /**
      * @param resource $socket A bound socket server resource
+     * @param callable(\Amp\Socket\Socket $socket): mixed Callback invoked when a connection is accepted.Generators
+     *     returned will be run as a coroutine. Promise failures will be rethrown to the event loop handler.
+     *     @see \Amp\wrap().
      * @param bool $autoClose True to close the stream resource when this object is destroyed, false to leave open.
      *
      * @throws \Error If a stream resource is not given for $socket.
@@ -24,7 +27,7 @@ class Server {
         if (!\is_resource($socket) ||\get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
         }
-    
+
         $this->socket = $socket;
         \stream_set_blocking($this->socket, false);
         
@@ -50,13 +53,11 @@ class Server {
     public function close() {
         Loop::cancel($this->watcher);
 
-        if (\is_resource($this->socket)) {
-            if ($this->autoClose) {
-                @\fclose($this->socket);
-            }
+        if ($this->autoClose && \is_resource($this->socket)) {
+            @\fclose($this->socket);
         }
     }
-    
+
     /**
      * The server will automatically stop listening if this object
      * is garbage collected. However, socket clients accepted by the
