@@ -43,6 +43,7 @@ class Reader implements ReadableStream {
 
         $this->buffer = $buffer = new Buffer;
         $this->reads = $reads = new \SplQueue;
+        $readable = &$this->readable;
         $this->watcher = Loop::onReadable($this->resource, static function ($watcher, $stream) use (&$readable, $buffer, $reads) {
             try {
                 while (!$reads->isEmpty()) {
