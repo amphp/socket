@@ -33,23 +33,23 @@ class Socket implements DuplexStream {
     }
 
     /**
-     * @see \Amp\Socket\cryptoEnable()
+     * @see \Amp\Socket\enableCrypto()
      *
      * @param array $options
      *
      * @return \Amp\Promise
      */
     public function enableCrypto(array $options = []): Promise {
-        return enableCrypto($this->reader->getResource(), $options);
+        return enableCrypto($this->reader->getRawResource(), $options);
     }
 
     /**
-     * @see \Amp\Socket\cryptoDisable()
+     * @see \Amp\Socket\disableCrypto()
      *
      * @return \Amp\Promise
      */
     public function disableCrypto(): Promise {
-        return disableCrypto($this->reader->getResource());
+        return disableCrypto($this->reader->getRawResource());
     }
 
     /**
@@ -99,6 +99,8 @@ class Socket implements DuplexStream {
      * {@inheritdoc}
      */
     public function end(string $data = ""): Promise {
-        return $this->writer->end($data);
+        $promise = $this->writer->end($data);
+        $promise->onResolve([$this->reader, 'close']);
+        return $promise;
     }
 }

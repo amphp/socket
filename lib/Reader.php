@@ -40,8 +40,6 @@ class Reader implements ReadableStream {
         $this->resource = $resource;
         $this->autoClose = $autoClose;
         \stream_set_blocking($this->resource, false);
-        \stream_set_read_buffer($this->resource, 0);
-        \stream_set_chunk_size($this->resource, self::CHUNK_SIZE);
 
         $this->buffer = $buffer = new Buffer;
         $this->reads = $reads = new \SplQueue;

@@ -6,8 +6,6 @@ use Amp\{ Deferred, Failure, Loop, Promise, Success };
 use Amp\ByteStream\{ ClosedException, WritableStream };
 
 class Writer implements WritableStream {
-    const CHUNK_SIZE = 8192;
-
     /** @var resource */
     private $resource;
 
@@ -37,8 +35,6 @@ class Writer implements WritableStream {
         $this->resource = $resource;
         $this->autoClose = $autoClose;
         \stream_set_blocking($this->resource, false);
-        \stream_set_write_buffer($this->resource, 0);
-        \stream_set_chunk_size($this->resource, self::CHUNK_SIZE);
 
         $writes = $this->writes = new \SplQueue;
         $writable = &$this->writable;
@@ -85,9 +81,6 @@ class Writer implements WritableStream {
             } finally {
                 if ($writes->isEmpty()) {
                     Loop::disable($watcher);
-                    if (!$writable && \is_resource($stream)) {
-                        \stream_socket_shutdown($stream, STREAM_SHUT_WR);
-                    }
                 }
             }
         });
@@ -175,14 +168,14 @@ class Writer implements WritableStream {
 
         if ($this->writes->isEmpty()) {
             if ($length === 0) {
-                if ($end && \is_resource($this->resource)) {
-                    \stream_socket_shutdown($this->resource, STREAM_SHUT_WR);
+                if ($end) {
+                    $this->close();
                 }
                 return new Success(0);
             }
 
             // Error reporting suppressed since fwrite() emits E_WARNING if the pipe is broken or the buffer is full.
-            $written = @\fwrite($this->resource, $data, self::CHUNK_SIZE);
+            $written = @\fwrite($this->resource, $data);
 
             if ($written === false) {
                 $message = "Failed to write to stream";
@@ -193,8 +186,8 @@ class Writer implements WritableStream {
             }
 
             if ($length <= $written) {
-                if ($end && \is_resource($this->resource)) {
-                    \stream_socket_shutdown($this->resource, STREAM_SHUT_WR);
+                if ($end) {
+                    $this->close();
                 }
                 return new Success($written);
             }
@@ -205,6 +198,12 @@ class Writer implements WritableStream {
         $deferred = new Deferred;
         $this->writes->push([$data, $written, $deferred]);
         Loop::enable($this->watcher);
-        return $deferred->promise();
+        $promise = $deferred->promise();
+
+        if ($end) {
+            $promise->onResolve([$this, 'close']);
+        }
+
+        return $promise;
     }
 }
