@@ -2,4 +2,6 @@
 
 namespace Amp\Socket;
 
-class SocketException extends \Exception {}
+use Amp\ByteStream\StreamException;
+
+class SocketException extends StreamException {}
