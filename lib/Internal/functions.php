@@ -49,12 +49,13 @@ function connect(string $uri, array $options): \Generator {
             \stream_set_blocking($socket, false);
 
             $deferred = new Deferred;
-            Loop::onWritable($socket, function ($watcher) use ($deferred) {
-                Loop::cancel($watcher);
-                $deferred->resolve();
-            });
+            $watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
 
-            yield Promise\timeout($deferred->promise(), $timeout);
+            try {
+                yield Promise\timeout($deferred->promise(), $timeout);
+            } finally {
+                Loop::cancel($watcher);
+            }
 
             // The following hack looks like the only way to detect connection refused errors with PHP's stream sockets.
             if (false === \stream_socket_get_name($socket, true)) {
