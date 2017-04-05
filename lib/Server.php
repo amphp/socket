@@ -24,7 +24,7 @@ class Server {
      * @throws \Error If a stream resource is not given for $socket.
      */
     public function __construct($socket, callable $handler, bool $autoClose = true) {
-        if (!\is_resource($socket) ||\get_resource_type($socket) !== 'stream') {
+        if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
         }
 
@@ -34,16 +34,10 @@ class Server {
         $handler = wrap($handler);
 
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use ($handler) {
-            do {
-                // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
-                $client = @\stream_socket_accept($socket, 0); // Timeout of 0 to be non-blocking.
-
-                if (!$client) {
-                    return; // No clients remaining.
-                }
-
+            // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
+            while ($client = @\stream_socket_accept($socket, 0)) { // Timeout of 0 to be non-blocking.
                 $handler(new Socket($client));
-            } while (true);
+            }
         });
     }
 
