@@ -10,7 +10,6 @@ function connect(string $uri, array $options): \Generator {
     list($scheme, $host, $port) = parseUri($uri);
 
     $context = [];
-
     $uris = [];
 
     if ($port === 0 || @\inet_pton($uri)) {
@@ -29,12 +28,16 @@ function connect(string $uri, array $options): \Generator {
     }
 
     $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
-    $timeout = 42; // <--- timeout not applicable for async connects
+
+    $timeout = (int) ($options["timeout"] ?? 10000);
+    if ($timeout <= 0) {
+        $timeout = 1;
+    }
 
     foreach ($uris as $builtUri) {
         try {
             $context = \stream_context_create($context);
-            if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, $timeout, $flags, $context)) {
+            if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $context)) {
                 throw new ConnectException(\sprintf(
                     "Connection to %s failed: [Error #%d] %s",
                     $uri,
@@ -44,17 +47,14 @@ function connect(string $uri, array $options): \Generator {
             }
 
             \stream_set_blocking($socket, false);
-            $timeout = (int) ($options["timeout"] ?? 10000);
-            if ($timeout <= 0) {
-                $timeout = 1;
-            }
 
             $deferred = new Deferred;
-            $watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
+            Loop::onWritable($socket, function ($watcher) use ($deferred) {
+                Loop::cancel($watcher);
+                $deferred->resolve();
+            });
 
-            $promise = $deferred->promise();
-
-            yield Promise\timeout($promise, $timeout);
+            yield Promise\timeout($deferred->promise(), $timeout);
 
             // The following hack looks like the only way to detect connection refused errors with PHP's stream sockets.
             if (false === \stream_socket_get_name($socket, true)) {
@@ -63,10 +63,6 @@ function connect(string $uri, array $options): \Generator {
             }
         } catch (\Exception $e) {
             continue; // Could not connect to host, try next host in the list.
-        } finally {
-            if (isset($watcher)) {
-                Loop::cancel($watcher);
-            }
         }
 
         return $socket;
