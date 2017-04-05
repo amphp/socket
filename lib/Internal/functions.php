@@ -2,7 +2,7 @@
 
 namespace Amp\Socket\Internal;
 
-use Amp\{ Deferred, Loop, Promise };
+use Amp\{ Deferred, Loop, Promise, TimeoutException };
 use Amp\Socket\{ ConnectException, CryptoException, function enableCrypto };
 
 /** @internal */
@@ -45,13 +45,22 @@ function connect(string $uri, array $options): \Generator {
 
             \stream_set_blocking($socket, false);
             $timeout = (int) ($options["timeout"] ?? 10000);
+            if ($timeout <= 0) {
+                $timeout = 1;
+            }
 
             $deferred = new Deferred;
             $watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
 
             $promise = $deferred->promise();
 
-            yield $timeout > 0 ? Promise\timeout($promise, $timeout) : $promise;
+            yield Promise\timeout($promise, $timeout);
+
+            // The following hack looks like the only way to detect connection refused errors with PHP's stream sockets.
+            if (false === \stream_socket_get_name($socket, true)) {
+                \fclose($socket);
+                throw new ConnectException(\sprintf("Connection to %s refused", $uri));
+            }
         } catch (\Exception $e) {
             continue; // Could not connect to host, try next host in the list.
         } finally {
@@ -63,7 +72,7 @@ function connect(string $uri, array $options): \Generator {
         return $socket;
     }
 
-    if ($socket) {
+    if ($e instanceof TimeoutException) {
         throw new ConnectException(\sprintf("Connecting to %s failed: timeout exceeded (%d ms)", $uri, $timeout));
     }
 
