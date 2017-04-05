@@ -20,9 +20,14 @@ class Server {
                 \stream_set_blocking($client, false);
                 $promisor = $state->promisor;
                 $state->promisor = new amp\Deferred;
-                $promisor->succeed(new Client($client));
+                $promisor->succeed(static::createClient($client));
             }
         });
+    }
+
+    protected static function createClient($socket)
+    {
+        return new Client($socket);
     }
 
     /**
