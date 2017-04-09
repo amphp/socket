@@ -38,6 +38,15 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
         ];
     }
 
+    public function testNoRenegotiationForEqualsOptions() {
+        $promise = \Amp\socket\cryptoConnect('www.google.com:443');
+        /** @var Socket $sock */
+        $socket = \Amp\Promise\wait($promise);
+        $promise = \Amp\Socket\enableCrypto($socket->getResource(), ['peer_name' => 'www.google.com']); // For this case renegotiation not needed because options is equals
+        $socketResource = \Amp\Promise\wait($promise);
+        $this->assertTrue(is_resource($socketResource));
+    }
+
     public function testRenegotiation() {
         $this->markTestSkipped("Expected failure: proper renegotiation does not work yet");
 
