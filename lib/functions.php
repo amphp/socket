@@ -214,7 +214,7 @@ function enableCrypto($socket, array $options = []): Promise {
     if (!empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
         $ctx = $ctx['ssl'];
         $compare = $options;
-        unset($ctx['peer_certificate'], $ctx['SNI_server_name']);
+        unset($ctx['peer_certificate'], $ctx['SNI_server_name'], $ctx['_enabled']);
         unset($compare['peer_certificate'], $compare['SNI_server_name']);
         if ($ctx == $compare) {
             return new Success($socket);
