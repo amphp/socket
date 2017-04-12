@@ -56,17 +56,17 @@ class Reader implements ReadableStream {
                     if ($data === false || ($data === '' && (\feof($stream) || !\is_resource($stream)))) {
                         $readable = false;
 
-                        if ($bytes !== null || $delimiter !== null) { // Fail bounded reads.
+                        if ($delimiter === null && $bytes > 0) { // Fail bounded reads.
                             $exception = new ClosedException("Reading from the socket failed");
                             $deferred->fail($exception);
                             while (!$reads->isEmpty()) {
-                                list(, , $deferred) = $reads->shift();
+                                list( , , $deferred) = $reads->shift();
                                 $deferred->fail($exception);
                             }
                             return;
                         }
 
-                        $deferred->resolve(''); // Succeed unbounded reads with an empty string.
+                        $deferred->resolve($buffer->drain()); // Resolve unbounded reads with remaining buffer.
                         return;
                     }
 
@@ -81,7 +81,7 @@ class Reader implements ReadableStream {
                         }
                     }
 
-                    if ($bytes !== null && $buffer->getLength() >= $bytes) {
+                    if ($bytes > 0 && $buffer->getLength() >= $bytes) {
                         $deferred->resolve($buffer->shift($bytes));
                         continue;
                     }
@@ -137,13 +137,20 @@ class Reader implements ReadableStream {
         $this->resource = null;
         $this->readable = false;
 
-        if (!$this->reads->isEmpty()) {
-            $exception = new ClosedException("The socket was unexpectedly closed before reading completed");
-            do {
-                /** @var \Amp\Deferred $deferred */
-                list( , , $deferred) = $this->reads->shift();
+        while (!$this->reads->isEmpty()) {
+            /** @var \Amp\Deferred $deferred */
+            list($bytes, $delimiter, $deferred) = $this->reads->shift();
+            if ($delimiter === null && $bytes > 0) {
+                $exception = new ClosedException("The socket was closed before the read request could be satisfied");
                 $deferred->fail($exception);
-            } while (!$this->reads->isEmpty());
+                while (!$this->reads->isEmpty()) { // If prior read failed, fail all subsequent reads.
+                    list( , , $deferred) = $this->reads->shift();
+                    $deferred->fail($exception);
+                }
+                return;
+            } else {
+                $deferred->resolve($this->buffer->drain()); // Resolve unbounded reads with remaining buffer.
+            }
         }
 
         Loop::cancel($this->watcher);
@@ -161,6 +168,19 @@ class Reader implements ReadableStream {
      */
     public function readTo(string $delimiter, int $limit = null): Promise {
         return $this->fetch($limit, $delimiter);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function readAll(): Promise {
+        if (!$this->readable) {
+            return new Failure(new SocketException("The stream is not readable"));
+        }
+
+        $this->reads->push([0, null, $deferred = new Deferred]);
+        Loop::enable($this->watcher);
+        return $deferred->promise();
     }
 
     private function fetch(int $bytes = null, string $delimiter = null): Promise {
@@ -181,7 +201,7 @@ class Reader implements ReadableStream {
                 }
             }
 
-            if ($bytes !== null && $this->buffer->getLength() >= $bytes) {
+            if ($bytes > 0 && $this->buffer->getLength() >= $bytes) {
                 return new Success($this->buffer->shift($bytes));
             }
 
