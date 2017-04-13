@@ -103,10 +103,6 @@ class Writer implements WritableStream {
         return $this->resource;
     }
 
-    public function isWritable(): bool {
-        return $this->writable;
-    }
-
     /**
      * {@inheritdoc}
      */

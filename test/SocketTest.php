@@ -6,24 +6,17 @@ use Amp\Loop;
 use Amp\Socket\Socket;
 
 class SocketTest extends \PHPUnit_Framework_TestCase {
-    /**
-     * @dataProvider provideInvalidLengthParameters
-     * @expectedException \TypeError
-     */
-    public function testReadFailsOnInvalidLengthParameter($badLen) {
-        Loop::run(function () use ($badLen) {
+    public function testReadAndClose() {
+        Loop::run(function () {
+            $data = "Testing\n";
             list($serverSock, $clientSock) = \Amp\Socket\pair();
+            \fwrite($serverSock, $data);
+            \fclose($serverSock);
             $client = new Socket($clientSock);
-            yield $client->read($badLen);
-        });
-    }
 
-    public function provideInvalidLengthParameters() {
-        return [
-            [-1],
-            [0],
-            [[]],
-            [new \StdClass],
-        ];
+            while (yield $client->wait()) {
+                $this->assertSame($data, $client->getChunk());
+            }
+        });
     }
 }

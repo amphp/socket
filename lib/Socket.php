@@ -63,36 +63,15 @@ class Socket implements DuplexStream {
     /**
      * {@inheritdoc}
      */
-    public function isReadable(): bool {
-        return $this->reader->isReadable();
+    public function wait(): Promise {
+        return $this->reader->wait();
     }
 
     /**
      * {@inheritdoc}
      */
-    public function read(int $bytes = null): Promise {
-        return $this->reader->read($bytes);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function readTo(string $delimiter, int $limit = null): Promise {
-        return $this->reader->readTo($delimiter, $limit);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function readAll(): Promise {
-        return $this->reader->readAll();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isWritable(): bool {
-        return $this->writer->isWritable();
+    public function getChunk(): string {
+        return $this->reader->getChunk();
     }
 
     /**

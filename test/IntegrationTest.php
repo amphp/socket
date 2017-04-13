@@ -52,7 +52,7 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
 
         $promise = \Amp\Socket\cryptoConnect('www.google.com:443', []);
         $sock = \Amp\Promise\wait($promise);
-        $promise = \Amp\Socket\cryptoEnable($sock, ["verify_peer" => false]); // force renegotiation by different option...
+        $promise = \Amp\Socket\enableCrypto($sock, ["verify_peer" => false]); // force renegotiation by different option...
         $sock = \Amp\Promise\wait($promise);
         $this->assertInstanceOf(Socket::class, $sock);
     }
