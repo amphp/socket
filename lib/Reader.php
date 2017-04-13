@@ -56,8 +56,8 @@ class Reader implements ReadableStream {
 
             Loop::disable($watcher);
 
-            $emitter->emit($data)->onResolve(function ($exception) use ($watcher) {
-                if ($exception === null) {
+            $emitter->emit($data)->onResolve(function ($exception) use (&$emitter, $watcher) {
+                if ($emitter !== null && $exception === null) {
                     Loop::enable($watcher);
                 }
             });
