@@ -63,8 +63,8 @@ class Socket implements DuplexStream {
     /**
      * {@inheritdoc}
      */
-    public function wait(): Promise {
-        return $this->reader->wait();
+    public function advance(): Promise {
+        return $this->reader->advance();
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\{ Emitter, Listener, Loop, Promise };
+use Amp\{ Emitter, Loop, Promise, StreamIterator };
 use Amp\ByteStream\ReadableStream;
 
 class Reader implements ReadableStream {
@@ -17,8 +17,8 @@ class Reader implements ReadableStream {
     /** @var \Amp\Emitter */
     private $emitter;
 
-    /** @var \Amp\Listener */
-    private $listener;
+    /** @var \Amp\StreamIterator */
+    private $iterator;
 
     /** @var bool */
     private $autoClose = true;
@@ -39,7 +39,7 @@ class Reader implements ReadableStream {
         \stream_set_blocking($this->resource, false);
 
         $this->emitter = new Emitter;
-        $this->listener = new Listener($this->emitter->stream());
+        $this->iterator = new StreamIterator($this->emitter->stream());
 
         $emitter = &$this->emitter;
         $this->watcher = Loop::onReadable($this->resource, static function ($watcher, $stream) use (&$emitter) {
@@ -73,15 +73,15 @@ class Reader implements ReadableStream {
     /**
      * {@inheritdoc}
      */
-    public function wait(): Promise {
-        return $this->listener->advance();
+    public function advance(): Promise {
+        return $this->iterator->advance();
     }
 
     /**
      * {@inheritdoc}
      */
     public function getChunk(): string {
-        return $this->listener->getCurrent();
+        return $this->iterator->getCurrent();
     }
 
     /**

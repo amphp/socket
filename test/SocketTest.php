@@ -14,7 +14,7 @@ class SocketTest extends \PHPUnit_Framework_TestCase {
             \fclose($serverSock);
             $client = new Socket($clientSock);
 
-            while (yield $client->wait()) {
+            while (yield $client->advance()) {
                 $this->assertSame($data, $client->getChunk());
             }
         });
