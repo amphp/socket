@@ -29,14 +29,15 @@ class Server {
         }
 
         $this->socket = $socket;
+        $this->autoClose = $autoClose;
         \stream_set_blocking($this->socket, false);
         
         $handler = asyncCoroutine($handler);
 
-        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use ($handler) {
+        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use ($handler, $autoClose) {
             // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
             while ($client = @\stream_socket_accept($socket, 0)) { // Timeout of 0 to be non-blocking.
-                $handler(new Socket($client));
+                $handler(new Socket($client, $autoClose));
             }
         });
     }
