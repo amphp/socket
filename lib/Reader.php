@@ -3,7 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\{ Emitter, Loop, Promise, StreamIterator };
-use Amp\ByteStream\ReadableStream;
+use Amp\ByteStream\{ ClosedException, ReadableStream };
 
 class Reader implements ReadableStream {
     const CHUNK_SIZE = 8192;
@@ -91,6 +91,32 @@ class Reader implements ReadableStream {
      */
     public function getResource() {
         return $this->resource;
+    }
+
+    /**
+     * Stops listening for new data arriving on the socket. Resume listening with resume().
+     *
+     * @throws \Amp\ByteStream\ClosedException If the socket has been closed.
+     */
+    public function pause() {
+        if ($this->emitter === null) {
+            throw new ClosedException("The socket has been closed");
+        }
+
+        Loop::disable($this->watcher);
+    }
+
+    /**
+     * Resumes listening for new data arriving on the socket if listening was paused.
+     *
+     * @throws \Amp\ByteStream\ClosedException If the socket has been closed.
+     */
+    public function resume() {
+        if ($this->emitter === null) {
+            throw new ClosedException("The socket has been closed");
+        }
+
+        Loop::enable($this->watcher);
     }
 
     /**

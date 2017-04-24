@@ -75,6 +75,20 @@ class Socket implements DuplexStream {
     }
 
     /**
+     * @see \Amp\Socket\Reader::pause()
+     */
+    public function pause() {
+        $this->reader->pause();
+    }
+
+    /**
+     * @see \Amp\Socket\Reader::resume()
+     */
+    public function resume() {
+        $this->reader->resume();
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function write(string $data): Promise {
