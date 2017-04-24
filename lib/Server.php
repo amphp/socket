@@ -2,7 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\{ Loop, function wrap };
+use Amp\{ Loop, function asyncCoroutine };
 
 class Server {
     /** @var resource Stream socket server resource. */
@@ -31,7 +31,7 @@ class Server {
         $this->socket = $socket;
         \stream_set_blocking($this->socket, false);
         
-        $handler = wrap($handler);
+        $handler = asyncCoroutine($handler);
 
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use ($handler) {
             // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
