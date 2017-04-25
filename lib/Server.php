@@ -16,9 +16,9 @@ class Server {
 
     /**
      * @param resource $socket A bound socket server resource
-     * @param callable(\Amp\Socket\Socket $socket): mixed Callback invoked when a connection is accepted.Generators
+     * @param callable(\Amp\Socket\Socket $socket): mixed Callback invoked when a connection is accepted. Generators
      *     returned will be run as a coroutine. Promise failures will be rethrown to the event loop handler.
-     *     @see \Amp\wrap().
+     *     {@see \Amp\asyncCoroutine()}.
      * @param bool $autoClose True to close the stream resource when this object is destroyed, false to leave open.
      *
      * @throws \Error If a stream resource is not given for $socket.
@@ -31,7 +31,7 @@ class Server {
         $this->socket = $socket;
         $this->autoClose = $autoClose;
         \stream_set_blocking($this->socket, false);
-        
+
         $handler = asyncCoroutine($handler);
 
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use ($handler, $autoClose) {
