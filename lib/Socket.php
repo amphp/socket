@@ -2,25 +2,29 @@
 
 namespace Amp\Socket;
 
+use Amp\ByteStream\InputStream;
+use Amp\ByteStream\OutputStream;
+use Amp\ByteStream\ResourceInputStream;
+use Amp\ByteStream\ResourceOutputStream;
 use Amp\Promise;
-use Amp\ByteStream\DuplexStream;
 
-class Socket implements DuplexStream {
-    /** @var \Amp\Socket\Reader */
+class Socket implements InputStream, OutputStream {
+    /** @var \Amp\ByteStream\ResourceInputStream */
     private $reader;
 
-    /** @var \Amp\Socket\Writer */
+    /** @var \Amp\ByteStream\ResourceOutputStream */
     private $writer;
 
     /**
      * @param resource $resource Stream resource.
-     * @param bool $autoClose True to close the stream resource when this object is destroyed, false to leave open.
+     * @param int      $chunkSize Read and write chunk size.
+     * @param bool     $autoClose True to close the stream resource when this object is destroyed, false to leave open.
      *
      * @throws \Error If a stream resource is not given for $resource.
      */
-    public function __construct($resource, bool $autoClose = true) {
-        $this->reader = new Reader($resource, $autoClose);
-        $this->writer = new Writer($resource, $autoClose);
+    public function __construct($resource, int $chunkSize = 65536, bool $autoClose = true) {
+        $this->reader = new ResourceInputStream($resource, $chunkSize, $autoClose);
+        $this->writer = new ResourceOutputStream($resource, $chunkSize, $autoClose);
     }
 
     /**
@@ -55,37 +59,8 @@ class Socket implements DuplexStream {
     /**
      * {@inheritdoc}
      */
-    public function close() {
-        $this->reader->close();
-        $this->writer->close();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function advance(): Promise {
-        return $this->reader->advance();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getChunk(): string {
-        return $this->reader->getChunk();
-    }
-
-    /**
-     * @see \Amp\Socket\Reader::pause()
-     */
-    public function pause() {
-        $this->reader->pause();
-    }
-
-    /**
-     * @see \Amp\Socket\Reader::resume()
-     */
-    public function resume() {
-        $this->reader->resume();
+    public function read(): Promise {
+        return $this->reader->read();
     }
 
     /**
@@ -101,6 +76,15 @@ class Socket implements DuplexStream {
     public function end(string $data = ""): Promise {
         $promise = $this->writer->end($data);
         $promise->onResolve([$this->reader, 'close']);
+
         return $promise;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function close() {
+        $this->reader->close();
+        $this->writer->close();
     }
 }

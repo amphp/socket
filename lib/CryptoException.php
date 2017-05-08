@@ -2,4 +2,5 @@
 
 namespace Amp\Socket;
 
-class CryptoException extends SocketException {}
+class CryptoException extends SocketException {
+}

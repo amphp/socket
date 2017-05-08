@@ -2,7 +2,8 @@
 
 namespace Amp\Socket;
 
-use Amp\{ Loop, function asyncCoroutine };
+use Amp\Loop;
+use function Amp\asyncCoroutine;
 
 class Server {
     /** @var resource Stream socket server resource. */

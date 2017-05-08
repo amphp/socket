@@ -4,8 +4,9 @@ namespace Amp\Socket\Test;
 
 use Amp\Loop;
 use Amp\Socket\Socket;
+use PHPUnit\Framework\TestCase;
 
-class SocketTest extends \PHPUnit_Framework_TestCase {
+class SocketTest extends TestCase {
     public function testReadAndClose() {
         Loop::run(function () {
             $data = "Testing\n";
@@ -14,8 +15,8 @@ class SocketTest extends \PHPUnit_Framework_TestCase {
             \fclose($serverSock);
             $client = new Socket($clientSock);
 
-            while (yield $client->advance()) {
-                $this->assertSame($data, $client->getChunk());
+            while (($chunk = yield $client->read()) !== null) {
+                $this->assertSame($data, $chunk);
             }
         });
     }

@@ -2,39 +2,51 @@
 
 namespace Amp\Socket;
 
-use Amp\{ Coroutine, Deferred, Failure, Loop, Promise, Success };
+use Amp\Coroutine;
+use Amp\Deferred;
+use Amp\Failure;
+use Amp\Loop;
+use Amp\Promise;
+use Amp\Success;
+use function Amp\call;
 
 /**
+ * Listen for client connections on the specified server address.
+ *
  * @param string $uri
  * @param callable(\Amp\Socket\Socket $socket): mixed $handler
  * @param array $options
  *
  * @return \Amp\Socket\Server
+ *
+ * @see rawListen()
  */
 function listen(string $uri, callable $handler, array $options = []): Server {
     return new Server(rawListen($uri, $options), $handler);
 }
 
 /**
- * Listen for client connections on the specified server $address
+ * Listen for client connections on the specified server address.
  *
  * @param string $uri
  * @param array $options
  *
  * @return resource
+ *
+ * @see listen()
  */
 function rawListen(string $uri, array $options = []) {
     $queue = (int) ($options["backlog"] ?? (\defined("SOMAXCONN") ? SOMAXCONN : 128));
     $pem = (string) ($options["pem"] ?? "");
     $passphrase = (string) ($options["passphrase"] ?? "");
     $name = (string) ($options["name"] ?? "");
-    
+
     $verify = (bool) ($options["verify_peer"] ?? true);
     $allowSelfSigned = (bool) ($options["allow_self_signed"] ?? false);
     $verifyDepth = (int) ($options["verify_depth"] ?? 10);
-    
+
     $context = [];
-    
+
     $context["socket"] = [
         "backlog" => $queue,
         "ipv6_v6only" => true,
@@ -62,38 +74,44 @@ function rawListen(string $uri, array $options = []) {
             "SNI_server_name" => $name,
             "peer_name" => $name,
         ];
-        
+
         if ($passphrase !== "") {
             $context["ssl"]["passphrase"] = $passphrase;
         }
     }
-    
+
     $context = \stream_context_create($context);
 
     // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
     $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $context);
-    
+
     if (!$server || $errno) {
         throw new SocketException(\sprintf("Could not create server %s: [Errno: #%d] %s", $uri, $errno, $errstr));
     }
-    
+
     return $server;
 }
 
 /**
+ * Asynchronously establish a socket connection to the specified URI.
+ *
+ * If a scheme is not specified in the $uri parameter, TCP is assumed. Allowed schemes include:
+ * [tcp, udp, unix, udg].
+ *
  * @param string $uri
  * @param array $options
  *
  * @return \Amp\Promise<\Amp\Socket\Socket>
  */
 function connect(string $uri, array $options = []): Promise {
-    return Promise\pipe(rawConnect($uri, $options), function ($socket): Socket {
+    return call(function () use ($uri, $options) {
+        $socket = yield rawConnect($uri, $options);
         return new Socket($socket);
     });
 }
 
 /**
- * Asynchronously establish a socket connection to the specified URI
+ * Asynchronously establish a socket connection to the specified URI.
  *
  * If a scheme is not specified in the $uri parameter, TCP is assumed. Allowed schemes include:
  * [tcp, udp, unix, udg].
@@ -108,7 +126,7 @@ function rawConnect(string $uri, array $options = []): Promise {
 }
 
 /**
- * Returns a pair of connected unix domain stream socket resources.
+ * Returns a pair of connected stream socket resources.
  *
  * @return resource[] Pair of socket resources.
  *
@@ -122,7 +140,7 @@ function pair(): array {
         }
         throw new SocketException($message);
     }
-    
+
     return $sockets;
 }
 
@@ -133,13 +151,14 @@ function pair(): array {
  * @return \Amp\Promise<\Amp\Socket\Socket>
  */
 function cryptoConnect(string $uri, array $options = []): Promise {
-    return Promise\pipe(rawCryptoConnect($uri, $options), function ($socket): Socket {
+    return call(function () use ($uri, $options) {
+        $socket = yield rawCryptoConnect($uri, $options);
         return new Socket($socket);
     });
 }
 
 /**
- * Asynchronously establish an encrypted TCP connection (non-blocking)
+ * Asynchronously establish an encrypted TCP connection (non-blocking).
  *
  * NOTE: Once resolved the socket stream will already be set to non-blocking mode.
  *
@@ -153,7 +172,7 @@ function rawCryptoConnect(string $uri, array $options = []): Promise {
 }
 
 /**
- * Enable encryption on an existing socket stream
+ * Enable encryption on an existing socket stream.
  *
  * @param resource $socket
  * @param array $options
@@ -214,15 +233,16 @@ function enableCrypto($socket, array $options = []): Promise {
     if (!empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
         $ctx = $ctx['ssl'];
         $compare = $options;
-        unset($ctx['peer_certificate'], $ctx['SNI_server_name'], $ctx['_enabled']);
-        unset($compare['peer_certificate'], $compare['SNI_server_name']);
+        unset($ctx['peer_certificate'], $ctx['SNI_server_name'], $ctx['_enabled'], $compare['peer_certificate'], $compare['SNI_server_name']);
+
         if ($ctx == $compare) {
             return new Success($socket);
-        } else {
-            return Promise\pipe(disableCrypto($socket), function($socket) use ($options) {
-                return enableCrypto($socket, $options);
-            });
         }
+
+        return call(function () use ($socket, $options) {
+            $socket = yield disableCrypto($socket);
+            return enableCrypto($socket, $options);
+        });
     }
 
     if (isset($options["crypto_method"])) {
@@ -234,27 +254,28 @@ function enableCrypto($socket, array $options = []): Promise {
     }
 
     $options["_enabled"] = true; // avoid recursion
-    
+
     \stream_context_set_option($socket, ["ssl" => $options]);
-    
+
     $result = \stream_socket_enable_crypto($socket, $enable = true, $method);
-    
+
     if ($result === true) {
         return new Success($socket);
     } elseif ($result === false) {
         return new Failure(new CryptoException(
             "Crypto negotiation failed: " . \error_get_last()["message"]
         ));
-    } else {
-        $deferred = new Deferred;
-        $cbData = [$deferred, $method];
-        Loop::onReadable($socket, 'Amp\Socket\Internal\onCryptoWatchReadability', $cbData);
-        return $deferred->promise();
     }
+
+    $deferred = new Deferred;
+
+    Loop::onReadable($socket, 'Amp\Socket\Internal\onCryptoWatchReadability', [$deferred, $method]);
+
+    return $deferred->promise();
 }
 
 /**
- * Disable encryption on an existing socket stream
+ * Disable encryption on an existing socket stream.
  *
  * @param resource $socket
  *

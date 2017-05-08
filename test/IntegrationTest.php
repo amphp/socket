@@ -3,8 +3,9 @@
 namespace Amp\Socket\Test;
 
 use Amp\Socket\Socket;
+use PHPUnit\Framework\TestCase;
 
-class IntegrationTest extends \PHPUnit_Framework_TestCase {
+class IntegrationTest extends TestCase {
     /**
      * @dataProvider provideConnectArgs
      */
@@ -44,7 +45,7 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase {
         $socket = \Amp\Promise\wait($promise);
         $promise = \Amp\Socket\enableCrypto($socket->getResource(), ['peer_name' => 'www.google.com']); // For this case renegotiation not needed because options is equals
         $socketResource = \Amp\Promise\wait($promise);
-        $this->assertTrue(is_resource($socketResource));
+        $this->assertInternalType('resource', $socketResource);
     }
 
     public function testRenegotiation() {

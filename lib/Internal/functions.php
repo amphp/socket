@@ -2,8 +2,13 @@
 
 namespace Amp\Socket\Internal;
 
-use Amp\{ Deferred, Loop, Promise, TimeoutException };
-use Amp\Socket\{ ConnectException, CryptoException, function enableCrypto };
+use Amp\Deferred;
+use Amp\Loop;
+use Amp\Promise;
+use Amp\Socket\ConnectException;
+use Amp\Socket\CryptoException;
+use Amp\TimeoutException;
+use function Amp\Socket\enableCrypto;
 
 /** @internal */
 function connect(string $uri, array $options): \Generator {
