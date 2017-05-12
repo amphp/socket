@@ -12,8 +12,8 @@ class Server {
     /** @var string Watcher ID. */
     private $watcher;
 
-    /** @var bool */
-    private $autoClose = true;
+    /** @var int */
+    private $chunkSize = 8192;
 
     /**
      * @param resource $socket A bound socket server resource
@@ -24,21 +24,21 @@ class Server {
      *
      * @throws \Error If a stream resource is not given for $socket.
      */
-    public function __construct($socket, callable $handler, bool $autoClose = true) {
+    public function __construct($socket, callable $handler, int $chunkSize = 65536) {
         if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
         }
 
         $this->socket = $socket;
-        $this->autoClose = $autoClose;
+        $this->chunkSize = $chunkSize;
         \stream_set_blocking($this->socket, false);
 
         $handler = asyncCoroutine($handler);
 
-        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use ($handler, $autoClose) {
+        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use ($handler, $chunkSize) {
             // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
             while ($client = @\stream_socket_accept($socket, 0)) { // Timeout of 0 to be non-blocking.
-                $handler(new Socket($client, $autoClose));
+                $handler(new Socket($client, $chunkSize));
             }
         });
     }
@@ -48,10 +48,7 @@ class Server {
      */
     public function close() {
         Loop::cancel($this->watcher);
-
-        if ($this->autoClose && \is_resource($this->socket)) {
-            @\fclose($this->socket);
-        }
+        $this->socket = null;
     }
 
     /**

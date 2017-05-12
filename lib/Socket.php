@@ -2,10 +2,12 @@
 
 namespace Amp\Socket;
 
+use Amp\ByteStream\ClosedException;
 use Amp\ByteStream\InputStream;
 use Amp\ByteStream\OutputStream;
 use Amp\ByteStream\ResourceInputStream;
 use Amp\ByteStream\ResourceOutputStream;
+use Amp\Failure;
 use Amp\Promise;
 
 class Socket implements InputStream, OutputStream {
@@ -18,19 +20,18 @@ class Socket implements InputStream, OutputStream {
     /**
      * @param resource $resource Stream resource.
      * @param int      $chunkSize Read and write chunk size.
-     * @param bool     $autoClose True to close the stream resource when this object is destroyed, false to leave open.
      *
      * @throws \Error If a stream resource is not given for $resource.
      */
-    public function __construct($resource, int $chunkSize = 65536, bool $autoClose = true) {
-        $this->reader = new ResourceInputStream($resource, $chunkSize, $autoClose);
-        $this->writer = new ResourceOutputStream($resource, $chunkSize, $autoClose);
+    public function __construct($resource, int $chunkSize = 65536) {
+        $this->reader = new ResourceInputStream($resource, $chunkSize);
+        $this->writer = new ResourceOutputStream($resource, $chunkSize);
     }
 
     /**
      * Raw stream socket resource.
      *
-     * @return resource
+     * @return resource|null
      */
     public function getResource() {
         return $this->reader->getResource();
@@ -44,7 +45,11 @@ class Socket implements InputStream, OutputStream {
      * @return \Amp\Promise
      */
     public function enableCrypto(array $options = []): Promise {
-        return enableCrypto($this->reader->getResource(), $options);
+        if (($resource = $this->reader->getResource()) === null) {
+            return new Failure(new ClosedException("The socket has been closed"));
+        }
+
+        return enableCrypto($resource, $options);
     }
 
     /**
@@ -53,7 +58,11 @@ class Socket implements InputStream, OutputStream {
      * @return \Amp\Promise
      */
     public function disableCrypto(): Promise {
-        return disableCrypto($this->reader->getResource());
+        if (($resource = $this->reader->getResource()) === null) {
+            return new Failure(new ClosedException("The socket has been closed"));
+        }
+
+        return disableCrypto($resource);
     }
 
     /**
@@ -75,13 +84,15 @@ class Socket implements InputStream, OutputStream {
      */
     public function end(string $data = ""): Promise {
         $promise = $this->writer->end($data);
-        $promise->onResolve([$this->reader, 'close']);
+        $promise->onResolve(function () {
+            $this->close();
+        });
 
         return $promise;
     }
 
     /**
-     * {@inheritdoc}
+     * Force closes the socket, failing any pending reads or writes.
      */
     public function close() {
         $this->reader->close();
