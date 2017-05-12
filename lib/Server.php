@@ -12,9 +12,6 @@ class Server {
     /** @var string Watcher ID. */
     private $watcher;
 
-    /** @var int */
-    private $chunkSize = 8192;
-
     /**
      * @param resource $socket A bound socket server resource
      * @param callable(\Amp\Socket\Socket $socket): mixed Callback invoked when a connection is accepted. Generators
@@ -30,7 +27,6 @@ class Server {
         }
 
         $this->socket = $socket;
-        $this->chunkSize = $chunkSize;
         \stream_set_blocking($this->socket, false);
 
         $handler = asyncCoroutine($handler);
