@@ -164,7 +164,7 @@ class SocketPool {
     }
 
     /**
-     * Remove the specified socket from the pool
+     * Remove the specified socket from the pool.
      *
      * @param resource $resource
      *
