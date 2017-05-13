@@ -255,7 +255,7 @@ class SocketPool {
 
         if (!empty($this->queuedSocketRequests[$uri])) {
             $this->dequeueNextWaitingSocket($uri);
-        } elseif ($poolStruct->msIdleTimeout > 0) {
+        } elseif ($poolStruct->idleTimeout > 0) {
             $this->initializeIdleTimeout($poolStruct);
         }
     }
