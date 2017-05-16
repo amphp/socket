@@ -267,6 +267,7 @@ class SocketPool {
             $poolStruct->idleWatcher = Loop::delay($poolStruct->idleTimeout, function () use ($poolStruct) {
                 $this->unloadSocket($poolStruct->uri, $poolStruct->id);
             });
+            Loop::unreference($poolStruct->idleWatcher);
         }
     }
 
