@@ -45,14 +45,4 @@ class Server {
         Loop::cancel($this->watcher);
         $this->socket = null;
     }
-
-    /**
-     * The server will automatically stop listening if this object
-     * is garbage collected. However, socket clients accepted by the
-     * server will not be closed just because the server is unloaded.
-     * Accepted clients must be manually closed or garbage collected.
-     */
-    public function __destruct() {
-        $this->close();
-    }
 }
