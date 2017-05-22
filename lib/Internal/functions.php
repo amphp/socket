@@ -2,7 +2,9 @@
 
 namespace Amp\Socket\Internal;
 
+use Amp\CancellationToken;
 use Amp\Deferred;
+use Amp\Dns\Record;
 use Amp\Loop;
 use Amp\Promise;
 use Amp\Socket\ConnectException;
@@ -11,7 +13,7 @@ use Amp\TimeoutException;
 use function Amp\Socket\enableCrypto;
 
 /** @internal */
-function connect(string $uri, array $options): \Generator {
+function connect(string $uri, array $options, CancellationToken $token = null): \Generator {
     list($scheme, $host, $port) = parseUri($uri);
 
     $context = [];
@@ -24,7 +26,7 @@ function connect(string $uri, array $options): \Generator {
         // Host is not an IP address, so resolve the domain name.
         $records = yield \Amp\Dns\resolve($host);
         foreach ($records as $record) {
-            if ($record[1] === \Amp\Dns\Record::AAAA) {
+            if ($record[1] === Record::AAAA) {
                 $uris[] = \sprintf("%s://[%s]:%d", $scheme, $record[0], $port);
             } else {
                 $uris[] = \sprintf("%s://%s:%d", $scheme, $record[0], $port);
@@ -40,6 +42,10 @@ function connect(string $uri, array $options): \Generator {
     }
 
     foreach ($uris as $builtUri) {
+        if ($token) {
+            $token->throwIfRequested();
+        }
+
         try {
             $context = \stream_context_create($context);
             if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $context)) {

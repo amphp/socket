@@ -2,6 +2,7 @@
 
 namespace Amp\Socket;
 
+use Amp\CancellationToken;
 use Amp\Loop;
 use Amp\Promise;
 use Amp\Struct;
@@ -36,14 +37,14 @@ final class RawSocketPool implements SocketPool {
     }
 
     /** @inheritdoc */
-    public function checkout(string $uri, array $options = []): Promise {
+    public function checkout(string $uri, array $options = [], CancellationToken $token = null): Promise {
         $uri = $this->normalizeUri($uri);
 
         unset($options[self::OP_IDLE_TIMEOUT]);
         $options = array_merge($this->options, $options);
 
         if (empty($this->sockets[$uri])) {
-            return $this->checkoutNewSocket($uri, $options);
+            return $this->checkoutNewSocket($uri, $options, $token);
         }
 
         foreach ($this->sockets[$uri] as $socketId => $socket) {
@@ -67,14 +68,14 @@ final class RawSocketPool implements SocketPool {
             return new Success($socket->resource);
         }
 
-        return $this->checkoutNewSocket($uri, $options);
+        return $this->checkoutNewSocket($uri, $options, $token);
     }
 
-    private function checkoutNewSocket(string $uri, array $options): Promise {
-        return call(function () use ($uri, $options) {
+    private function checkoutNewSocket(string $uri, array $options, CancellationToken $token = null): Promise {
+        return call(function () use ($uri, $options, $token) {
             $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
-            $rawSocket = yield rawConnect($uri, $options);
+            $rawSocket = yield rawConnect($uri, $options, $token);
             $socketId = (int) $rawSocket;
 
             $socket = new SocketPoolStruct;
