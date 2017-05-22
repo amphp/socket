@@ -2,6 +2,7 @@
 
 namespace Amp\Socket;
 
+use Amp\CancellationToken;
 use Amp\Coroutine;
 use Amp\Deferred;
 use Amp\Failure;
@@ -100,12 +101,13 @@ function rawListen(string $uri, array $options = []) {
  *
  * @param string $uri
  * @param array $options
+ * @param CancellationToken|null $token
  *
  * @return \Amp\Promise<\Amp\Socket\Socket>
  */
-function connect(string $uri, array $options = []): Promise {
-    return call(function () use ($uri, $options) {
-        $socket = yield rawConnect($uri, $options);
+function connect(string $uri, array $options = [], CancellationToken $token = null): Promise {
+    return call(function () use ($uri, $options, $token) {
+        $socket = yield rawConnect($uri, $options, $token);
         return new Socket($socket);
     });
 }
@@ -118,11 +120,12 @@ function connect(string $uri, array $options = []): Promise {
  *
  * @param string $uri
  * @param array $options
+ * @param CancellationToken|null $token
  *
  * @return \Amp\Promise<resource>
  */
-function rawConnect(string $uri, array $options = []): Promise {
-    return new Coroutine(Internal\connect($uri, $options));
+function rawConnect(string $uri, array $options = [], CancellationToken $token = null): Promise {
+    return new Coroutine(Internal\connect($uri, $options, $token));
 }
 
 /**

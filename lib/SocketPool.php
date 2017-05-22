@@ -2,6 +2,7 @@
 
 namespace Amp\Socket;
 
+use Amp\CancellationToken;
 use Amp\Promise;
 
 /**
@@ -19,12 +20,14 @@ interface SocketPool {
      * finished with the stream (even if the socket has been closed). Failure to checkin sockets will result in memory
      * leaks and socket queue blockage. Instead of checking the socket in again, it can also be cleared.
      *
-     * @param string $uri A string of the form tcp://example.com:80 or tcp://192.168.1.1:443
-     * @param array  $options Array of options. OP_IDLE_TIMEOUT is ignored and has only effect on the pool itself.
+     * @param string            $uri A string of the form tcp://example.com:80 or tcp://192.168.1.1:443
+     * @param array             $options Array of options. OP_IDLE_TIMEOUT is ignored and has only effect on the pool
+     *     itself.
+     * @param CancellationToken $token Optional cancellation token to cancel the checkout request.
      *
      * @return Promise Returns a promise that resolves to a socket once a connection is available
      */
-    public function checkout(string $uri, array $options = []): Promise;
+    public function checkout(string $uri, array $options = [], CancellationToken $token = null): Promise;
 
     /**
      * Return a previously checked-out socket to the pool.
