@@ -9,7 +9,7 @@ use Amp\Success;
 use function Amp\call;
 
 /** @internal */
-class SocketPoolStruct {
+final class SocketPoolStruct {
     use Struct;
 
     public $id;
@@ -20,7 +20,7 @@ class SocketPoolStruct {
     public $idleTimeout;
 }
 
-class RawSocketPool implements SocketPool {
+final class RawSocketPool implements SocketPool {
     private $sockets = [];
     private $socketIdUriMap = [];
     private $pendingCount = [];
