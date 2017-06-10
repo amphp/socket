@@ -98,4 +98,21 @@ class Socket implements InputStream, OutputStream {
         $this->reader->close();
         $this->writer->close();
     }
+
+    public function getLocalAddress() {
+        return $this->cleanupAddress(@\stream_socket_get_name($this->getResource(), false));
+    }
+
+    public function getRemoteAddress() {
+        return $this->cleanupAddress(@\stream_socket_get_name($this->getResource(), true));
+    }
+
+    private function cleanupAddress($address) {
+        // https://3v4l.org/5C1lo
+        if ($address === false || $address === "\0") {
+            return null;
+        }
+
+        return $address;
+    }
 }
