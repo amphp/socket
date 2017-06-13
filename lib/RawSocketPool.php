@@ -3,106 +3,115 @@
 namespace Amp\Socket;
 
 use Amp\CancellationToken;
+use Amp\CancelledException;
+use Amp\Failure;
 use Amp\Loop;
 use Amp\Promise;
 use Amp\Struct;
 use Amp\Success;
 use function Amp\call;
 
-/** @internal */
-final class SocketPoolStruct {
-    use Struct;
-
-    public $id;
-    public $uri;
-    public $resource;
-    public $isAvailable;
-    public $idleWatcher;
-    public $idleTimeout;
-}
-
 final class RawSocketPool implements SocketPool {
     private $sockets = [];
     private $socketIdUriMap = [];
     private $pendingCount = [];
 
-    private $options = [
-        self::OP_IDLE_TIMEOUT => 10000,
-        self::OP_CONNECT_TIMEOUT => 10000,
-        self::OP_BINDTO => "",
-    ];
+    private $connectTimeout;
+    private $idleTimeout;
+    private $bindTo;
+
+    public function __construct(int $connectTimeout = 10000, int $idleTimeout = 10000, string $bindTo = null) {
+        $this->connectTimeout = $connectTimeout;
+        $this->idleTimeout = $idleTimeout;
+        $this->bindTo = $bindTo;
+    }
 
     private function normalizeUri(string $uri): string {
+        // TODO: Use proper normalization
         return stripos($uri, 'unix://') === 0 ? $uri : strtolower($uri);
     }
 
     /** @inheritdoc */
-    public function checkout(string $uri, array $options = [], CancellationToken $token = null): Promise {
+    public function checkout(string $uri, ClientSocketContext $socketContext = null, CancellationToken $token = null): Promise {
+        // A request might already be cancelled before we reach the checkout, so do not even attempt to checkout in that
+        // case. The weird logic is required to throw the token's exception instead of creating a new one.
+        if ($token && $token->isRequested()) {
+            try {
+                $token->throwIfRequested();
+            } catch (CancelledException $e) {
+                return new Failure($e);
+            }
+        }
+
         $uri = $this->normalizeUri($uri);
 
-        unset($options[self::OP_IDLE_TIMEOUT]);
-        $options = array_merge($this->options, $options);
-
         if (empty($this->sockets[$uri])) {
-            return $this->checkoutNewSocket($uri, $options, $token);
+            return $this->checkoutNewSocket($uri, $socketContext, $token);
         }
 
         foreach ($this->sockets[$uri] as $socketId => $socket) {
             if (!$socket->isAvailable) {
                 continue;
             } elseif (!\is_resource($socket->resource) || \feof($socket->resource)) {
-                unset($this->sockets[$uri][$socketId]);
+                $this->clear($socket->resource);
                 continue;
-            } elseif (($bindTo = @\stream_context_get_options($socket->resource)['socket']['bindto'])) {
-                if ($bindTo !== $options[self::OP_BINDTO]) {
-                    continue;
-                }
             }
 
             $socket->isAvailable = false;
 
-            if (isset($socket->idleWatcher)) {
+            if ($socket->idleWatcher !== null) {
                 Loop::disable($socket->idleWatcher);
             }
 
             return new Success($socket->resource);
         }
 
-        return $this->checkoutNewSocket($uri, $options, $token);
+        return $this->checkoutNewSocket($uri, $socketContext, $token);
     }
 
-    private function checkoutNewSocket(string $uri, array $options, CancellationToken $token = null): Promise {
-        return call(function () use ($uri, $options, $token) {
+    private function checkoutNewSocket(string $uri, ClientSocketContext $socketContext = null, CancellationToken $token = null): Promise {
+        return call(function () use ($uri, $socketContext, $token) {
             $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
-            $rawSocket = yield rawConnect($uri, $options, $token);
+            try {
+                $rawSocket = yield rawConnect($uri, $socketContext, $token);
+            } finally {
+                if (--$this->pendingCount[$uri] === 0) {
+                    unset($this->pendingCount[$uri]);
+                }
+            }
+
             $socketId = (int) $rawSocket;
 
-            $socket = new SocketPoolStruct;
+            $socket = new class {
+                use Struct;
+
+                public $id;
+                public $uri;
+                public $resource;
+                public $isAvailable;
+                public $idleWatcher;
+            };
+
             $socket->id = $socketId;
             $socket->uri = $uri;
             $socket->resource = $rawSocket;
             $socket->isAvailable = false;
-            $socket->idleTimeout = $this->options[self::OP_IDLE_TIMEOUT];
 
             $this->sockets[$uri][$socketId] = $socket;
             $this->socketIdUriMap[$socketId] = $uri;
-
-            if (--$this->pendingCount[$uri] === 0) {
-                unset($this->pendingCount[$uri]);
-            }
 
             return $rawSocket;
         });
     }
 
     /** @inheritdoc */
-    public function clear($resource) {
-        $socketId = (int) $resource;
+    public function clear($socket) {
+        $socketId = (int) $socket;
 
         if (!isset($this->socketIdUriMap[$socketId])) {
             throw new \Error(
-                sprintf('Unknown socket: %s', $resource)
+                sprintf('Unknown socket: %s', $socket)
             );
         }
 
@@ -124,19 +133,19 @@ final class RawSocketPool implements SocketPool {
     }
 
     /** @inheritdoc */
-    public function checkin($resource) {
-        $socketId = (int) $resource;
+    public function checkin($socket) {
+        $socketId = (int) $socket;
 
         if (!isset($this->socketIdUriMap[$socketId])) {
             throw new \Error(
-                sprintf('Unknown socket: %s', $resource)
+                \sprintf('Unknown socket: %d', $socketId)
             );
         }
 
         $uri = $this->socketIdUriMap[$socketId];
 
-        if (!is_resource($resource) || feof($resource)) {
-            $this->clear($resource);
+        if (!\is_resource($socket) || \feof($socket)) {
+            $this->clear($socket);
             return;
         }
 
@@ -151,54 +160,6 @@ final class RawSocketPool implements SocketPool {
             });
 
             Loop::unreference($socket->idleWatcher);
-        }
-    }
-
-    /**
-     * Gets the number of outstanding checkout requests.
-     *
-     * @param string $uri A URI as passed to `checkout()`.
-     *
-     * @return int
-     */
-    public function getPendingCount(string $uri): int {
-        $uri = $this->normalizeUri($uri);
-
-        return $this->pendingCount[$uri] ?? null;
-    }
-
-    /**
-     * Gets the number of currently checked out sockets.
-     *
-     * @param string $uri A URI as passed to `checkout()`.
-     *
-     * @return int
-     */
-    public function getCheckoutCount(string $uri): int {
-        $uri = $this->normalizeUri($uri);
-
-        return \count($this->sockets[$uri] ?? []);
-    }
-
-    /** @inheritdoc */
-    public function setOption(string $option, $value) {
-        switch ($option) {
-            case self::OP_CONNECT_TIMEOUT:
-                $this->options[self::OP_CONNECT_TIMEOUT] = (int) $value;
-                break;
-
-            case self::OP_IDLE_TIMEOUT:
-                $this->options[self::OP_IDLE_TIMEOUT] = (int) $value;
-                break;
-
-            case self::OP_BINDTO:
-                $this->options[self::OP_BINDTO] = $value;
-                break;
-
-            default:
-                throw new \Error(
-                    sprintf('Unknown option: %s', $option)
-                );
         }
     }
 }

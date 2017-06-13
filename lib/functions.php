@@ -14,80 +14,47 @@ use function Amp\call;
 /**
  * Listen for client connections on the specified server address.
  *
- * @param string $uri
- * @param callable(\Amp\Socket\Socket $socket): mixed $handler
- * @param array $options
+ * @param string              $uri
+ * @param callable            $handler callable(Socket): mixed
+ * @param ServerSocketContext $socketContext
+ * @param TlsContext          $tlsContext
  *
- * @return \Amp\Socket\Server
+ * @return Server
  *
  * @see rawListen()
  */
-function listen(string $uri, callable $handler, array $options = []): Server {
-    return new Server(rawListen($uri, $options), $handler);
+function listen(string $uri, callable $handler, ServerSocketContext $socketContext = null, TlsContext $tlsContext = null): Server {
+    return new Server(rawListen($uri, $socketContext, $tlsContext), $handler);
 }
 
 /**
  * Listen for client connections on the specified server address.
  *
- * @param string $uri
- * @param array $options
+ * @param string              $uri
+ * @param ServerSocketContext $socketContext
+ * @param TlsContext          $tlsContext
  *
  * @return resource
  *
  * @see listen()
  */
-function rawListen(string $uri, array $options = []) {
-    $queue = (int) ($options["backlog"] ?? (\defined("SOMAXCONN") ? SOMAXCONN : 128));
-    $pem = (string) ($options["pem"] ?? "");
-    $passphrase = (string) ($options["passphrase"] ?? "");
-    $name = (string) ($options["name"] ?? "");
-
-    $verify = (bool) ($options["verify_peer"] ?? true);
-    $allowSelfSigned = (bool) ($options["allow_self_signed"] ?? false);
-    $verifyDepth = (int) ($options["verify_depth"] ?? 10);
-
-    $context = [];
-
-    $context["socket"] = [
-        "backlog" => $queue,
-        "ipv6_v6only" => true,
-    ];
-
+function rawListen(string $uri, ServerSocketContext $socketContext = null, TlsContext $tlsContext = null) {
     $scheme = strstr($uri, "://", true);
+
     if (!in_array($scheme, ["tcp", "udp", "unix", "udg"])) {
         throw new \Error("Only tcp, udp, unix and udg schemes allowed for server creation");
     }
 
-    if ($pem !== "") {
-        /* listen() is not returning an Promise - hence a blocking file_exists() for the rare case where we start an encrypted server socket */
-        if (!\file_exists($pem)) {
-            throw new SocketException("PEM file $pem for creating server does not exist");
-        }
-
-        $context["ssl"] = [
-            "verify_peer" => $verify,
-            "verify_peer_name" => $verify,
-            "allow_self_signed" => $allowSelfSigned,
-            "verify_depth" => $verifyDepth,
-            "local_cert" => $pem,
-            "disable_compression" => true,
-            "SNI_enabled" => true,
-            "SNI_server_name" => $name,
-            "peer_name" => $name,
-        ];
-
-        if ($passphrase !== "") {
-            $context["ssl"]["passphrase"] = $passphrase;
-        }
-    }
-
-    $context = \stream_context_create($context);
+    $context = \stream_context_create(array_merge(
+        $socketContext->toStreamContextArray(),
+        $tlsContext->toStreamContextArray(TlsContext::SERVER)
+    ));
 
     // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
     $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $context);
 
     if (!$server || $errno) {
-        throw new SocketException(\sprintf("Could not create server %s: [Errno: #%d] %s", $uri, $errno, $errstr));
+        throw new SocketException(\sprintf("Could not create server %s: [Error: #%d] %s", $uri, $errno, $errstr));
     }
 
     return $server;
@@ -99,15 +66,15 @@ function rawListen(string $uri, array $options = []) {
  * If a scheme is not specified in the $uri parameter, TCP is assumed. Allowed schemes include:
  * [tcp, udp, unix, udg].
  *
- * @param string $uri
- * @param array $options
+ * @param string                 $uri
+ * @param ClientSocketContext    $socketContext
  * @param CancellationToken|null $token
  *
  * @return \Amp\Promise<\Amp\Socket\Socket>
  */
-function connect(string $uri, array $options = [], CancellationToken $token = null): Promise {
-    return call(function () use ($uri, $options, $token) {
-        $socket = yield rawConnect($uri, $options, $token);
+function connect(string $uri, ClientSocketContext $socketContext = null, CancellationToken $token = null): Promise {
+    return call(function () use ($uri, $socketContext, $token) {
+        $socket = yield rawConnect($uri, $socketContext, $token);
         return new Socket($socket);
     });
 }
@@ -118,14 +85,14 @@ function connect(string $uri, array $options = [], CancellationToken $token = nu
  * If a scheme is not specified in the $uri parameter, TCP is assumed. Allowed schemes include:
  * [tcp, udp, unix, udg].
  *
- * @param string $uri
- * @param array $options
+ * @param string                 $uri
+ * @param ClientSocketContext    $socketContext
  * @param CancellationToken|null $token
  *
  * @return \Amp\Promise<resource>
  */
-function rawConnect(string $uri, array $options = [], CancellationToken $token = null): Promise {
-    return new Coroutine(Internal\connect($uri, $options, $token));
+function rawConnect(string $uri, ClientSocketContext $socketContext, CancellationToken $token = null): Promise {
+    return new Coroutine(Internal\connect($uri, $socketContext, $token));
 }
 
 /**
@@ -148,14 +115,19 @@ function pair(): array {
 }
 
 /**
- * @param string $uri
- * @param array $options
+ * Asynchronously establish an encrypted TCP connection (non-blocking).
  *
- * @return \Amp\Promise<\Amp\Socket\Socket>
+ * Note: Once resolved the socket stream will already be set to non-blocking mode.
+ *
+ * @param string              $uri
+ * @param ClientSocketContext $socketContext
+ * @param TlsContext          $tlsContext
+ *
+ * @return Promise<Socket>
  */
-function cryptoConnect(string $uri, array $options = []): Promise {
-    return call(function () use ($uri, $options) {
-        $socket = yield rawCryptoConnect($uri, $options);
+function cryptoConnect(string $uri, ClientSocketContext $socketContext = null, TlsContext $tlsContext = null): Promise {
+    return call(function () use ($uri, $socketContext, $tlsContext) {
+        $socket = yield rawCryptoConnect($uri, $socketContext, $tlsContext);
         return new Socket($socket);
     });
 }
@@ -163,104 +135,54 @@ function cryptoConnect(string $uri, array $options = []): Promise {
 /**
  * Asynchronously establish an encrypted TCP connection (non-blocking).
  *
- * NOTE: Once resolved the socket stream will already be set to non-blocking mode.
+ * Note: Once resolved the socket stream will already be set to non-blocking mode.
  *
- * @param string $uri
- * @param array $options
+ * @param string              $uri
+ * @param ClientSocketContext $socketContext
+ * @param TlsContext          $tlsContext
  *
- * @return \Amp\Promise
+ * @return Promise<resource>
  */
-function rawCryptoConnect(string $uri, array $options = []): Promise {
-    return new Coroutine(Internal\cryptoConnect($uri, $options));
+function rawCryptoConnect(string $uri, ClientSocketContext $socketContext = null, TlsContext $tlsContext = null): Promise {
+    return new Coroutine(Internal\cryptoConnect($uri, $socketContext, $tlsContext));
 }
 
 /**
  * Enable encryption on an existing socket stream.
  *
- * @param resource $socket
- * @param array $options
+ * @param resource   $socket
+ * @param TlsContext $tlsContext
  *
- * @return \Amp\Promise
+ * @return Promise
  */
-function enableCrypto($socket, array $options = []): Promise {
-    static $caBundleFiles = [];
-
-    if (empty($options["ciphers"])) {
-        // See https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28default.29
-        // DES ciphers have been explicitly removed from that list
-
-        // TODO: We're using the recommended settings for servers here, we need a good resource for clients.
-        // Then we might be able to use a more restrictive list.
-
-        // The following cipher suites have been explicitly disabled, taken from previous configuration:
-        // !aNULL:!eNULL:!EXPORT:!DES:!DSS:!3DES:!MD5:!PSK
-        $options["ciphers"] = \implode(':', [
-            "ECDHE-ECDSA-CHACHA20-POLY1305",
-            "ECDHE-RSA-CHACHA20-POLY1305",
-            "ECDHE-ECDSA-AES128-GCM-SHA256",
-            "ECDHE-RSA-AES128-GCM-SHA256",
-            "ECDHE-ECDSA-AES256-GCM-SHA384",
-            "ECDHE-RSA-AES256-GCM-SHA384",
-            "DHE-RSA-AES128-GCM-SHA256",
-            "DHE-RSA-AES256-GCM-SHA384",
-            "ECDHE-ECDSA-AES128-SHA256",
-            "ECDHE-RSA-AES128-SHA256",
-            "ECDHE-ECDSA-AES128-SHA",
-            "ECDHE-RSA-AES256-SHA384",
-            "ECDHE-RSA-AES128-SHA",
-            "ECDHE-ECDSA-AES256-SHA384",
-            "ECDHE-ECDSA-AES256-SHA",
-            "ECDHE-RSA-AES256-SHA",
-            "DHE-RSA-AES128-SHA256",
-            "DHE-RSA-AES128-SHA",
-            "DHE-RSA-AES256-SHA256",
-            "DHE-RSA-AES256-SHA",
-            "AES128-GCM-SHA256",
-            "AES256-GCM-SHA384",
-            "AES128-SHA256",
-            "AES256-SHA256",
-            "AES128-SHA",
-            "AES256-SHA",
-            "!aNULL",
-            "!eNULL",
-            "!EXPORT",
-            "!DES",
-            "!DSS",
-            "!3DES",
-            "!MD5",
-            "!PSK",
-        ]);
-    }
-
+function enableCrypto($socket, TlsContext $tlsContext = null): Promise {
     $ctx = \stream_context_get_options($socket);
+
     if (!empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
+        $compare = $tlsContext->toStreamContextArray(TlsContext::CLIENT);
         $ctx = $ctx['ssl'];
-        $compare = $options;
-        unset($ctx['peer_certificate'], $ctx['SNI_server_name'], $ctx['_enabled'], $compare['peer_certificate'], $compare['SNI_server_name']);
+
+        unset(
+            $ctx['peer_certificate'],
+            $ctx['peer_certificate_chain'],
+            $ctx['SNI_server_name'],
+            $ctx['_enabled']
+        );
 
         if ($ctx == $compare) {
             return new Success($socket);
         }
 
-        return call(function () use ($socket, $options) {
+        return call(function () use ($socket, $tlsContext) {
             $socket = yield disableCrypto($socket);
-            return enableCrypto($socket, $options);
+            return enableCrypto($socket, $tlsContext);
         });
-    }
-
-    if (isset($options["crypto_method"])) {
-        $method = $options["crypto_method"];
-        unset($options["crypto_method"]);
-    } else {
-        // note that this constant actually means "Any TLS version EXCEPT SSL v2 and v3"
-        $method = \STREAM_CRYPTO_METHOD_SSLv23_CLIENT;
     }
 
     $options["_enabled"] = true; // avoid recursion
 
-    \stream_context_set_option($socket, ["ssl" => $options]);
-
-    $result = \stream_socket_enable_crypto($socket, $enable = true, $method);
+    \stream_context_set_option($socket, $tlsContext->toStreamContextArray(TlsContext::CLIENT));
+    $result = \stream_socket_enable_crypto($socket, $enable = true, $tlsContext->toStreamCryptoMethod(TlsContext::CLIENT));
 
     if ($result === true) {
         return new Success($socket);
@@ -272,7 +194,7 @@ function enableCrypto($socket, array $options = []): Promise {
 
     $deferred = new Deferred;
 
-    Loop::onReadable($socket, 'Amp\Socket\Internal\onCryptoWatchReadability', [$deferred, $method]);
+    Loop::onReadable($socket, 'Amp\Socket\Internal\onCryptoWatchReadability', [$deferred, $tlsContext]);
 
     return $deferred->promise();
 }
@@ -282,7 +204,7 @@ function enableCrypto($socket, array $options = []): Promise {
  *
  * @param resource $socket
  *
- * @return \Amp\Promise
+ * @return Promise
  */
 function disableCrypto($socket): Promise {
     // note that disabling crypto *ALWAYS* returns false, immediately
