@@ -16,7 +16,7 @@ class SocketTest extends TestCase {
             \fwrite($serverSock, $data);
             \fclose($serverSock);
 
-            $client = new Socket\Socket($clientSock);
+            $client = new Socket\ClientSocket($clientSock);
 
             while (($chunk = yield $client->read()) !== null) {
                 $this->assertSame($data, $chunk);
