@@ -18,7 +18,7 @@ final class ClientConnectContext {
         return $clone;
     }
 
-    public function getBindTo() /* : ?string */ {
+    public function getBindTo() {
         return $this->bindTo;
     }
 
