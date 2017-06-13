@@ -2,112 +2,25 @@
 
 namespace Amp\Socket\Internal;
 
-use Amp\CancellationToken;
 use Amp\Deferred;
-use Amp\Dns;
+use Amp\Failure;
 use Amp\Loop;
-use Amp\NullCancellationToken;
 use Amp\Promise;
-use Amp\Socket\ClientSocketContext;
-use Amp\Socket\ConnectException;
 use Amp\Socket\CryptoException;
-use Amp\Socket\TlsContext;
-use Amp\TimeoutException;
-use function Amp\Socket\enableCrypto;
+use Amp\Success;
+use function Amp\call;
 
-/** @internal */
-function connect(string $uri, ClientSocketContext $socketContext = null, CancellationToken $token = null): \Generator {
-    $socketContext = $socketContext ?? new ClientSocketContext;
-    $token = $token ?? new NullCancellationToken;
-    $attempt = 0;
-    $uris = [];
-
-    list($scheme, $host, $port) = parseUri($uri);
-
-    if ($port === 0 || @\inet_pton($host)) {
-        // Host is already an IP address or file path.
-        $uris = [$uri];
-    } else {
-        // Host is not an IP address, so resolve the domain name.
-        $records = yield Dns\resolve($host);
-        foreach ($records as list($ip, $type)) {
-            if ($type === Dns\Record::AAAA) {
-                $uris[] = \sprintf("%s://[%s]:%d", $scheme, $ip, $port);
-            } else {
-                $uris[] = \sprintf("%s://%s:%d", $scheme, $ip, $port);
-            }
-        }
-    }
-
-    $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
-    $timeout = $socketContext->getConnectTimeout();
-
-    foreach ($uris as $builtUri) {
-        if ($token) {
-            $token->throwIfRequested();
-        }
-
-        try {
-            $context = \stream_context_create($socketContext->toStreamContextArray());
-
-            if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $context)) {
-                throw new ConnectException(\sprintf(
-                    "Connection to %s failed: [Error #%d] %s",
-                    $uri,
-                    $errno,
-                    $errstr
-                ));
-            }
-
-            \stream_set_blocking($socket, false);
-
-            $deferred = new Deferred;
-            $watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
-
-            try {
-                yield Promise\timeout($deferred->promise(), $timeout);
-            } finally {
-                Loop::cancel($watcher);
-            }
-
-            // The following hack looks like the only way to detect connection refused errors with PHP's stream sockets.
-            if (\stream_socket_get_name($socket, true) === false) {
-                \fclose($socket);
-                throw new ConnectException(\sprintf("Connection to %s refused", $uri));
-            }
-        } catch (\Exception $e) {
-            if (++$attempt === $socketContext->getMaxAttempts()) {
-                break;
-            }
-
-            continue; // Could not connect to host, try next host in the list.
-        }
-
-        return $socket;
-    }
-
-    if ($e instanceof TimeoutException) {
-        throw new ConnectException(\sprintf("Connecting to %s failed: timeout exceeded (%d ms)", $uri, $timeout));
-    }
-
-    throw $e;
-}
-
-/** @internal */
-function cryptoConnect(string $uri, ClientSocketContext $socketContext = null, TlsContext $tlsContext = null): \Generator {
-    $tlsContext = $tlsContext ?? new TlsContext;
-
-    if ($tlsContext->getPeerName() === null) {
-        $tlsContext->withPeerName(\parse_url($uri, PHP_URL_HOST));
-    }
-
-    $socket = yield from connect($uri, $socketContext);
-    yield enableCrypto($socket, $tlsContext);
-
-    return $socket;
-}
-
-/** @internal */
+/**
+ * Parse an URI into [scheme, host, port].
+ *
+ * @param string $uri
+ *
+ * @return array
+ *
+ * @throws \Error If an invalid URI has been passed.
+ *
+ * @internal
+ */
 function parseUri(string $uri): array {
     if (\stripos($uri, "unix://") === 0 || \stripos($uri, "udg://") === 0) {
         list($scheme, $path) = \explode("://", $uri, 2);
@@ -143,18 +56,109 @@ function parseUri(string $uri): array {
     return [$scheme, $host, $port];
 }
 
-/** @internal */
+/**
+ * Enable encryption on an existing socket stream.
+ *
+ * @param resource $socket
+ * @param array    $options
+ *
+ * @return Promise
+ *
+ * @throws \Error If an invalid options array has been passed.
+ *
+ * @internal
+ */
+function enableCrypto($socket, array $options): Promise {
+    if (!isset($options["ssl"]["crypto_method"])) {
+        throw new \Error("'crypto_method' option is a required parameter");
+    }
+
+    $ctx = \stream_context_get_options($socket);
+
+    if (!empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
+        $cmp = $options["ssl"];
+        $ctx = $ctx['ssl'];
+
+        unset(
+            $ctx['peer_certificate'],
+            $cmp['peer_certificate'],
+            $ctx['peer_certificate_chain'],
+            $cmp['peer_certificate_chain'],
+            $ctx['SNI_server_name'],
+            $cmp['SNI_server_name'],
+            $ctx['_enabled'],
+            $cmp['_enabled']
+        );
+
+        // Use weak comparison so the order of the items doesn't matter
+        if ($ctx == $cmp) {
+            return new Success;
+        }
+
+        return call(function () use ($socket, $options) {
+            yield disableCrypto($socket);
+            return enableCrypto($socket, $options);
+        });
+    }
+
+    $options["ssl"]["_enabled"] = true; // avoid recursion
+
+    \error_clear_last();
+
+    \stream_context_set_option($socket, $options);
+    $result = \stream_socket_enable_crypto($socket, $enable = true, $options["ssl"]["crypto_method"]);
+
+    // Yes, that function can return true / false / 0, don't use weak comparisons.
+    if ($result === true) {
+        return new Success($socket);
+    } elseif ($result === false) {
+        return new Failure(new CryptoException(
+            "Crypto negotiation failed: " . (\error_get_last()["message"] ?? "Unknown error")
+        ));
+    }
+
+    $deferred = new Deferred;
+
+    Loop::onReadable($socket, 'Amp\Socket\Internal\onCryptoWatchReadability', [$deferred, $options]);
+
+    return $deferred->promise();
+}
+
+/**
+ * Disable encryption on an existing socket stream.
+ *
+ * @param resource $socket
+ *
+ * @return Promise
+ *
+ * @internal
+ */
+function disableCrypto($socket): Promise {
+    // note that disabling crypto *ALWAYS* returns false, immediately
+    \stream_context_set_option($socket, ["ssl" => ["_enabled" => false]]);
+    \stream_socket_enable_crypto($socket, false);
+
+    return new Success;
+}
+
+/**
+ * Watches for crypto readability to wait for a successful TLS handshake.
+ *
+ * @param string   $watcherId
+ * @param resource $socket
+ * @param array    $data
+ */
 function onCryptoWatchReadability($watcherId, $socket, $data) {
     /** @var Deferred $deferred */
-    /** @var TlsContext $tlsContext */
-    list($deferred, $tlsContext) = $data;
+    /** @var array $options */
+    list($deferred, $options) = $data;
 
-    $cryptoMethod = $tlsContext->toStreamCryptoMethod(TlsContext::CLIENT);
-    $result = \stream_socket_enable_crypto($socket, $enable = true, $cryptoMethod);
+    $result = \stream_socket_enable_crypto($socket, $enable = true, $options["ssl"]["crypto_method"]);
 
+    // If $result is 0, just wait for the next invocation
     if ($result === true) {
         Loop::cancel($watcherId);
-        $deferred->resolve($socket);
+        $deferred->resolve();
     } else if ($result === false) {
         Loop::cancel($watcherId);
         $deferred->fail(new CryptoException("Crypto negotiation failed: " . (\feof($socket)
@@ -163,6 +167,15 @@ function onCryptoWatchReadability($watcherId, $socket, $data) {
     }
 }
 
+/**
+ * Normalizes "bindto" options to add a ":0" in case no port is present, otherwise PHP will silently ignore those.
+ *
+ * @param string|null $bindTo
+ *
+ * @return string|null
+ *
+ * @throws \Error If an invalid option has been passed.
+ */
 function normalizeBindToOption(string $bindTo = null) {
     if ($bindTo === null) {
         // all fine

@@ -4,8 +4,8 @@ namespace Amp\Socket;
 
 use function Amp\Socket\Internal\normalizeBindToOption;
 
-final class ClientSocketContext {
-    private $bindTo;
+final class ClientConnectContext {
+    private $bindTo = null;
     private $connectTimeout = 10000;
     private $maxAttempts = 2;
 
@@ -24,7 +24,7 @@ final class ClientSocketContext {
 
     public function withConnectTimeout(int $timeout): self {
         if ($timeout <= 0) {
-            throw new \Error("Invalid connect timeout, must be greater than 0, got {$timeout}");
+            throw new \Error("Invalid connect timeout ({$timeout}), must be greater than 0");
         }
 
         $clone = clone $this;
@@ -39,7 +39,7 @@ final class ClientSocketContext {
 
     public function withMaxAttempts(int $maxAttempts): self {
         if ($maxAttempts <= 0) {
-            throw new \Error("Invalid value, must be greater than 0, got {$maxAttempts}");
+            throw new \Error("Invalid max attempts ({$maxAttempts}), must be greater than 0");
         }
 
         $clone = clone $this;
@@ -53,8 +53,12 @@ final class ClientSocketContext {
     }
 
     public function toStreamContextArray(): array {
-        return ["socket" => [
-            "bindto" => $this->bindTo,
-        ]];
+        $options = [];
+
+        if ($this->bindTo !== null) {
+            $options["bindto"] = $this->bindTo;
+        }
+
+        return ["socket" => $options];
     }
 }

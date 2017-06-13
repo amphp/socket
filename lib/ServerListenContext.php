@@ -4,7 +4,7 @@ namespace Amp\Socket;
 
 use function Amp\Socket\Internal\normalizeBindToOption;
 
-final class ServerSocketContext {
+final class ServerListenContext {
     private $bindTo = null;
     private $backlog = 128;
     private $reusePort = false;
@@ -34,7 +34,7 @@ final class ServerSocketContext {
         return $clone;
     }
 
-    public function isReusePort(): bool {
+    public function hasReusePort(): bool {
         return $this->reusePort;
     }
 
@@ -52,7 +52,7 @@ final class ServerSocketContext {
         return $clone;
     }
 
-    public function isBroadcast(): bool {
+    public function hasBroadcast(): bool {
         return $this->broadcast;
     }
 
