@@ -3,7 +3,7 @@
 namespace Amp\Socket\Test;
 
 use Amp\Socket\ClientTlsContext;
-use Amp\Socket\Socket;
+use Amp\Socket\ClientSocket;
 use PHPUnit\Framework\TestCase;
 
 class IntegrationTest extends TestCase {
@@ -13,7 +13,7 @@ class IntegrationTest extends TestCase {
     public function testConnect($uri) {
         $promise = \Amp\Socket\connect($uri);
         $sock = \Amp\Promise\wait($promise);
-        $this->assertInstanceOf(Socket::class, $sock);
+        $this->assertInstanceOf(ClientSocket::class, $sock);
     }
 
     public function provideConnectArgs() {
@@ -29,7 +29,7 @@ class IntegrationTest extends TestCase {
     public function testCryptoConnect($uri) {
         $promise = \Amp\Socket\cryptoConnect($uri);
         $sock = \Amp\Promise\wait($promise);
-        $this->assertInstanceOf(Socket::class, $sock);
+        $this->assertInstanceOf(ClientSocket::class, $sock);
     }
 
     public function provideCryptoConnectArgs() {
@@ -42,7 +42,7 @@ class IntegrationTest extends TestCase {
 
     public function testNoRenegotiationForEqualOptions() {
         $promise = \Amp\socket\cryptoConnect('www.google.com:443');
-        /** @var Socket $sock */
+        /** @var ClientSocket $sock */
         $socket = \Amp\Promise\wait($promise);
         // For this case renegotiation not needed because options is equals
         $promise = $socket->enableCrypto((new ClientTlsContext)->withPeerName("www.google.com"));
@@ -59,6 +59,6 @@ class IntegrationTest extends TestCase {
         $promise = $sock->enableCrypto((new ClientTlsContext)->withoutPeerVerification());
         \Amp\Promise\wait($promise);
 
-        $this->assertInstanceOf(Socket::class, $sock);
+        $this->assertInstanceOf(ClientSocket::class, $sock);
     }
 }

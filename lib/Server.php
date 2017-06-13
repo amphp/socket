@@ -33,7 +33,7 @@ class Server {
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use ($handler, $chunkSize) {
             // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
             while ($client = @\stream_socket_accept($socket, 0)) { // Timeout of 0 to be non-blocking.
-                $handler(new Socket($client, $chunkSize));
+                $handler(new ServerSocket($client, $chunkSize));
             }
         });
     }
@@ -43,6 +43,11 @@ class Server {
      */
     public function close() {
         Loop::cancel($this->watcher);
+
+        if ($this->socket) {
+            \fclose($this->socket);
+        }
+
         $this->socket = null;
     }
 }

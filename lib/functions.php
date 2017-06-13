@@ -128,7 +128,7 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
                 continue; // Could not connect to host, try next host in the list.
             }
 
-            return new Socket($socket);
+            return new ClientSocket($socket);
         }
 
         if ($e instanceof TimeoutException) {
@@ -146,9 +146,9 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
  *
  * @param string               $uri
  * @param ClientConnectContext $socketContext
- * @param ServerTlsContext     $tlsContext
+ * @param ClientTlsContext     $tlsContext
  *
- * @return Promise<Socket>
+ * @return Promise<ClientSocket>
  */
 function cryptoConnect(string $uri, ClientConnectContext $socketContext = null, ClientTlsContext $tlsContext = null): Promise {
     return call(function () use ($uri, $socketContext, $tlsContext) {
@@ -158,7 +158,7 @@ function cryptoConnect(string $uri, ClientConnectContext $socketContext = null, 
             $tlsContext = $tlsContext->withPeerName(\parse_url($uri, PHP_URL_HOST));
         }
 
-        /** @var Socket $socket */
+        /** @var ClientSocket $socket */
         $socket = yield connect($uri, $socketContext);
         yield $socket->enableCrypto($tlsContext);
 

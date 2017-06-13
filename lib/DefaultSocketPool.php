@@ -51,7 +51,7 @@ final class DefaultSocketPool implements SocketPool {
             if (!$socket->isAvailable) {
                 continue;
             } elseif (!\is_resource($socket->resource) || \feof($socket->resource)) {
-                $this->clear(new Socket($socket->resource));
+                $this->clear(new ClientSocket($socket->resource));
                 continue;
             }
 
@@ -72,7 +72,7 @@ final class DefaultSocketPool implements SocketPool {
             $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
             try {
-                /** @var Socket $rawSocket */
+                /** @var ClientSocket $rawSocket */
                 $rawSocket = yield connect($uri, $this->socketContext, $token);
             } finally {
                 if (--$this->pendingCount[$uri] === 0) {
@@ -105,7 +105,7 @@ final class DefaultSocketPool implements SocketPool {
     }
 
     /** @inheritdoc */
-    public function clear(Socket $socket) {
+    public function clear(ClientSocket $socket) {
         $socketId = (int) $socket->getResource();
 
         if (!isset($this->socketIdUriMap[$socketId])) {
@@ -132,7 +132,7 @@ final class DefaultSocketPool implements SocketPool {
     }
 
     /** @inheritdoc */
-    public function checkin(Socket $socket) {
+    public function checkin(ClientSocket $socket) {
         $socketId = (int) $socket->getResource();
 
         if (!isset($this->socketIdUriMap[$socketId])) {

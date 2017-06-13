@@ -2,6 +2,7 @@
 
 namespace Amp\Socket\Test;
 
+use Amp\Delayed;
 use Amp\Loop;
 use Amp\Socket;
 use PHPUnit\Framework\TestCase;
@@ -10,12 +11,95 @@ class ServerTest extends TestCase {
     public function testAccept() {
         Loop::run(function () {
             $server = Socket\listen("tcp://127.0.0.1:12345", function ($socket) {
-                $this->assertInstanceOf(Socket\Socket::class, $socket);
+                $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
             });
 
             yield Socket\connect("tcp://127.0.0.1:12345");
 
             Loop::delay(100, [$server, 'close']);
+        });
+    }
+
+    public function testTls() {
+        Loop::run(function () {
+            $server = Socket\listen("tcp://127.0.0.1:12345", function (Socket\ServerSocket $socket) {
+                yield $socket->enableCrypto();
+                $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
+                $this->assertSame("Hello World", yield $socket->read());
+                $socket->write("test");
+            }, null, (new Socket\ServerTlsContext)->withDefaultCertificate(__DIR__ . "/tls/amphp.org.pem"));
+
+            $context = (new Socket\ClientTlsContext)
+                ->withPeerName("amphp.org")
+                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+
+            /** @var Socket\ClientSocket $client */
+            $client = yield Socket\cryptoConnect("tcp://127.0.0.1:12345", null, $context);
+            yield $client->write("Hello World");
+
+            $this->assertSame("test", yield $client->read());
+
+            $server->close();
+
+            Loop::stop();
+        });
+    }
+
+    public function testSniWorksWithCorrectHostName() {
+        Loop::run(function () {
+            $server = Socket\listen("tcp://127.0.0.1:12345", function (Socket\ServerSocket $socket) {
+                yield $socket->enableCrypto();
+                $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
+                $this->assertSame("Hello World", yield $socket->read());
+                $socket->write("test");
+            }, null, (new Socket\ServerTlsContext)->withCertificates(["amphp.org" => __DIR__ . "/tls/amphp.org.pem"]));
+
+            $context = (new Socket\ClientTlsContext)
+                ->withPeerName("amphp.org")
+                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+
+            /** @var Socket\ClientSocket $client */
+            $client = yield Socket\cryptoConnect("tcp://127.0.0.1:12345", null, $context);
+            yield $client->write("Hello World");
+
+            $this->assertSame("test", yield $client->read());
+
+            $server->close();
+
+            Loop::stop();
+        });
+    }
+
+    public function testSniWorksWithMultipleCertificates() {
+        Loop::run(function () {
+            $server = Socket\listen("tcp://127.0.0.1:12345", function (Socket\ServerSocket $socket) {
+                yield $socket->enableCrypto();
+                $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
+                $this->assertSame("Hello World", yield $socket->read());
+            }, null, (new Socket\ServerTlsContext)->withCertificates([
+                "amphp.org" => __DIR__ . "/tls/amphp.org.pem",
+                "www.amphp.org" => __DIR__ . "/tls/www.amphp.org.pem",
+            ]));
+
+            $context = (new Socket\ClientTlsContext)
+                ->withPeerName("amphp.org")
+                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+
+            /** @var Socket\ClientSocket $client */
+            $client = yield Socket\cryptoConnect("tcp://127.0.0.1:12345", null, $context);
+            yield $client->write("Hello World");
+
+            $context = (new Socket\ClientTlsContext)
+                ->withPeerName("www.amphp.org")
+                ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt");
+
+            /** @var Socket\ClientSocket $client */
+            $client = yield Socket\cryptoConnect("tcp://127.0.0.1:12345", null, $context);
+            yield $client->write("Hello World");
+
+            $server->close();
+
+            Loop::stop();
         });
     }
 }

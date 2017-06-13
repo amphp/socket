@@ -26,18 +26,18 @@ interface SocketPool {
     /**
      * Return a previously checked-out socket to the pool so it can be reused.
      *
-     * @param Socket $socket Socket instance.
+     * @param ClientSocket $socket Socket instance.
      *
      * @throws \Error If the provided resource is unknown to the pool.
      */
-    public function checkin(Socket $socket);
+    public function checkin(ClientSocket $socket);
 
     /**
      * Remove the specified socket from the pool.
      *
-     * @param Socket $socket Socket instance.
+     * @param ClientSocket $socket Socket instance.
      *
      * @throws \Error If the provided resource is unknown to the pool.
      */
-    public function clear(Socket $socket);
+    public function clear(ClientSocket $socket);
 }

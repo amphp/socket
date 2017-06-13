@@ -15,6 +15,7 @@ final class ServerTlsContext {
     private $caFile = null;
     private $caPath = null;
     private $capturePeer = false;
+    private $defaultCertificate = null;
     private $certificates = [];
 
     public function withMinimumVersion(int $version): self {
@@ -127,6 +128,17 @@ final class ServerTlsContext {
         return $this->capturePeer;
     }
 
+    public function withDefaultCertificate(string $defaultCertificate = null): self {
+        $clone = clone $this;
+        $clone->defaultCertificate = $defaultCertificate;
+
+        return $clone;
+    }
+
+    public function getDefaultCertificate() /* : ?string */ {
+        return $this->defaultCertificate;
+    }
+
     public function withCertificates(array $certificates): self {
         $clone = clone $this;
         $clone->certificates = $certificates;
@@ -139,22 +151,37 @@ final class ServerTlsContext {
     }
 
     public function toStreamContextArray(): array {
-        return ["ssl" => [
+        $options = [
             "crypto_method" => $this->toStreamCryptoMethod(),
             "peer_name" => $this->peerName,
             "verify_peer" => $this->verifyPeer,
             "verify_peer_name" => $this->verifyPeer,
             "verify_depth" => $this->verifyDepth,
-            "cafile" => $this->caFile,
-            "capath" => $this->caPath,
             "ciphers" => $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS,
             "honor_cipher_order" => true,
             "single_dh_use" => true,
             "no_ticket" => true,
             "capture_peer_cert" => $this->capturePeer,
             "capture_peer_chain" => $this->capturePeer,
-            "SNI_server_certs" => $this->certificates,
-        ]];
+        ];
+
+        if ($this->defaultCertificate !== null) {
+            $options["local_cert"] = $this->defaultCertificate;
+        }
+
+        if ($this->certificates) {
+            $options["SNI_server_certs"] = $this->certificates;
+        }
+
+        if ($this->caFile !== null) {
+            $options["cafile"] = $this->caFile;
+        }
+
+        if ($this->caPath !== null) {
+            $options["capath"] = $this->caPath;
+        }
+
+        return ["ssl" => $options];
     }
 
     public function toStreamCryptoMethod(): int {

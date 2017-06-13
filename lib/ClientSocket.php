@@ -10,7 +10,7 @@ use Amp\ByteStream\ResourceOutputStream;
 use Amp\Failure;
 use Amp\Promise;
 
-class Socket implements InputStream, OutputStream {
+class ClientSocket implements InputStream, OutputStream {
     /** @var \Amp\ByteStream\ResourceInputStream */
     private $reader;
 
@@ -44,10 +44,12 @@ class Socket implements InputStream, OutputStream {
      *
      * @return Promise
      */
-    public function enableCrypto(ClientTlsContext $tlsContext): Promise {
+    public function enableCrypto(ClientTlsContext $tlsContext = null): Promise {
         if (($resource = $this->reader->getResource()) === null) {
             return new Failure(new ClosedException("The socket has been closed"));
         }
+
+        $tlsContext = $tlsContext ?? new ClientTlsContext;
 
         return Internal\enableCrypto($resource, $tlsContext->toStreamContextArray());
     }
