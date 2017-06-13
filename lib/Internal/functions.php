@@ -159,7 +159,7 @@ function onCryptoWatchReadability($watcherId, $socket, $data) {
     if ($result === true) {
         Loop::cancel($watcherId);
         $deferred->resolve();
-    } else if ($result === false) {
+    } elseif ($result === false) {
         Loop::cancel($watcherId);
         $deferred->fail(new CryptoException("Crypto negotiation failed: " . (\feof($socket)
                 ? "Connection reset by peer"
@@ -179,8 +179,8 @@ function onCryptoWatchReadability($watcherId, $socket, $data) {
 function normalizeBindToOption(string $bindTo = null) {
     if ($bindTo === null) {
         // all fine
-    } else if (\preg_match("(\\[([0-9a-f.:]+)\\](:\\d+))", $bindTo ?? "", $match)) {
-        list ($ip, $port) = $match;
+    } elseif (\preg_match("(\\[([0-9a-f.:]+)\\](:\\d+))", $bindTo ?? "", $match)) {
+        list($ip, $port) = $match;
 
         if (@\inet_pton($ip) === false) {
             throw new \Error("Invalid IPv6 address: {$ip}");
@@ -194,7 +194,7 @@ function normalizeBindToOption(string $bindTo = null) {
     }
 
     if (\preg_match("((\\d+\\.\\d+\\.\\d+\\.\\d+)(:\\d+))", $bindTo ?? "", $match)) {
-        list ($ip, $port) = $match;
+        list($ip, $port) = $match;
 
         if (@\inet_pton($ip) === false) {
             throw new \Error("Invalid IPv4 address: {$ip}");

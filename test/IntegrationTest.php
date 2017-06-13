@@ -2,8 +2,8 @@
 
 namespace Amp\Socket\Test;
 
-use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ClientSocket;
+use Amp\Socket\ClientTlsContext;
 use PHPUnit\Framework\TestCase;
 
 class IntegrationTest extends TestCase {

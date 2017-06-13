@@ -40,7 +40,7 @@ final class ServerTlsContext {
         return $clone;
     }
 
-    public function getPeerName() /* : ?string */ {
+    public function getPeerName() {
         return $this->peerName;
     }
 
@@ -95,7 +95,7 @@ final class ServerTlsContext {
         return $clone;
     }
 
-    public function getCaFile() /* : ?string */ {
+    public function getCaFile() {
         return $this->caFile;
     }
 
@@ -106,7 +106,7 @@ final class ServerTlsContext {
         return $clone;
     }
 
-    public function getCaPath() /* : ?string */ {
+    public function getCaPath() {
         return $this->caPath;
     }
 
@@ -135,7 +135,7 @@ final class ServerTlsContext {
         return $clone;
     }
 
-    public function getDefaultCertificate() /* : ?string */ {
+    public function getDefaultCertificate() {
         return $this->defaultCertificate;
     }
 

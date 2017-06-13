@@ -2,7 +2,6 @@
 
 namespace Amp\Socket\Test;
 
-use Amp\Delayed;
 use Amp\Loop;
 use Amp\Socket;
 use PHPUnit\Framework\TestCase;

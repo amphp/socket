@@ -19,11 +19,11 @@ final class ServerListenContext {
         return $clone;
     }
 
-    public function getBindTo() /* : ?string */ {
+    public function getBindTo() {
         return $this->bindTo;
     }
 
-    public function getBacklog() /* : ?int */ {
+    public function getBacklog() {
         return $this->backlog;
     }
 

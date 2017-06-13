@@ -39,7 +39,7 @@ final class ClientTlsContext {
         return $clone;
     }
 
-    public function getPeerName() /* : ?string */ {
+    public function getPeerName() {
         return $this->peerName;
     }
 
@@ -94,7 +94,7 @@ final class ClientTlsContext {
         return $clone;
     }
 
-    public function getCaFile() /* : ?string */ {
+    public function getCaFile() {
         return $this->caFile;
     }
 
@@ -105,7 +105,7 @@ final class ClientTlsContext {
         return $clone;
     }
 
-    public function getCaPath() /* : ?string */ {
+    public function getCaPath() {
         return $this->caPath;
     }
 
