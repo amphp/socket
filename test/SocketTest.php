@@ -3,17 +3,20 @@
 namespace Amp\Socket\Test;
 
 use Amp\Loop;
-use Amp\Socket\Socket;
+use Amp\Socket;
 use PHPUnit\Framework\TestCase;
 
 class SocketTest extends TestCase {
     public function testReadAndClose() {
         Loop::run(function () {
             $data = "Testing\n";
-            list($serverSock, $clientSock) = \Amp\Socket\pair();
+
+            list($serverSock, $clientSock) = Socket\pair();
+
             \fwrite($serverSock, $data);
             \fclose($serverSock);
-            $client = new Socket($clientSock);
+
+            $client = new Socket\Socket($clientSock);
 
             while (($chunk = yield $client->read()) !== null) {
                 $this->assertSame($data, $chunk);

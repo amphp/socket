@@ -13,7 +13,7 @@ class ServerTest extends TestCase {
                 $this->assertInstanceOf(Socket\Socket::class, $socket);
             });
 
-            $client = yield Socket\connect("tcp://127.0.0.1:12345");
+            yield Socket\connect("tcp://127.0.0.1:12345");
 
             Loop::delay(100, [$server, 'close']);
         });

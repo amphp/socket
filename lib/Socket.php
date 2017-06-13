@@ -38,50 +38,44 @@ class Socket implements InputStream, OutputStream {
     }
 
     /**
-     * @see \Amp\Socket\enableCrypto()
+     * Enables encryption on this socket.
      *
-     * @param array $options
+     * @param ClientTlsContext $tlsContext
      *
-     * @return \Amp\Promise
+     * @return Promise
      */
-    public function enableCrypto(array $options = []): Promise {
+    public function enableCrypto(ClientTlsContext $tlsContext): Promise {
         if (($resource = $this->reader->getResource()) === null) {
             return new Failure(new ClosedException("The socket has been closed"));
         }
 
-        return enableCrypto($resource, $options);
+        return Internal\enableCrypto($resource, $tlsContext->toStreamContextArray());
     }
 
     /**
-     * @see \Amp\Socket\disableCrypto()
+     * Disables encryption on this socket.
      *
-     * @return \Amp\Promise
+     * @return Promise
      */
     public function disableCrypto(): Promise {
         if (($resource = $this->reader->getResource()) === null) {
             return new Failure(new ClosedException("The socket has been closed"));
         }
 
-        return disableCrypto($resource);
+        return Internal\disableCrypto($resource);
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    /** @inheritdoc */
     public function read(): Promise {
         return $this->reader->read();
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    /** @inheritdoc */
     public function write(string $data): Promise {
         return $this->writer->write($data);
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    /** @inheritdoc */
     public function end(string $data = ""): Promise {
         $promise = $this->writer->end($data);
         $promise->onResolve(function () {
