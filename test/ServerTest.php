@@ -2,12 +2,11 @@
 
 namespace Amp\Socket\Test;
 
-use function Amp\asyncCall;
-use function Amp\asyncCoroutine;
 use Amp\Delayed;
 use Amp\Loop;
 use Amp\Socket;
 use PHPUnit\Framework\TestCase;
+use function Amp\asyncCall;
 
 class ServerTest extends TestCase {
     public function testAccept() {
