@@ -211,7 +211,7 @@ function normalizeBindToOption(string $bindTo = null) {
 }
 
 /**
- * Cleans up return values of stream_socket_get_name
+ * Cleans up return values of stream_socket_get_name.
  *
  * @param string|false $address
  *
