@@ -2,6 +2,9 @@
 
 namespace Amp\Socket\Test;
 
+use function Amp\asyncCall;
+use function Amp\asyncCoroutine;
+use Amp\Delayed;
 use Amp\Loop;
 use Amp\Socket;
 use PHPUnit\Framework\TestCase;
@@ -9,8 +12,12 @@ use PHPUnit\Framework\TestCase;
 class ServerTest extends TestCase {
     public function testAccept() {
         Loop::run(function () {
-            $server = Socket\listen("tcp://127.0.0.1:0", function ($socket) {
-                $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
+            $server = Socket\listen("127.0.0.1:0");
+
+            asyncCall(function () use ($server) {
+                while ($socket = yield $server->accept()) {
+                    $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
+                }
             });
 
             yield Socket\connect($server->getAddress());
@@ -21,12 +28,20 @@ class ServerTest extends TestCase {
 
     public function testTls() {
         Loop::run(function () {
-            $server = Socket\listen("tcp://127.0.0.1:0", function (Socket\ServerSocket $socket) {
-                yield $socket->enableCrypto();
-                $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
-                $this->assertSame("Hello World", yield $socket->read());
-                $socket->write("test");
-            }, null, (new Socket\ServerTlsContext)->withDefaultCertificate(__DIR__ . "/tls/amphp.org.pem"));
+            $tlsContext = (new Socket\ServerTlsContext)->withDefaultCertificate(__DIR__ . "/tls/amphp.org.pem");
+            $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
+
+            asyncCall(function () use ($server) {
+                /** @var Socket\ServerSocket $socket */
+                while ($socket = yield $server->accept()) {
+                    asyncCall(function () use ($socket) {
+                        yield $socket->enableCrypto();
+                        $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
+                        $this->assertSame("Hello World", yield $socket->read());
+                        $socket->write("test");
+                    });
+                }
+            });
 
             $context = (new Socket\ClientTlsContext)
                 ->withPeerName("amphp.org")
@@ -46,12 +61,20 @@ class ServerTest extends TestCase {
 
     public function testSniWorksWithCorrectHostName() {
         Loop::run(function () {
-            $server = Socket\listen("tcp://127.0.0.1:0", function (Socket\ServerSocket $socket) {
-                yield $socket->enableCrypto();
-                $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
-                $this->assertSame("Hello World", yield $socket->read());
-                $socket->write("test");
-            }, null, (new Socket\ServerTlsContext)->withCertificates(["amphp.org" => __DIR__ . "/tls/amphp.org.pem"]));
+            $tlsContext = (new Socket\ServerTlsContext)->withCertificates(["amphp.org" => __DIR__ . "/tls/amphp.org.pem"]);
+            $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
+
+            asyncCall(function () use ($server) {
+                /** @var Socket\ServerSocket $socket */
+                while ($socket = yield $server->accept()) {
+                    asyncCall(function () use ($socket) {
+                        yield $socket->enableCrypto();
+                        $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
+                        $this->assertSame("Hello World", yield $socket->read());
+                        $socket->write("test");
+                    });
+                }
+            });
 
             $context = (new Socket\ClientTlsContext)
                 ->withPeerName("amphp.org")
@@ -71,14 +94,24 @@ class ServerTest extends TestCase {
 
     public function testSniWorksWithMultipleCertificates() {
         Loop::run(function () {
-            $server = Socket\listen("tcp://127.0.0.1:0", function (Socket\ServerSocket $socket) {
-                yield $socket->enableCrypto();
-                $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
-                $this->assertSame("Hello World", yield $socket->read());
-            }, null, (new Socket\ServerTlsContext)->withCertificates([
+            $tlsContext = (new Socket\ServerTlsContext)->withCertificates([
                 "amphp.org" => __DIR__ . "/tls/amphp.org.pem",
                 "www.amphp.org" => __DIR__ . "/tls/www.amphp.org.pem",
-            ]));
+            ]);
+
+            $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
+
+            asyncCall(function () use ($server) {
+                /** @var Socket\ServerSocket $socket */
+                while ($socket = yield $server->accept()) {
+                    asyncCall(function () use ($socket) {
+                        yield $socket->enableCrypto();
+                        $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
+                        $this->assertSame("Hello World", yield $socket->read());
+                        $socket->write("test");
+                    });
+                }
+            });
 
             $context = (new Socket\ClientTlsContext)
                 ->withPeerName("amphp.org")
@@ -96,8 +129,8 @@ class ServerTest extends TestCase {
             $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
             yield $client->write("Hello World");
 
+            yield new Delayed(1);
             $server->close();
-
             Loop::stop();
         });
     }

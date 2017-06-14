@@ -2,8 +2,10 @@
 
 namespace Amp\Socket;
 
+use Amp\Deferred;
 use Amp\Loop;
-use function Amp\asyncCoroutine;
+use Amp\Promise;
+use Amp\Success;
 use function Amp\Socket\Internal\cleanupSocketName;
 
 class Server {
@@ -16,32 +18,54 @@ class Server {
     /** @var string|null Stream socket name */
     private $address;
 
+    /** @var int */
+    private $chunkSize;
+
+    /** @var Deferred */
+    private $acceptor;
+
     /**
      * @param resource $socket A bound socket server resource
-     * @param callable(\Amp\Socket\Socket $socket): mixed Callback invoked when a connection is accepted. Generators
-     *     returned will be run as a coroutine. Promise failures will be rethrown to the event loop handler.
-     *     {@see \Amp\asyncCoroutine()}.
+     * @param int      $chunkSize Chunk size for the input and output stream.
      *
      * @throws \Error If a stream resource is not given for $socket.
      */
-    public function __construct($socket, callable $handler, int $chunkSize = 65536) {
+    public function __construct($socket, int $chunkSize = 65536) {
         if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
         }
 
         $this->socket = $socket;
-        \stream_set_blocking($this->socket, false);
-
+        $this->chunkSize = $chunkSize;
         $this->address = cleanupSocketName(@\stream_socket_get_name($this->socket, false));
 
-        $handler = asyncCoroutine($handler);
+        \stream_set_blocking($this->socket, false);
 
-        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use ($handler, $chunkSize) {
+        $this->watcher = Loop::onReadable($this->socket, function ($watcher, $socket) {
+            $acceptor = $this->acceptor;
+            $this->acceptor = null;
+
+            // Always disabling is safe, other clients get still accepted within the same tick, because accept tries an
+            // immediate accept.
+            Loop::disable($watcher);
+
             // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
-            while ($client = @\stream_socket_accept($socket, 0)) { // Timeout of 0 to be non-blocking.
-                $handler(new ServerSocket($client, $chunkSize));
-            }
+            $acceptor->resolve(new ServerSocket(@\stream_socket_accept($socket, 0), $this->chunkSize)); // Timeout of 0 to be non-blocking.
         });
+
+        Loop::disable($this->watcher);
+    }
+
+    public function accept(): Promise {
+        // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
+        if ($client = @\stream_socket_accept($this->socket, 0)) { // Timeout of 0 to be non-blocking.
+            return new Success(new ServerSocket($client, $this->chunkSize));
+        }
+
+        $this->acceptor = new Deferred;
+        Loop::enable($this->watcher);
+
+        return $this->acceptor->promise();
     }
 
     /**
@@ -49,6 +73,11 @@ class Server {
      */
     public function close() {
         Loop::cancel($this->watcher);
+
+        if ($this->acceptor) {
+            $this->acceptor->resolve(null);
+            $this->acceptor = null;
+        }
 
         if ($this->socket) {
             \fclose($this->socket);
