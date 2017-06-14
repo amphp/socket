@@ -18,20 +18,15 @@ class ServerSocket implements InputStream, OutputStream {
     /** @var \Amp\ByteStream\ResourceOutputStream */
     private $writer;
 
-    /** @var ServerTlsContext */
-    private $tlsContext;
-
     /**
      * @param resource         $resource Stream resource.
      * @param int              $chunkSize Read and write chunk size.
-     * @param ServerTlsContext $tlsContext Same TLS options used when creating the server socket.
      *
      * @throws \Error If a stream resource is not given for $resource.
      */
-    public function __construct($resource, int $chunkSize = 65536, ServerTlsContext $tlsContext) {
+    public function __construct($resource, int $chunkSize = 65536) {
         $this->reader = new ResourceInputStream($resource, $chunkSize);
         $this->writer = new ResourceOutputStream($resource, $chunkSize);
-        $this->tlsContext = $tlsContext;
     }
 
     /**
@@ -53,7 +48,7 @@ class ServerSocket implements InputStream, OutputStream {
             return new Failure(new ClosedException("The socket has been closed"));
         }
 
-        return Internal\enableCrypto($resource, $this->tlsContext);
+        return Internal\enableCrypto($resource, [], true);
     }
 
     /**
