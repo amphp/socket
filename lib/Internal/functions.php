@@ -61,6 +61,7 @@ function parseUri(string $uri): array {
  *
  * @param resource $socket
  * @param array    $options
+ * @param bool     $force Forces enabling without prior disabling if already enabled.
  *
  * @return Promise
  *
@@ -68,10 +69,10 @@ function parseUri(string $uri): array {
  *
  * @internal
  */
-function enableCrypto($socket, array $options = []): Promise {
+function enableCrypto($socket, array $options = [], bool $force = false): Promise {
     $ctx = \stream_context_get_options($socket);
 
-    if (!empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
+    if (!$force && !empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
         $cmp = array_merge($ctx["ssl"], $options["ssl"] ?? []);
         $ctx = $ctx['ssl'];
 

@@ -45,7 +45,7 @@ function listen(string $uri, callable $handler, ServerListenContext $socketConte
         throw new SocketException(\sprintf("Could not create server %s: [Error: #%d] %s", $uri, $errno, $errstr));
     }
 
-    return new Server($server, $handler);
+    return new Server($server, $handler, 65536, $tlsContext);
 }
 
 /**
