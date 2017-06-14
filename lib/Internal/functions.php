@@ -209,3 +209,19 @@ function normalizeBindToOption(string $bindTo = null) {
 
     throw new \Error("Invalid bindTo value: {$bindTo}");
 }
+
+/**
+ * Cleans up return values of stream_socket_get_name
+ *
+ * @param string|false $address
+ *
+ * @return string|null
+ */
+function cleanupSocketName($address) {
+    // https://3v4l.org/5C1lo
+    if ($address === false || $address === "\0") {
+        return null;
+    }
+
+    return $address;
+}
