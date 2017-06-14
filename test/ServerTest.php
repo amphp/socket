@@ -9,11 +9,11 @@ use PHPUnit\Framework\TestCase;
 class ServerTest extends TestCase {
     public function testAccept() {
         Loop::run(function () {
-            $server = Socket\listen("tcp://127.0.0.1:12345", function ($socket) {
+            $server = Socket\listen("tcp://127.0.0.1:0", function ($socket) {
                 $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
             });
 
-            yield Socket\connect("tcp://127.0.0.1:12345");
+            yield Socket\connect($server->getAddress());
 
             Loop::delay(100, [$server, 'close']);
         });
@@ -21,7 +21,7 @@ class ServerTest extends TestCase {
 
     public function testTls() {
         Loop::run(function () {
-            $server = Socket\listen("tcp://127.0.0.1:12345", function (Socket\ServerSocket $socket) {
+            $server = Socket\listen("tcp://127.0.0.1:0", function (Socket\ServerSocket $socket) {
                 yield $socket->enableCrypto();
                 $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
                 $this->assertSame("Hello World", yield $socket->read());
@@ -33,7 +33,7 @@ class ServerTest extends TestCase {
                 ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect("tcp://127.0.0.1:12345", null, $context);
+            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
             yield $client->write("Hello World");
 
             $this->assertSame("test", yield $client->read());
@@ -46,7 +46,7 @@ class ServerTest extends TestCase {
 
     public function testSniWorksWithCorrectHostName() {
         Loop::run(function () {
-            $server = Socket\listen("tcp://127.0.0.1:12345", function (Socket\ServerSocket $socket) {
+            $server = Socket\listen("tcp://127.0.0.1:0", function (Socket\ServerSocket $socket) {
                 yield $socket->enableCrypto();
                 $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
                 $this->assertSame("Hello World", yield $socket->read());
@@ -58,7 +58,7 @@ class ServerTest extends TestCase {
                 ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect("tcp://127.0.0.1:12345", null, $context);
+            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
             yield $client->write("Hello World");
 
             $this->assertSame("test", yield $client->read());
@@ -71,7 +71,7 @@ class ServerTest extends TestCase {
 
     public function testSniWorksWithMultipleCertificates() {
         Loop::run(function () {
-            $server = Socket\listen("tcp://127.0.0.1:12345", function (Socket\ServerSocket $socket) {
+            $server = Socket\listen("tcp://127.0.0.1:0", function (Socket\ServerSocket $socket) {
                 yield $socket->enableCrypto();
                 $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
                 $this->assertSame("Hello World", yield $socket->read());
@@ -85,7 +85,7 @@ class ServerTest extends TestCase {
                 ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect("tcp://127.0.0.1:12345", null, $context);
+            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
             yield $client->write("Hello World");
 
             $context = (new Socket\ClientTlsContext)
@@ -93,7 +93,7 @@ class ServerTest extends TestCase {
                 ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect("tcp://127.0.0.1:12345", null, $context);
+            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
             yield $client->write("Hello World");
 
             $server->close();
