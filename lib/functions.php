@@ -23,11 +23,15 @@ use function Amp\call;
  *
  * @see rawListen()
  */
-function listen(string $uri, callable $handler, ServerListenContext $socketContext = null, ServerTlsContext $tlsContext = null): Server {
+function listen(string $uri, ServerListenContext $socketContext = null, ServerTlsContext $tlsContext = null): Server {
     $socketContext = $socketContext ?? new ServerListenContext;
     $tlsContext = $tlsContext ?? new ServerTlsContext;
 
     $scheme = \strstr($uri, "://", true);
+
+    if ($scheme === false) {
+        $scheme = "tcp";
+    }
 
     if (!\in_array($scheme, ["tcp", "udp", "unix", "udg"])) {
         throw new \Error("Only tcp, udp, unix and udg schemes allowed for server creation");
@@ -45,7 +49,7 @@ function listen(string $uri, callable $handler, ServerListenContext $socketConte
         throw new SocketException(\sprintf("Could not create server %s: [Error: #%d] %s", $uri, $errno, $errstr));
     }
 
-    return new Server($server, $handler, 65536, $tlsContext);
+    return new Server($server, 65536);
 }
 
 /**
