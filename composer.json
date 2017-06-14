@@ -38,6 +38,7 @@
         "amphp/byte-stream": "dev-master as 0.1"
     },
     "require-dev": {
+        "amphp/phpunit-util": "dev-master",
         "phpunit/phpunit": "^6",
         "friendsofphp/php-cs-fixer": "^2.3"
     },

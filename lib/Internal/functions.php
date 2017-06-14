@@ -68,27 +68,12 @@ function parseUri(string $uri): array {
  *
  * @internal
  */
-function enableCrypto($socket, array $options): Promise {
-    if (!isset($options["ssl"]["crypto_method"])) {
-        throw new \Error("'crypto_method' option is a required parameter");
-    }
-
+function enableCrypto($socket, array $options = []): Promise {
     $ctx = \stream_context_get_options($socket);
 
     if (!empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
-        $cmp = $options["ssl"];
+        $cmp = array_merge($ctx["ssl"], $options["ssl"] ?? []);
         $ctx = $ctx['ssl'];
-
-        unset(
-            $ctx['peer_certificate'],
-            $cmp['peer_certificate'],
-            $ctx['peer_certificate_chain'],
-            $cmp['peer_certificate_chain'],
-            $ctx['SNI_server_name'],
-            $cmp['SNI_server_name'],
-            $ctx['_enabled'],
-            $cmp['_enabled']
-        );
 
         // Use weak comparison so the order of the items doesn't matter
         if ($ctx == $cmp) {
@@ -106,7 +91,7 @@ function enableCrypto($socket, array $options): Promise {
     \error_clear_last();
 
     \stream_context_set_option($socket, $options);
-    $result = \stream_socket_enable_crypto($socket, $enable = true, $options["ssl"]["crypto_method"]);
+    $result = \stream_socket_enable_crypto($socket, $enable = true);
 
     // Yes, that function can return true / false / 0, don't use weak comparisons.
     if ($result === true) {
@@ -119,7 +104,7 @@ function enableCrypto($socket, array $options): Promise {
 
     $deferred = new Deferred;
 
-    Loop::onReadable($socket, 'Amp\Socket\Internal\onCryptoWatchReadability', [$deferred, $options]);
+    Loop::onReadable($socket, 'Amp\Socket\Internal\onCryptoWatchReadability', $deferred);
 
     return $deferred->promise();
 }
@@ -146,14 +131,10 @@ function disableCrypto($socket): Promise {
  *
  * @param string   $watcherId
  * @param resource $socket
- * @param array    $data
+ * @param Deferred $deferred
  */
-function onCryptoWatchReadability($watcherId, $socket, $data) {
-    /** @var Deferred $deferred */
-    /** @var array $options */
-    list($deferred, $options) = $data;
-
-    $result = \stream_socket_enable_crypto($socket, $enable = true, $options["ssl"]["crypto_method"]);
+function onCryptoWatchReadability($watcherId, $socket, Deferred $deferred) {
+    $result = \stream_socket_enable_crypto($socket, $enable = true);
 
     // If $result is 0, just wait for the next invocation
     if ($result === true) {
