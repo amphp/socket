@@ -5,9 +5,7 @@
 ![Unstable](https://img.shields.io/badge/api-unstable-orange.svg?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)
 
-
-`amphp/socket` is a socket lib for establishing and encrypting non-blocking sockets in the [`amp`](https://github.com/amphp/amp)
-concurrency framework.
+`amphp/socket` is a socket library for establishing and encrypting non-blocking sockets for [Amp](https://github.com/amphp/amp).
 
 **Required PHP Version**
 
@@ -16,38 +14,29 @@ concurrency framework.
 **Installation**
 
 ```bash
-$ composer require amphp/socket: dev-master
+composer require amphp/socket
 ```
 
 **Example**
 
 ```php
-<?php // basic server
+<?php // basic server, see examples/simple-http-server.php
 
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
-use Amp as amp;
-use Amp\Socket as socket;
+use Amp\Loop;
+use Amp\Socket\ServerSocket;
 
-amp\execute(function () {
-    $socket = socket\listen("tcp://127.0.0.1:1337");
-    $server = new socket\Server($socket);
-    echo "listening for new connections ...\n";
-    while ($client = yield $server->accept()) {
-        new amp\Coroutine(onClient($client));
-    }
+Loop::run(function () {
+    $server = Amp\Socket\listen("tcp://127.0.0.1:0", function (ServerSocket $socket) {
+        list($ip, $port) = explode(":", $socket->getRemoteAddress());
+
+        $body = "Hey, your IP is {$ip} and your local port used is {$port}.";
+        $bodyLength = \strlen($body);
+
+        yield $socket->end("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}");
+    });
+
+    echo "Listening for new connections on " . $server->getAddress() . " ...\n";
 });
-
-// Generator coroutine is a lightweight "thread" for each client
-function onClient(socket\Client $client) {
-    $clientId = $client->id();
-    echo "+ connected: {$clientId}\n";
-    while ($client->alive()) {
-        $data = yield $client->readLine();
-        echo "data read from {$clientId}: {$data}\n";
-        $bytes = yield $client->write("echo: {$data}\n");
-        echo  "{$bytes} written to client {$clientId}\n";
-    }
-    echo "- disconnected {$clientId}\n";
-}
 ```

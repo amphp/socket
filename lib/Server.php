@@ -4,6 +4,7 @@ namespace Amp\Socket;
 
 use Amp\Loop;
 use function Amp\asyncCoroutine;
+use function Amp\Socket\Internal\cleanupSocketName;
 
 class Server {
     /** @var resource Stream socket server resource. */
@@ -11,6 +12,9 @@ class Server {
 
     /** @var string Watcher ID. */
     private $watcher;
+
+    /** @var string|null Stream socket name */
+    private $address;
 
     /**
      * @param resource $socket A bound socket server resource
@@ -27,6 +31,8 @@ class Server {
 
         $this->socket = $socket;
         \stream_set_blocking($this->socket, false);
+
+        $this->address = cleanupSocketName(@\stream_socket_get_name($this->socket, false));
 
         $handler = asyncCoroutine($handler);
 
@@ -49,5 +55,9 @@ class Server {
         }
 
         $this->socket = null;
+    }
+
+    public function getAddress() {
+        return $this->address;
     }
 }

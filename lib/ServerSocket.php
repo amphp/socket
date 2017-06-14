@@ -9,6 +9,7 @@ use Amp\ByteStream\ResourceInputStream;
 use Amp\ByteStream\ResourceOutputStream;
 use Amp\Failure;
 use Amp\Promise;
+use function Amp\Socket\Internal\cleanupSocketName;
 
 class ServerSocket implements InputStream, OutputStream {
     /** @var \Amp\ByteStream\ResourceInputStream */
@@ -93,5 +94,13 @@ class ServerSocket implements InputStream, OutputStream {
     public function close() {
         $this->reader->close();
         $this->writer->close();
+    }
+
+    public function getLocalAddress() {
+        return cleanupSocketName(@\stream_socket_get_name($this->getResource(), false));
+    }
+
+    public function getRemoteAddress() {
+        return cleanupSocketName(@\stream_socket_get_name($this->getResource(), true));
     }
 }
