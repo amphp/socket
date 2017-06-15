@@ -6,7 +6,6 @@ use Amp\Deferred;
 use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
-use function Amp\Socket\Internal\cleanupSocketName;
 
 class Server {
     /** @var resource Stream socket server resource. */
@@ -21,7 +20,7 @@ class Server {
     /** @var int */
     private $chunkSize;
 
-    /** @var Deferred */
+    /** @var Deferred|null */
     private $acceptor;
 
     /**
@@ -37,26 +36,43 @@ class Server {
 
         $this->socket = $socket;
         $this->chunkSize = $chunkSize;
-        $this->address = cleanupSocketName(@\stream_socket_get_name($this->socket, false));
+        $this->address = Internal\cleanupSocketName(@\stream_socket_get_name($this->socket, false));
 
         \stream_set_blocking($this->socket, false);
 
-        $this->watcher = Loop::onReadable($this->socket, function ($watcher, $socket) {
-            $acceptor = $this->acceptor;
-            $this->acceptor = null;
-
-            // Always disabling is safe, other clients get still accepted within the same tick, because accept tries an
-            // immediate accept.
-            Loop::disable($watcher);
-
+        $acceptor = &$this->acceptor;
+        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (&$acceptor, $chunkSize) {
             // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
-            $acceptor->resolve(new ServerSocket(@\stream_socket_accept($socket, 0), $this->chunkSize)); // Timeout of 0 to be non-blocking.
+            if (!$client = @\stream_socket_accept($socket, 0)) {  // Timeout of 0 to be non-blocking.
+                return; // Accepting client failed.
+            }
+
+            $deferred = $acceptor;
+            $acceptor = null;
+            $deferred->resolve(new ServerSocket($client, $chunkSize));
+
+            if (!$acceptor) {
+                Loop::disable($watcher);
+            }
         });
 
         Loop::disable($this->watcher);
     }
 
+    /**
+     * @return \Amp\Promise<ServerSocket|null>
+     *
+     * @throws \Amp\Socket\PendingAcceptError If another accept request is pending.
+     */
     public function accept(): Promise {
+        if ($this->acceptor) {
+            throw new PendingAcceptError;
+        }
+
+        if (!$this->socket) {
+            return new Success; // Resolve with null when server is closed.
+        }
+
         // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
         if ($client = @\stream_socket_accept($this->socket, 0)) { // Timeout of 0 to be non-blocking.
             return new Success(new ServerSocket($client, $this->chunkSize));
@@ -74,16 +90,16 @@ class Server {
     public function close() {
         Loop::cancel($this->watcher);
 
-        if ($this->acceptor) {
-            $this->acceptor->resolve(null);
-            $this->acceptor = null;
-        }
-
         if ($this->socket) {
             \fclose($this->socket);
         }
 
         $this->socket = null;
+
+        if ($this->acceptor) {
+            $this->acceptor->resolve();
+            $this->acceptor = null;
+        }
     }
 
     public function getAddress() {
