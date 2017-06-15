@@ -60,6 +60,17 @@ class Server {
     }
 
     /**
+     * Automatically cancels the loop watcher.
+     */
+    public function __destruct() {
+        if (!$this->socket) {
+            return;
+        }
+
+        $this->free();
+    }
+
+    /**
      * @return \Amp\Promise<ServerSocket|null>
      *
      * @throws \Amp\Socket\PendingAcceptError If another accept request is pending.
@@ -88,11 +99,22 @@ class Server {
      * Closes the server and stops accepting connections. Any socket clients accepted will not be closed.
      */
     public function close() {
-        Loop::cancel($this->watcher);
-
         if ($this->socket) {
             \fclose($this->socket);
         }
+
+        $this->free();
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getAddress() {
+        return $this->address;
+    }
+
+    private function free() {
+        Loop::cancel($this->watcher);
 
         $this->socket = null;
 
@@ -100,9 +122,5 @@ class Server {
             $this->acceptor->resolve();
             $this->acceptor = null;
         }
-    }
-
-    public function getAddress() {
-        return $this->address;
     }
 }
