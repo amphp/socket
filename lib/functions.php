@@ -14,14 +14,13 @@ use function Amp\call;
 /**
  * Listen for client connections on the specified server address.
  *
- * @param string              $uri
- * @param callable            $handler callable(Socket): mixed
- * @param ServerListenContext $socketContext
- * @param ServerTlsContext    $tlsContext
+ * If you want to accept TLS connections, you have to use `yield $socket->enableCrypto()` after accepting new clients.
+ *
+ * @param string              $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param ServerListenContext $socketContext Context options for listening.
+ * @param ServerTlsContext    $tlsContext Context options for TLS connections.
  *
  * @return Server
- *
- * @see rawListen()
  */
 function listen(string $uri, ServerListenContext $socketContext = null, ServerTlsContext $tlsContext = null): Server {
     $socketContext = $socketContext ?? new ServerListenContext;
@@ -55,14 +54,11 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
 /**
  * Asynchronously establish a socket connection to the specified URI.
  *
- * If a scheme is not specified in the $uri parameter, TCP is assumed. Allowed schemes include:
- * [tcp, udp, unix, udg].
- *
- * @param string                 $uri
- * @param ClientConnectContext   $socketContext
+ * @param string                 $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param ClientConnectContext   $socketContext Socket connect context to use when connecting.
  * @param CancellationToken|null $token
  *
- * @return \Amp\Promise<\Amp\Socket\Socket>
+ * @return Promise<\Amp\Socket\ClientSocket>
  */
 function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise {
     return call(function () use ($uri, $socketContext, $token) {
