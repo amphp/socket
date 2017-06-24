@@ -75,11 +75,12 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
         } else {
             // Host is not an IP address, so resolve the domain name.
             $records = yield Dns\resolve($host);
-            foreach ($records as list($ip, $type)) {
-                if ($type === Dns\Record::AAAA) {
-                    $uris[] = \sprintf("%s://[%s]:%d", $scheme, $ip, $port);
+            foreach ($records as $record) {
+                /** @var Dns\Record $record */
+                if ($record->getType() === Dns\Record::AAAA) {
+                    $uris[] = \sprintf("%s://[%s]:%d", $scheme, $record->getValue(), $port);
                 } else {
-                    $uris[] = \sprintf("%s://%s:%d", $scheme, $ip, $port);
+                    $uris[] = \sprintf("%s://%s:%d", $scheme, $record->getValue(), $port);
                 }
             }
         }

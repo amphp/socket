@@ -9,9 +9,10 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Struct;
 use Amp\Success;
+use Amp\Uri\Uri;
 use function Amp\call;
 
-final class DefaultSocketPool implements SocketPool {
+final class BasicSocketPool implements SocketPool {
     private $sockets = [];
     private $socketIdUriMap = [];
     private $pendingCount = [];
@@ -25,8 +26,11 @@ final class DefaultSocketPool implements SocketPool {
     }
 
     private function normalizeUri(string $uri): string {
-        // TODO: Use proper normalization
-        return stripos($uri, 'unix://') === 0 ? $uri : strtolower($uri);
+        if (stripos($uri, 'unix://') === 0) {
+            return $uri;
+        }
+
+        return (new Uri($uri))->normalize();
     }
 
     /** @inheritdoc */
