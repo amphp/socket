@@ -65,7 +65,7 @@ final class BasicSocketPool implements SocketPool {
                 Loop::disable($socket->idleWatcher);
             }
 
-            return new Success($socket->resource);
+            return new Success(new ClientSocket($socket->resource));
         }
 
         return $this->checkoutNewSocket($uri, $token);
@@ -98,7 +98,7 @@ final class BasicSocketPool implements SocketPool {
 
             $socket->id = $socketId;
             $socket->uri = $uri;
-            $socket->resource = $rawSocket;
+            $socket->resource = $rawSocket->getResource();
             $socket->isAvailable = false;
 
             $this->sockets[$uri][$socketId] = $socket;
@@ -159,7 +159,7 @@ final class BasicSocketPool implements SocketPool {
             Loop::enable($socket->idleWatcher);
         } else {
             $socket->idleWatcher = Loop::delay($this->idleTimeout, function () use ($socket) {
-                $this->clear($socket->resource);
+                $this->clear(new ClientSocket($socket->resource));
             });
 
             Loop::unreference($socket->idleWatcher);
