@@ -6,11 +6,10 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Amp\ByteStream\ResourceOutputStream;
 use Amp\Loop;
-use function Amp\asyncCoroutine;
-use function Amp\Socket\connect;
-use function Amp\Socket\cryptoConnect;
 use Amp\Socket\Socket;
 use Amp\Uri\Uri;
+use function Amp\Socket\connect;
+use function Amp\Socket\cryptoConnect;
 
 Loop::run(function () use ($argv) {
     $stdout = new ResourceOutputStream(STDOUT);
