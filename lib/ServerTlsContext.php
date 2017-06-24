@@ -7,15 +7,34 @@ final class ServerTlsContext {
     const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_SERVER;
     const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_SERVER;
 
+    /** @var int */
     private $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
+
+    /** @var null|string */
     private $peerName = null;
+
+    /** @var bool */
     private $verifyPeer = false;
+
+    /** @var int */
     private $verifyDepth = 10;
+
+    /** @var null|string */
     private $ciphers = null;
+
+    /** @var null|string */
     private $caFile = null;
+
+    /** @var null|string */
     private $caPath = null;
+
+    /** @var bool */
     private $capturePeer = false;
+
+    /** @var null|Certificate */
     private $defaultCertificate = null;
+
+    /** @var Certificate[] */
     private $certificates = [];
 
     public function withMinimumVersion(int $version): self {
@@ -128,7 +147,7 @@ final class ServerTlsContext {
         return $this->capturePeer;
     }
 
-    public function withDefaultCertificate(string $defaultCertificate = null): self {
+    public function withDefaultCertificate(Certificate $defaultCertificate = null): self {
         $clone = clone $this;
         $clone->defaultCertificate = $defaultCertificate;
 
@@ -140,6 +159,19 @@ final class ServerTlsContext {
     }
 
     public function withCertificates(array $certificates): self {
+        foreach ($certificates as $certificate) {
+            if (!$certificate instanceof Certificate) {
+                throw new \TypeError("Expected an array of Certificate instances");
+            }
+
+            if ($certificate->getCertFile() !== $certificate->getKeyFile()) {
+                throw new \Error(
+                    "Different files for cert and key are not supported on this version of PHP. " .
+                    "It's a planned feature for PHP 7.2."
+                );
+            }
+        }
+
         $clone = clone $this;
         $clone->certificates = $certificates;
 
@@ -166,11 +198,17 @@ final class ServerTlsContext {
         ];
 
         if ($this->defaultCertificate !== null) {
-            $options["local_cert"] = $this->defaultCertificate;
+            $options["local_cert"] = $this->defaultCertificate->getCertFile();
+
+            if ($this->defaultCertificate->getCertFile() !== $this->defaultCertificate->getKeyFile()) {
+                $options["local_pk"] = $this->defaultCertificate->getKeyFile();
+            }
         }
 
         if ($this->certificates) {
-            $options["SNI_server_certs"] = $this->certificates;
+            $options["SNI_server_certs"] = array_map(function (Certificate $certificate) {
+                return $certificate->getCertFile();
+            }, $this->certificates);
         }
 
         if ($this->caFile !== null) {

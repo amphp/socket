@@ -27,7 +27,8 @@ class ServerTest extends TestCase {
 
     public function testTls() {
         Loop::run(function () {
-            $tlsContext = (new Socket\ServerTlsContext)->withDefaultCertificate(__DIR__ . "/tls/amphp.org.pem");
+            $tlsContext = (new Socket\ServerTlsContext)
+                ->withDefaultCertificate(new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem"));
             $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
 
             asyncCall(function () use ($server) {
@@ -60,7 +61,8 @@ class ServerTest extends TestCase {
 
     public function testSniWorksWithCorrectHostName() {
         Loop::run(function () {
-            $tlsContext = (new Socket\ServerTlsContext)->withCertificates(["amphp.org" => __DIR__ . "/tls/amphp.org.pem"]);
+            $tlsContext = (new Socket\ServerTlsContext)
+                ->withCertificates(["amphp.org" => new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem")]);
             $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
 
             asyncCall(function () use ($server) {
@@ -94,8 +96,8 @@ class ServerTest extends TestCase {
     public function testSniWorksWithMultipleCertificates() {
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)->withCertificates([
-                "amphp.org" => __DIR__ . "/tls/amphp.org.pem",
-                "www.amphp.org" => __DIR__ . "/tls/www.amphp.org.pem",
+                "amphp.org" => new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem"),
+                "www.amphp.org" => new Socket\Certificate(__DIR__ . "/tls/www.amphp.org.pem"),
             ]);
 
             $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
