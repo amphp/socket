@@ -28,7 +28,7 @@ class ServerTest extends TestCase {
     public function testTls() {
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
-                ->withDefaultCertificate(new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem"));
+                ->withDefaultCertificate(new Socket\Certificate(__DIR__ . "/tls/amphp.org.sha256.pem"));
             $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
 
             asyncCall(function () use ($server) {
@@ -45,7 +45,7 @@ class ServerTest extends TestCase {
 
             $context = (new Socket\ClientTlsContext)
                 ->withPeerName("amphp.org")
-                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+                ->withCaFile(__DIR__ . "/tls/ca.crt");
 
             /** @var Socket\ClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
@@ -62,7 +62,7 @@ class ServerTest extends TestCase {
     public function testSniWorksWithCorrectHostName() {
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
-                ->withCertificates(["amphp.org" => new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem")]);
+                ->withCertificates(["amphp.org" => new Socket\Certificate(__DIR__ . "/tls/amphp.org.sha256.pem")]);
             $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
 
             asyncCall(function () use ($server) {
@@ -79,7 +79,7 @@ class ServerTest extends TestCase {
 
             $context = (new Socket\ClientTlsContext)
                 ->withPeerName("amphp.org")
-                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+                ->withCaFile(__DIR__ . "/tls/ca.crt");
 
             /** @var Socket\ClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
@@ -96,8 +96,8 @@ class ServerTest extends TestCase {
     public function testSniWorksWithMultipleCertificates() {
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)->withCertificates([
-                "amphp.org" => new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem"),
-                "www.amphp.org" => new Socket\Certificate(__DIR__ . "/tls/www.amphp.org.pem"),
+                "amphp.org" => new Socket\Certificate(__DIR__ . "/tls/amphp.org.sha256.pem"),
+                "www.amphp.org" => new Socket\Certificate(__DIR__ . "/tls/www.amphp.org.sha256.pem"),
             ]);
 
             $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
@@ -116,7 +116,7 @@ class ServerTest extends TestCase {
 
             $context = (new Socket\ClientTlsContext)
                 ->withPeerName("amphp.org")
-                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+                ->withCaFile(__DIR__ . "/tls/ca.crt");
 
             /** @var Socket\ClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
@@ -124,7 +124,7 @@ class ServerTest extends TestCase {
 
             $context = (new Socket\ClientTlsContext)
                 ->withPeerName("www.amphp.org")
-                ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt");
+                ->withCaFile(__DIR__ . "/tls/ca.crt");
 
             /** @var Socket\ClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
