@@ -175,15 +175,10 @@ function validateCertificateSignatureAlgorithms($socket) {
         foreach ($certs as $i => $cert) {
             $cert = new Certificate($cert);
 
-            if ($i === \count($certs) - 1) {
-                // Ignore signature type of the last certificate, it's always the trusted certificate
-                continue;
-            }
-
             // e.g. RSA-MD5, covers also other types than RSA
             $algs = \explode("-", $cert->getSignatureType());
 
-            if (\count($algs) === 2 && in_array($algs[1], ["RSA-SHA1", "RSA-MD5"], true)) {
+            if (\count($algs) === 2 && in_array($algs[1], ["SHA1", "MD5"], true)) {
                 @\fclose($socket);
 
                 throw new CryptoException(\sprintf(
