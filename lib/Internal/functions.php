@@ -8,6 +8,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Socket\CryptoException;
 use Amp\Success;
+use Kelunik\Certificate\Certificate;
 use function Amp\call;
 
 /**
@@ -71,6 +72,9 @@ function parseUri(string $uri): array {
  */
 function enableCrypto($socket, array $options = [], bool $force = false): Promise {
     $ctx = \stream_context_get_options($socket);
+
+    $options["ssl"]["capture_peer_cert"] = true;
+    $options["ssl"]["capture_peer_cert_chain"] = true;
 
     if (!$force && !empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
         $cmp = array_merge($ctx["ssl"], $options["ssl"] ?? []);
