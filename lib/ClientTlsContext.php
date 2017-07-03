@@ -154,7 +154,7 @@ final class ClientTlsContext {
             "verify_depth" => $this->verifyDepth,
             "ciphers" => $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS,
             "capture_peer_cert" => $this->capturePeer,
-            "capture_peer_chain" => $this->capturePeer,
+            "capture_peer_cert_chain" => $this->capturePeer,
             "SNI_enabled" => $this->sniEnabled,
         ];
 
