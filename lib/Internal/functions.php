@@ -96,7 +96,7 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
     \error_clear_last();
 
     \stream_context_set_option($socket, $options);
-    $result = \stream_socket_enable_crypto($socket, $enable = true);
+    $result = @\stream_socket_enable_crypto($socket, $enable = true);
 
     // Yes, that function can return true / false / 0, don't use weak comparisons.
     if ($result === true) {
