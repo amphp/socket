@@ -59,6 +59,45 @@ class ServerTest extends TestCase {
         });
     }
 
+    public function provideBlacklistedDigests() {
+        return [
+            ["sha1"],
+            ["md5"],
+        ];
+    }
+
+    /** @dataProvider provideBlacklistedDigests */
+    public function testTlsRejectsDigests(string $digest) {
+        Loop::run(function () use ($digest) {
+            try {
+                $tlsContext = (new Socket\ServerTlsContext)
+                    ->withDefaultCertificate(new Socket\Certificate(__DIR__ . "/tls/amphp.org.{$digest}.pem"));
+                $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
+
+                asyncCall(function () use ($server) {
+                    /** @var Socket\ServerSocket $socket */
+                    while ($socket = yield $server->accept()) {
+                        asyncCall(function () use ($socket) {
+                            yield $socket->enableCrypto();
+                        });
+                    }
+                });
+
+                $context = (new Socket\ClientTlsContext)
+                    ->withPeerName("amphp.org")
+                    ->withCaFile(__DIR__ . "/tls/ca.crt");
+
+                $this->expectException(Socket\CryptoException::class);
+                $this->expectExceptionMessage("provided a certificate using a weak signature scheme");
+
+                /** @var Socket\ClientSocket $client */
+                yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            } finally {
+                $server->close();
+            }
+        });
+    }
+
     public function testSniWorksWithCorrectHostName() {
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
