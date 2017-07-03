@@ -100,6 +100,12 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
 
     // Yes, that function can return true / false / 0, don't use weak comparisons.
     if ($result === true) {
+        try {
+            validateCertificateSignatureAlgorithms($socket);
+        } catch (CryptoException $e) {
+            return new Failure($e);
+        }
+
         return new Success($socket);
     }
 
@@ -117,6 +123,13 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
 
             // If $result is 0, just wait for the next invocation
             if ($result === true) {
+                try {
+                    validateCertificateSignatureAlgorithms($socket);
+                } catch (CryptoException $e) {
+                    $deferred->fail($e);
+                    return;
+                }
+
                 $deferred->resolve();
             } elseif ($result === false) {
                 $deferred->fail(new CryptoException("Crypto negotiation failed: " . (\feof($socket)
@@ -150,6 +163,37 @@ function disableCrypto($socket): Promise {
     \stream_socket_enable_crypto($socket, false);
 
     return new Success;
+}
+
+function validateCertificateSignatureAlgorithms($socket) {
+    $options = \stream_context_get_options($socket);
+
+    if ($options["ssl"]["verify_peer"] ?? true) {
+        // $certs will contain the peer's certificate twice for clients, but it's not included in the chain for servers
+        $certs = array_merge([$options["ssl"]["peer_certificate"]], $options["ssl"]["peer_certificate_chain"]);
+
+        foreach ($certs as $i => $cert) {
+            $cert = new Certificate($cert);
+
+            if ($i === \count($certs) - 1) {
+                // Ignore signature type of the last certificate, it's always the trusted certificate
+                continue;
+            }
+
+            // e.g. RSA-MD5, covers also other types than RSA
+            $algs = \explode("-", $cert->getSignatureType());
+
+            if (\count($algs) === 2 && in_array($algs[1], ["RSA-SHA1", "RSA-MD5"], true)) {
+                @\fclose($socket);
+
+                throw new CryptoException(\sprintf(
+                    "Peer (%s) provided a certificate using a weak signature scheme: '%s'",
+                    $options["ssl"]["peer_name"] ?? "unknown",
+                    $cert->getSignatureType()
+                ));
+            }
+        }
+    }
 }
 
 /**
