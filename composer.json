@@ -35,7 +35,7 @@
         "amphp/dns": "^0.9",
         "amphp/byte-stream": "^1.1",
         "amphp/uri": "^0.1",
-        "kelunik/certificate": "^1.1"
+        "kelunik/certificate": "^1.1.1"
     },
     "require-dev": {
         "amphp/phpunit-util": "^1",

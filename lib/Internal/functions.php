@@ -178,7 +178,7 @@ function validateCertificateSignatureAlgorithms($socket) {
             // e.g. RSA-MD5, covers also other types than RSA
             $algs = \explode("-", $cert->getSignatureType());
 
-            if (\count($algs) === 2 && in_array($algs[1], ["SHA1", "MD5"], true)) {
+            if (\count($algs) === 2 && in_array($algs[1], ["SHA1", "MD5"], true) && !isCertificateWithKnownPublicKey($cert)) {
                 @\fclose($socket);
 
                 throw new CryptoException(\sprintf(
@@ -189,6 +189,67 @@ function validateCertificateSignatureAlgorithms($socket) {
             }
         }
     }
+}
+
+function isCertificateWithKnownPublicKey(Certificate $certificate) {
+    static $certificates;
+
+    if ($certificates === null) {
+        $certs = [];
+        $path = null;
+
+        $paths = openssl_get_cert_locations();
+
+        foreach (["default_cert_file_env", "default_cert_dir_env"] as $env) {
+            if (($value = getenv($env)) && \file_exists($value)) {
+                $path = $value;
+                break;
+            }
+        }
+
+        if ($path === null) {
+            foreach (["ini_cafile", "ini_capath", "default_cert_file", "default_cert_dir"] as $entry) {
+                if (!empty($paths[$entry]) && \file_exists($paths[$entry])) {
+                    $path = $paths[$entry];
+                    break;
+                }
+            }
+        }
+
+        if ($path !== null) {
+            $certPattern = "(-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----)s";
+
+            if (\is_dir($path)) {
+                $files = \glob($path . "/*");
+            } else {
+                $files = [$path];
+            }
+
+            foreach ($files as $file) {
+                $contents = \file_get_contents($file);
+                \preg_match_all($certPattern, $contents, $matches, \PREG_SET_ORDER);
+
+                foreach ($matches as $match) {
+                    $cert = @openssl_x509_read($match[0]);
+                    $pubKey = openssl_pkey_get_public($cert);
+                    $keyPem = openssl_pkey_get_details($pubKey)["key"];
+
+                    $certs[$keyPem] = true;
+                }
+            }
+        }
+
+        // Only set it here, so further attempts fail again if it failed once
+        $certificates = $certs;
+    }
+
+    // We need to verify public keys, because of cross-signatures like the one for google.com
+
+    $cert = @openssl_x509_read($certificate->toPem());
+    $pubKey = openssl_pkey_get_public($cert);
+    $keyPem = openssl_pkey_get_details($pubKey)["key"];
+
+    return isset($certificates[$keyPem]);
 }
 
 /**
