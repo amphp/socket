@@ -166,6 +166,11 @@ function disableCrypto($socket): Promise {
 }
 
 function validateCertificateSignatureAlgorithms($socket) {
+    // !! NOTE !!
+    // We verify the SERVER SENT chain here, no the validated chain. PHP doesn't allow that currently.
+    // But it's fine for the use case of checking signature schemes, because OpenSSL will fail for incomplete chains,
+    // which means any certificates we don't check must already be in the trust store.
+
     $options = \stream_context_get_options($socket);
 
     if ($options["ssl"]["verify_peer"] ?? true) {
@@ -244,6 +249,7 @@ function isCertificateWithKnownPublicKey(Certificate $certificate) {
     }
 
     // We need to verify public keys, because of cross-signatures like the one for google.com
+    // This is fine, because we trust public keys in the certificate store, not signatures
 
     $cert = @openssl_x509_read($certificate->toPem());
     $pubKey = openssl_pkey_get_public($cert);
