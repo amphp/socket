@@ -148,11 +148,17 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
  * @param string               $uri
  * @param ClientConnectContext $socketContext
  * @param ClientTlsContext     $tlsContext
+ * @param CancellationToken    $token
  *
  * @return Promise<ClientSocket>
  */
-function cryptoConnect(string $uri, ClientConnectContext $socketContext = null, ClientTlsContext $tlsContext = null): Promise {
-    return call(function () use ($uri, $socketContext, $tlsContext) {
+function cryptoConnect(
+    string $uri,
+    ClientConnectContext $socketContext = null,
+    ClientTlsContext $tlsContext = null,
+    CancellationToken $token = null
+): Promise {
+    return call(function () use ($uri, $socketContext, $tlsContext, $token) {
         $tlsContext = $tlsContext ?? new ClientTlsContext;
 
         if ($tlsContext->getPeerName() === null) {
@@ -160,8 +166,38 @@ function cryptoConnect(string $uri, ClientConnectContext $socketContext = null, 
         }
 
         /** @var ClientSocket $socket */
-        $socket = yield connect($uri, $socketContext);
-        yield $socket->enableCrypto($tlsContext);
+        $socket = yield connect($uri, $socketContext, $token);
+
+        $promise = $socket->enableCrypto($tlsContext);
+
+        if ($token) {
+            $deferred = new Deferred;
+            $id = $token->subscribe([$deferred, "fail"]);
+
+            $promise->onResolve(function ($exception) use ($id, $token, $deferred) {
+                if ($token->isRequested()) {
+                    return;
+                }
+
+                $token->unsubscribe($id);
+
+                if ($exception) {
+                    $deferred->fail($exception);
+                    return;
+                }
+
+                $deferred->resolve();
+            });
+
+            $promise = $deferred->promise();
+        }
+
+        try {
+            yield $promise;
+        } catch (\Throwable $exception) {
+            $socket->close();
+            throw $exception;
+        }
 
         return $socket;
     });

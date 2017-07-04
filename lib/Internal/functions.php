@@ -97,17 +97,38 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
     // Yes, that function can return true / false / 0, don't use weak comparisons.
     if ($result === true) {
         return new Success($socket);
-    } elseif ($result === false) {
+    }
+
+    if ($result === false) {
         return new Failure(new CryptoException(
             "Crypto negotiation failed: " . (\error_get_last()["message"] ?? "Unknown error")
         ));
     }
 
-    $deferred = new Deferred;
+    return call(function () use ($socket) {
+        $deferred = new Deferred;
 
-    Loop::onReadable($socket, 'Amp\Socket\Internal\onCryptoWatchReadability', $deferred);
+        $watcher = Loop::onReadable($socket, function (string $watcher, $socket, Deferred $deferred) {
+            $result = \stream_socket_enable_crypto($socket, $enable = true);
 
-    return $deferred->promise();
+            // If $result is 0, just wait for the next invocation
+            if ($result === true) {
+                $deferred->resolve();
+            } elseif ($result === false) {
+                $deferred->fail(new CryptoException("Crypto negotiation failed: " . (\feof($socket)
+                        ? "Connection reset by peer"
+                        : \error_get_last()["message"])));
+            }
+        }, $deferred);
+
+        try {
+            yield $deferred->promise();
+        } finally {
+            Loop::cancel($watcher);
+        }
+
+        return $socket;
+    });
 }
 
 /**
@@ -125,28 +146,6 @@ function disableCrypto($socket): Promise {
     \stream_socket_enable_crypto($socket, false);
 
     return new Success;
-}
-
-/**
- * Watches for crypto readability to wait for a successful TLS handshake.
- *
- * @param string   $watcherId
- * @param resource $socket
- * @param Deferred $deferred
- */
-function onCryptoWatchReadability($watcherId, $socket, Deferred $deferred) {
-    $result = \stream_socket_enable_crypto($socket, $enable = true);
-
-    // If $result is 0, just wait for the next invocation
-    if ($result === true) {
-        Loop::cancel($watcherId);
-        $deferred->resolve();
-    } elseif ($result === false) {
-        Loop::cancel($watcherId);
-        $deferred->fail(new CryptoException("Crypto negotiation failed: " . (\feof($socket)
-                ? "Connection reset by peer"
-                : \error_get_last()["message"])));
-    }
 }
 
 /**
