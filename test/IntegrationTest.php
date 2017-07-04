@@ -37,6 +37,8 @@ class IntegrationTest extends TestCase {
             ['stackoverflow.com:443'],
             ['github.com:443'],
             ['raw.githubusercontent.com:443'],
+            ['google.com:443'], /* sha-1 cert in chain */
+            ['icicle.io:443'], /* sha-1 cert in chain */
         ];
     }
 
