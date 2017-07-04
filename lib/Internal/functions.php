@@ -119,7 +119,8 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
         $deferred = new Deferred;
 
         $watcher = Loop::onReadable($socket, function (string $watcher, $socket, Deferred $deferred) {
-            $result = \stream_socket_enable_crypto($socket, $enable = true);
+            \error_clear_last();
+            $result = @\stream_socket_enable_crypto($socket, $enable = true);
 
             // If $result is 0, just wait for the next invocation
             if ($result === true) {
