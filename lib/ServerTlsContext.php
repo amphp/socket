@@ -164,10 +164,10 @@ final class ServerTlsContext {
                 throw new \TypeError("Expected an array of Certificate instances");
             }
 
-            if ($certificate->getCertFile() !== $certificate->getKeyFile()) {
+            if (\PHP_VERSION_ID < 70200 && $certificate->getCertFile() !== $certificate->getKeyFile()) {
                 throw new \Error(
                     "Different files for cert and key are not supported on this version of PHP. " .
-                    "It's a planned feature for PHP 7.2."
+                    "Please upgrade to PHP 7.2 or later."
                 );
             }
         }
@@ -207,7 +207,14 @@ final class ServerTlsContext {
 
         if ($this->certificates) {
             $options["SNI_server_certs"] = array_map(function (Certificate $certificate) {
-                return $certificate->getCertFile();
+                if ($certificate->getCertFile() === $certificate->getKeyFile()) {
+                    return $certificate->getCertFile();
+                } else {
+                    return [
+                        "local_cert" => $certificate->getCertFile(),
+                        "local_pk" => $certificate->getKeyFile(),
+                    ];
+                }
             }, $this->certificates);
         }
 

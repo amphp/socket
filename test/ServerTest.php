@@ -135,4 +135,51 @@ class ServerTest extends TestCase {
             Loop::stop();
         });
     }
+
+    public function testSniWorksWithMultipleCertificatesAndDifferentFilesForCertAndKey() {
+        if (\PHP_VERSION_ID < 70200) {
+            $this->markTestSkipped("This test requires PHP 7.2 or higher.");
+        }
+
+        Loop::run(function () {
+            $tlsContext = (new Socket\ServerTlsContext)->withCertificates([
+                "amphp.org" => new Socket\Certificate(__DIR__ . "/tls/amphp.org.crt", __DIR__ . "/tls/amphp.org.key"),
+                "www.amphp.org" => new Socket\Certificate(__DIR__ . "/tls/www.amphp.org.crt", __DIR__ . "/tls/www.amphp.org.key"),
+            ]);
+
+            $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
+
+            asyncCall(function () use ($server) {
+                /** @var Socket\ServerSocket $socket */
+                while ($socket = yield $server->accept()) {
+                    asyncCall(function () use ($socket) {
+                        yield $socket->enableCrypto();
+                        $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
+                        $this->assertSame("Hello World", yield $socket->read());
+                        $socket->write("test");
+                    });
+                }
+            });
+
+            $context = (new Socket\ClientTlsContext)
+                ->withPeerName("amphp.org")
+                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+
+            /** @var Socket\ClientSocket $client */
+            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            yield $client->write("Hello World");
+
+            $context = (new Socket\ClientTlsContext)
+                ->withPeerName("www.amphp.org")
+                ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt");
+
+            /** @var Socket\ClientSocket $client */
+            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            yield $client->write("Hello World");
+
+            yield new Delayed(1);
+            $server->close();
+            Loop::stop();
+        });
+    }
 }
