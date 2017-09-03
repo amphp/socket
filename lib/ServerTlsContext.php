@@ -209,12 +209,12 @@ final class ServerTlsContext {
             $options["SNI_server_certs"] = array_map(function (Certificate $certificate) {
                 if ($certificate->getCertFile() === $certificate->getKeyFile()) {
                     return $certificate->getCertFile();
-                } else {
-                    return [
-                        "local_cert" => $certificate->getCertFile(),
-                        "local_pk" => $certificate->getKeyFile(),
-                    ];
                 }
+
+                return [
+                    "local_cert" => $certificate->getCertFile(),
+                    "local_pk" => $certificate->getKeyFile(),
+                ];
             }, $this->certificates);
         }
 
