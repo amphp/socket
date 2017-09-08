@@ -31,5 +31,12 @@ Loop::run(function () use ($argv) {
     }
 
     yield $socket->write("GET {$uri} HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n");
-    yield Amp\ByteStream\pipe($socket, $stdout);
+
+    while (null !== $chunk = yield $socket->read()) {
+        yield $stdout->write($chunk);
+    }
+
+    // If the promise returned from `read()` resolves to `null`, the socket closed and we're done.
+    // In this case you can also use `yield Amp\ByteStream\pipe($socket, $stdout)` instead of the while loop,
+    // but we want to demonstate the `read()` method here.
 });
