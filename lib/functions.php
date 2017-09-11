@@ -74,7 +74,7 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
             $uris = [$uri];
         } else {
             // Host is not an IP address, so resolve the domain name.
-            $records = yield Dns\resolve($host);
+            $records = yield Dns\resolve($host, $socketContext->getResolveTypeRestriction());
             foreach ($records as $record) {
                 /** @var Dns\Record $record */
                 if ($record->getType() === Dns\Record::AAAA) {
