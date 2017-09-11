@@ -56,7 +56,7 @@ final class ClientConnectContext {
 
     public function withResolveTypeRestriction($type): self {
         if ($type !== null && $type !== Record::AAAA && $type !== Record::A) {
-          throw new \Error("Invalid resolver type restriction");
+            throw new \Error("Invalid resolver type restriction");
         }
 
         $clone = clone $this;
