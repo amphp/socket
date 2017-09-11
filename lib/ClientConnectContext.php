@@ -65,7 +65,7 @@ final class ClientConnectContext {
         return $clone;
     }
 
-    public function getResolveTypeRestriction(): int {
+    public function getResolveTypeRestriction(): ?int {
         return $this->typeRestriction;
     }
 
