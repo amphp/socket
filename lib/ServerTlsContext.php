@@ -37,6 +37,15 @@ final class ServerTlsContext {
     /** @var Certificate[] */
     private $certificates = [];
 
+    /**
+     * Minimum TLS version to negotiate.
+     *
+     * Defaults to TLS 1.0.
+     *
+     * @param int $version `ServerTlsContext::TLSv1_0`, `ServerTlsContext::TLSv1_1`, or `ServerTlsContext::TLSv1_2`.
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withMinimumVersion(int $version): self {
         if ($version !== self::TLSv1_0 && $version !== self::TLSv1_1 && $version !== self::TLSv1_2) {
             throw new \Error("Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed");
@@ -48,10 +57,22 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * Returns the minimum TLS version to negotiate.
+     *
+     * @return int
+     */
     public function getMinimumVersion(): int {
         return $this->minVersion;
     }
 
+    /**
+     * Expected name of the peer.
+     *
+     * @param string|null $peerName
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withPeerName(string $peerName = null): self {
         $clone = clone $this;
         $clone->peerName = $peerName;
@@ -59,10 +80,18 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * @return null|string Expected name of the peer or `null` if such an expectation doesn't exist.
+     */
     public function getPeerName() {
         return $this->peerName;
     }
 
+    /**
+     * Enable peer verification.
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withPeerVerification(): self {
         $clone = clone $this;
         $clone->verifyPeer = true;
@@ -70,6 +99,11 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * Disable peer verification, this is the default for servers.
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withoutPeerVerification(): self {
         $clone = clone $this;
         $clone->verifyPeer = false;
@@ -77,10 +111,20 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * @return bool Whether peer verification is enabled.
+     */
     public function hasPeerVerification(): bool {
         return $this->verifyPeer;
     }
 
+    /**
+     * Maximum chain length the peer might present including the certificates in the local trust store.
+     *
+     * @param int $verifyDepth Maximum length of the certificate chain.
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withVerificationDepth(int $verifyDepth): self {
         if ($verifyDepth < 0) {
             throw new \Error("Invalid verification depth ({$verifyDepth}), must be greater than or equal to 0");
@@ -92,10 +136,20 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * @return int Maximum length of the certificate chain.
+     */
     public function getVerificationDepth(): int {
         return $this->verifyDepth;
     }
 
+    /**
+     * List of ciphers to negotiate, the server's order is always preferred.
+     *
+     * @param string|null $ciphers List of ciphers in OpenSSL's format (colon separated).
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withCiphers(string $ciphers = null): self {
         $clone = clone $this;
         $clone->ciphers = $ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS;
@@ -103,10 +157,20 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * @return string List of ciphers in OpenSSL's format (colon separated).
+     */
     public function getCiphers(): string {
         return $this->ciphers;
     }
 
+    /**
+     * CAFile to check for trusted certificates.
+     *
+     * @param string|null $cafile Path to the file or `null` to unset.
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withCaFile(string $cafile = null): self {
         $clone = clone $this;
         $clone->caFile = $cafile;
@@ -114,10 +178,20 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * @return null|string Path to the file if one is set, otherwise `null`.
+     */
     public function getCaFile() {
         return $this->caFile;
     }
 
+    /**
+     * CAPath to check for trusted certificates.
+     *
+     * @param string|null $capath Path to the file or `null` to unset.
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withCaPath(string $capath = null): self {
         $clone = clone $this;
         $clone->caPath = $capath;
@@ -125,10 +199,20 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * @return null|string Path to the file if one is set, otherwise `null`.
+     */
     public function getCaPath() {
         return $this->caPath;
     }
 
+    /**
+     * Capture the certificates sent by the peer.
+     *
+     * Note: This is the chain as sent by the peer, NOT the verified chain.
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withPeerCapturing(): self {
         $clone = clone $this;
         $clone->capturePeer = true;
@@ -136,6 +220,11 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * Don't capture the certificates sent by the peer.
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withoutPeerCapturing(): self {
         $clone = clone $this;
         $clone->capturePeer = false;
@@ -143,10 +232,20 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * @return bool Whether to capture the certificates sent by the peer.
+     */
     public function hasPeerCapturing(): bool {
         return $this->capturePeer;
     }
 
+    /**
+     * Default certificate to use in case no SNI certificate matches.
+     *
+     * @param Certificate|null $defaultCertificate
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withDefaultCertificate(Certificate $defaultCertificate = null): self {
         $clone = clone $this;
         $clone->defaultCertificate = $defaultCertificate;
@@ -154,10 +253,20 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * @return Certificate|null Default certificate to use in case no SNI certificate matches, or `null` if unset.
+     */
     public function getDefaultCertificate() {
         return $this->defaultCertificate;
     }
 
+    /**
+     * Certificates to use for the given host names.
+     *
+     * @param array $certificates Must be a associative array mapping hostnames to certificate instances.
+     *
+     * @return ServerTlsContext Cloned, modified instance.
+     */
     public function withCertificates(array $certificates): self {
         foreach ($certificates as $key => $certificate) {
             if (!\is_string($key)) {
@@ -182,10 +291,18 @@ final class ServerTlsContext {
         return $clone;
     }
 
+    /**
+     * @return array Associative array mapping hostnames to certificate instances.
+     */
     public function getCertificates(): array {
         return $this->certificates;
     }
 
+    /**
+     * Converts this TLS context into PHP's equivalent stream context array.
+     *
+     * @return array Stream context array compatible with PHP's streams.
+     */
     public function toStreamContextArray(): array {
         $options = [
             "crypto_method" => $this->toStreamCryptoMethod(),
@@ -233,6 +350,9 @@ final class ServerTlsContext {
         return ["ssl" => $options];
     }
 
+    /**
+     * @return int Crypto method compatible with PHP's streams.
+     */
     public function toStreamCryptoMethod(): int {
         return (~($this->minVersion - 1) & \STREAM_CRYPTO_METHOD_ANY_SERVER) & (~1);
     }
