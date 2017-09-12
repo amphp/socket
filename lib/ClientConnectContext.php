@@ -54,7 +54,7 @@ final class ClientConnectContext {
         return $this->maxAttempts;
     }
 
-    public function withDnsTypeRestriction($type): self {
+    public function withDnsTypeRestriction(int $type = null): self {
         if ($type !== null && $type !== Record::AAAA && $type !== Record::A) {
             throw new \Error("Invalid resolver type restriction");
         }
