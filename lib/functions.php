@@ -21,6 +21,8 @@ use function Amp\call;
  * @param ServerTlsContext    $tlsContext Context options for TLS connections.
  *
  * @return Server
+ *
+ * @throws SocketException If binding to the specified URI failed.
  */
 function listen(string $uri, ServerListenContext $socketContext = null, ServerTlsContext $tlsContext = null): Server {
     $socketContext = $socketContext ?? new ServerListenContext;

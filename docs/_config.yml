@@ -23,3 +23,5 @@ defaults:
 asset_path: "/socket/.shared/asset"
 
 navigation:
+ - client
+ - server
