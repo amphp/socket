@@ -159,7 +159,11 @@ final class ServerTlsContext {
     }
 
     public function withCertificates(array $certificates): self {
-        foreach ($certificates as $certificate) {
+        foreach ($certificates as $key => $certificate) {
+            if (!\is_string($key)) {
+                throw new \TypeError("Expected an array mapping domain names to Certificate instances");
+            }
+
             if (!$certificate instanceof Certificate) {
                 throw new \TypeError("Expected an array of Certificate instances");
             }
