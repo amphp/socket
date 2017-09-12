@@ -63,7 +63,9 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
  * @return Promise<\Amp\Socket\ClientSocket>
  */
 function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise {
-    return call(function () use ($uri, $socketContext, $token) {
+    static $useIPv6 = true;
+
+    return call(function () use ($uri, $socketContext, $token, &$useIPv6) {
         $socketContext = $socketContext ?? new ClientConnectContext;
         $token = $token ?? new NullCancellationToken;
         $attempt = 0;
@@ -80,11 +82,19 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
             foreach ($records as $record) {
                 /** @var Dns\Record $record */
                 if ($record->getType() === Dns\Record::AAAA) {
+                    if (!$useIPv6) {
+                        continue;
+                    }
+
                     $uris[] = \sprintf("%s://[%s]:%d", $scheme, $record->getValue(), $port);
                 } else {
                     $uris[] = \sprintf("%s://%s:%d", $scheme, $record->getValue(), $port);
                 }
             }
+        }
+
+        if (!$uris) {
+            throw new Dns\NoRecordException("No IPv4 records available for {$uri} and IPv6 is unavailable.");
         }
 
         $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
@@ -99,6 +109,14 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
                 $context = \stream_context_create($socketContext->toStreamContextArray());
 
                 if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $context)) {
+                    if ($errno === 101 && $useIPv6) { // Network is unreachable
+                        $useIPv6 = false;
+
+			// If IPv6 addresses are not routeable, remove support for IPv6 and retry.
+                        // See https://github.com/amphp/socket/issues/35.
+                        return connect($uri, $socketContext, $token);
+                    }
+
                     throw new ConnectException(\sprintf(
                         "Connection to %s failed: [Error #%d] %s",
                         $uri,
