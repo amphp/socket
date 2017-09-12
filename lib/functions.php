@@ -47,7 +47,7 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
     $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $context);
 
     if (!$server || $errno) {
-        throw new SocketException(\sprintf("Could not create server %s: [Error: #%d] %s", $uri, $errno, $errstr));
+        throw new SocketException(\sprintf("Could not create server %s: [Error: #%d] %s", $uri, $errno, $errstr), $errno);
     }
 
     return new Server($server, 65536);
@@ -104,7 +104,7 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
                         $uri,
                         $errno,
                         $errstr
-                    ));
+                    ), $errno);
                 }
 
                 \stream_set_blocking($socket, false);
