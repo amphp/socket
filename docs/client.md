@@ -2,6 +2,8 @@
 title: Client
 permalink: /client
 ---
+`amphp/socket` allows clients to connect to servers via TCP, UDP, or Unix domain sockets.
+
 ## Connecting
 
 You can establish a socket connection to a specified URI by using `Amp\Socket\connect`. It will automatically take care of resolving DNS names and will try other IPs if a connection fails and multiple IPs are available via DNS.

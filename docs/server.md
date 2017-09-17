@@ -2,6 +2,7 @@
 title: Server
 permalink: /server
 ---
+`amphp/socket` allows listening for incoming TCP connections as well as connections via Unix domain sockets. It defaults to secure TLS settings if you decide to enable TLS.
 
 ## Listening
 
