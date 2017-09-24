@@ -63,7 +63,21 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
  * @return Promise<\Amp\Socket\ClientSocket>
  */
 function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise {
-    return call(function () use ($uri, $socketContext, $token) {
+    static $typeRestriction = null;
+    static $typeRestrictionInitialized = false;
+
+    if (!$typeRestrictionInitialized) {
+        $typeRestrictionInitialized = true;
+
+        $server = stream_socket_server("tcp://[::]:0", $errno, $errstr, \STREAM_SERVER_BIND, \stream_context_create());
+        @\fclose($server);
+
+        if ($server === false || $errno) {
+            $typeRestriction = Dns\Record::A;
+        }
+    }
+
+    return call(function () use ($uri, $socketContext, $token, $typeRestriction) {
         $socketContext = $socketContext ?? new ClientConnectContext;
         $token = $token ?? new NullCancellationToken;
         $attempt = 0;
@@ -75,8 +89,10 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
             // Host is already an IP address or file path.
             $uris = [$uri];
         } else {
+            $typeRestriction = $socketContext->getDnsTypeRestriction() ?? $typeRestriction;
+
             // Host is not an IP address, so resolve the domain name.
-            $records = yield Dns\resolve($host, $socketContext->getDnsTypeRestriction());
+            $records = yield Dns\resolve($host, $typeRestriction);
             foreach ($records as $record) {
                 /** @var Dns\Record $record */
                 if ($record->getType() === Dns\Record::AAAA) {
