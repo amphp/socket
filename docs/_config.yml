@@ -4,9 +4,10 @@ kramdown:
 
 baseurl: "/socket"
 layouts_dir: ".shared/layout"
+includes_dir: ".shared/includes"
 
 exclude: ["Gemfile", "Gemfile.lock", "README.md", "vendor"]
-include: [".shared"]
+safe: true
 
 repository: amphp/socket
 gems:
@@ -19,8 +20,10 @@ defaults:
      type: "pages"
    values:
      layout: "docs"
+     description: "amphp/socket provides a socket abstraction for clients and servers. It abstracts the really low levels of non-blocking streams in PHP."
+     keywords: ["amphp", "amp", "socket", "tcp", "udp", "server", "client", "connection"]
 
-asset_path: "/socket/.shared/asset"
+shared_asset_path: "/socket/asset"
 
 navigation:
  - client
