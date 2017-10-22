@@ -8,6 +8,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Socket\CryptoException;
 use Amp\Success;
+use Kelunik\Certificate\Certificate;
 use function Amp\call;
 
 /**
@@ -72,6 +73,9 @@ function parseUri(string $uri): array {
 function enableCrypto($socket, array $options = [], bool $force = false): Promise {
     $ctx = \stream_context_get_options($socket);
 
+    $options["ssl"]["capture_peer_cert"] = true;
+    $options["ssl"]["capture_peer_cert_chain"] = true;
+
     if (!$force && !empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
         $cmp = array_merge($ctx["ssl"], $options["ssl"] ?? []);
         $ctx = $ctx['ssl'];
@@ -92,10 +96,16 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
     \error_clear_last();
 
     \stream_context_set_option($socket, $options);
-    $result = \stream_socket_enable_crypto($socket, $enable = true);
+    $result = @\stream_socket_enable_crypto($socket, $enable = true);
 
     // Yes, that function can return true / false / 0, don't use weak comparisons.
     if ($result === true) {
+        try {
+            validateCertificateSignatureAlgorithms($socket);
+        } catch (CryptoException $e) {
+            return new Failure($e);
+        }
+
         return new Success($socket);
     }
 
@@ -109,10 +119,18 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
         $deferred = new Deferred;
 
         $watcher = Loop::onReadable($socket, function (string $watcher, $socket, Deferred $deferred) {
-            $result = \stream_socket_enable_crypto($socket, $enable = true);
+            \error_clear_last();
+            $result = @\stream_socket_enable_crypto($socket, $enable = true);
 
             // If $result is 0, just wait for the next invocation
             if ($result === true) {
+                try {
+                    validateCertificateSignatureAlgorithms($socket);
+                } catch (CryptoException $e) {
+                    $deferred->fail($e);
+                    return;
+                }
+
                 $deferred->resolve();
             } elseif ($result === false) {
                 $deferred->fail(new CryptoException("Crypto negotiation failed: " . (\feof($socket)
@@ -146,6 +164,99 @@ function disableCrypto($socket): Promise {
     \stream_socket_enable_crypto($socket, false);
 
     return new Success;
+}
+
+function validateCertificateSignatureAlgorithms($socket) {
+    // !! NOTE !!
+    // We verify the SERVER SENT chain here, no the validated chain. PHP doesn't allow that currently.
+    // But it's fine for the use case of checking signature schemes, because OpenSSL will fail for incomplete chains,
+    // which means any certificates we don't check must already be in the trust store.
+
+    $options = \stream_context_get_options($socket);
+
+    if ($options["ssl"]["verify_peer"] ?? true) {
+        // $certs will contain the peer's certificate twice for clients, but it's not included in the chain for servers
+        $certs = array_merge([$options["ssl"]["peer_certificate"]], $options["ssl"]["peer_certificate_chain"]);
+
+        foreach ($certs as $i => $cert) {
+            $cert = new Certificate($cert);
+
+            // e.g. RSA-MD5, covers also other types than RSA
+            $algs = \explode("-", $cert->getSignatureType());
+
+            if (\count($algs) === 2 && in_array($algs[1], ["SHA1", "MD5"], true) && !isCertificateWithKnownPublicKey($cert)) {
+                @\fclose($socket);
+
+                throw new CryptoException(\sprintf(
+                    "Peer (%s) provided a certificate using a weak signature scheme: '%s'",
+                    $options["ssl"]["peer_name"] ?? "unknown",
+                    $cert->getSignatureType()
+                ));
+            }
+        }
+    }
+}
+
+function isCertificateWithKnownPublicKey(Certificate $certificate) {
+    static $certificates;
+
+    if ($certificates === null) {
+        $certs = [];
+        $path = null;
+
+        $paths = openssl_get_cert_locations();
+
+        foreach (["default_cert_file_env", "default_cert_dir_env"] as $env) {
+            if (($value = getenv($env)) && \file_exists($value)) {
+                $path = $value;
+                break;
+            }
+        }
+
+        if ($path === null) {
+            foreach (["ini_cafile", "ini_capath", "default_cert_file", "default_cert_dir"] as $entry) {
+                if (!empty($paths[$entry]) && \file_exists($paths[$entry])) {
+                    $path = $paths[$entry];
+                    break;
+                }
+            }
+        }
+
+        if ($path !== null) {
+            $certPattern = "(-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----)s";
+
+            if (\is_dir($path)) {
+                $files = \glob($path . "/*");
+            } else {
+                $files = [$path];
+            }
+
+            foreach ($files as $file) {
+                $contents = \file_get_contents($file);
+                \preg_match_all($certPattern, $contents, $matches, \PREG_SET_ORDER);
+
+                foreach ($matches as $match) {
+                    $cert = @openssl_x509_read($match[0]);
+                    $pubKey = openssl_pkey_get_public($cert);
+                    $keyPem = openssl_pkey_get_details($pubKey)["key"];
+
+                    $certs[$keyPem] = true;
+                }
+            }
+        }
+
+        // Only set it here, so further attempts fail again if it failed once
+        $certificates = $certs;
+    }
+
+    // We need to verify public keys, because of cross-signatures like the one for google.com
+    // This is fine, because we trust public keys in the certificate store, not signatures
+
+    $cert = @openssl_x509_read($certificate->toPem());
+    $pubKey = openssl_pkey_get_public($cert);
+    $keyPem = openssl_pkey_get_details($pubKey)["key"];
+
+    return isset($certificates[$keyPem]);
 }
 
 /**
