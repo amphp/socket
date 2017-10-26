@@ -92,7 +92,7 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
     \error_clear_last();
 
     \stream_context_set_option($socket, $options);
-    $result = \stream_socket_enable_crypto($socket, $enable = true);
+    $result = @\stream_socket_enable_crypto($socket, $enable = true);
 
     // Yes, that function can return true / false / 0, don't use weak comparisons.
     if ($result === true) {
@@ -109,7 +109,7 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
         $deferred = new Deferred;
 
         $watcher = Loop::onReadable($socket, function (string $watcher, $socket, Deferred $deferred) {
-            $result = \stream_socket_enable_crypto($socket, $enable = true);
+            $result = @\stream_socket_enable_crypto($socket, $enable = true);
 
             // If $result is 0, just wait for the next invocation
             if ($result === true) {
@@ -143,7 +143,7 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
 function disableCrypto($socket): Promise {
     // note that disabling crypto *ALWAYS* returns false, immediately
     \stream_context_set_option($socket, ["ssl" => ["_enabled" => false]]);
-    \stream_socket_enable_crypto($socket, false);
+    @\stream_socket_enable_crypto($socket, false);
 
     return new Success;
 }
