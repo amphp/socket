@@ -67,7 +67,7 @@ final class ClientTlsContext {
         }
 
         $clone = clone $this;
-        $clone->verifyPeer = $verifyDepth;
+        $clone->verifyDepth = $verifyDepth;
 
         return $clone;
     }
@@ -83,7 +83,7 @@ final class ClientTlsContext {
         return $clone;
     }
 
-    public function getCiphers(): string {
+    public function getCiphers() {
         return $this->ciphers;
     }
 

@@ -16,13 +16,14 @@ use function Amp\call;
  *
  * If you want to accept TLS connections, you have to use `yield $socket->enableCrypto()` after accepting new clients.
  *
- * @param string              $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ServerListenContext $socketContext Context options for listening.
- * @param ServerTlsContext    $tlsContext Context options for TLS connections.
+ * @param ServerTlsContext $tlsContext Context options for TLS connections.
  *
  * @return Server
  *
  * @throws SocketException If binding to the specified URI failed.
+ * @throws \Error If an invalid scheme is given.
  */
 function listen(string $uri, ServerListenContext $socketContext = null, ServerTlsContext $tlsContext = null): Server {
     $socketContext = $socketContext ?? new ServerListenContext;
