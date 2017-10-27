@@ -2,15 +2,12 @@
 
 namespace Amp\Socket\Test;
 
-
 use Amp\Socket\Certificate;
 use Amp\Socket\ServerTlsContext;
 use PHPUnit\Framework\TestCase;
 
-class ServerTlsContextTest extends TestCase
-{
-    public function minimumVersionDataProvider()
-    {
+class ServerTlsContextTest extends TestCase {
+    public function minimumVersionDataProvider() {
         return [
             [ServerTlsContext::TLSv1_0],
             [ServerTlsContext::TLSv1_1],
@@ -21,8 +18,7 @@ class ServerTlsContextTest extends TestCase
     /**
      * @dataProvider minimumVersionDataProvider
      */
-    public function testWithMinimumVersion($version)
-    {
+    public function testWithMinimumVersion($version) {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withMinimumVersion($version);
         $this->assertNotSame($origContext, $clonedContext);
@@ -30,8 +26,7 @@ class ServerTlsContextTest extends TestCase
         $this->assertSame($version, $clonedContext->getMinimumVersion());
     }
 
-    public function minimumVersionInvalidDataProvider()
-    {
+    public function minimumVersionInvalidDataProvider() {
         return [
             [-1],
         ];
@@ -42,14 +37,12 @@ class ServerTlsContextTest extends TestCase
      * @expectedException \Error
      * @expectedExceptionMessage Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed
      */
-    public function testWithMinimumVersionInvalid($version)
-    {
+    public function testWithMinimumVersionInvalid($version) {
         $origContext = new ServerTlsContext();
         $origContext->withMinimumVersion($version);
     }
 
-    public function peerNameDataProvider()
-    {
+    public function peerNameDataProvider() {
         return [
             [null],
             ['test'],
@@ -59,8 +52,7 @@ class ServerTlsContextTest extends TestCase
     /**
      * @dataProvider peerNameDataProvider
      */
-    public function testWithPeerName($peerName)
-    {
+    public function testWithPeerName($peerName) {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withPeerName($peerName);
         $this->assertNotSame($origContext, $clonedContext);
@@ -68,8 +60,7 @@ class ServerTlsContextTest extends TestCase
         $this->assertSame($peerName, $clonedContext->getPeerName());
     }
 
-    public function testWithPeerVerification()
-    {
+    public function testWithPeerVerification() {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withPeerVerification();
         $this->assertNotSame($origContext, $clonedContext);
@@ -77,8 +68,7 @@ class ServerTlsContextTest extends TestCase
         $this->assertTrue($clonedContext->hasPeerVerification());
     }
 
-    public function testWithoutPeerVerification()
-    {
+    public function testWithoutPeerVerification() {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withoutPeerVerification();
         $this->assertNotSame($origContext, $clonedContext);
@@ -86,8 +76,7 @@ class ServerTlsContextTest extends TestCase
         $this->assertFalse($clonedContext->hasPeerVerification());
     }
 
-    public function verifyDepthDataProvider()
-    {
+    public function verifyDepthDataProvider() {
         return [
             [0],
             [123],
@@ -97,8 +86,7 @@ class ServerTlsContextTest extends TestCase
     /**
      * @dataProvider verifyDepthDataProvider
      */
-    public function testWithVerificationDepth($verifyDepth)
-    {
+    public function testWithVerificationDepth($verifyDepth) {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withVerificationDepth($verifyDepth);
         $this->assertNotSame($origContext, $clonedContext);
@@ -106,8 +94,7 @@ class ServerTlsContextTest extends TestCase
         $this->assertSame($verifyDepth, $clonedContext->getVerificationDepth());
     }
 
-    public function verifyDepthInvalidDataProvider()
-    {
+    public function verifyDepthInvalidDataProvider() {
         return [
             [-1],
             [-123],
@@ -119,14 +106,12 @@ class ServerTlsContextTest extends TestCase
      * @expectedException \Error
      * @expectedExceptionMessageRegExp /Invalid verification depth (.*), must be greater than or equal to 0/
      */
-    public function testWithVerificationDepthInvalid($verifyDepth)
-    {
+    public function testWithVerificationDepthInvalid($verifyDepth) {
         $origContext = new ServerTlsContext();
         $origContext->withVerificationDepth($verifyDepth);
     }
 
-    public function ciphersDataProvider()
-    {
+    public function ciphersDataProvider() {
         return [
             ['ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256'],
             ['DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256'],
@@ -136,8 +121,7 @@ class ServerTlsContextTest extends TestCase
     /**
      * @dataProvider ciphersDataProvider
      */
-    public function testWithCiphers($ciphers)
-    {
+    public function testWithCiphers($ciphers) {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withCiphers($ciphers);
         $this->assertNotSame($origContext, $clonedContext);
@@ -145,8 +129,7 @@ class ServerTlsContextTest extends TestCase
         $this->assertSame($ciphers, $clonedContext->getCiphers());
     }
 
-    public function caFileDataProvider()
-    {
+    public function caFileDataProvider() {
         return [
             [null],
             ['test'],
@@ -156,8 +139,7 @@ class ServerTlsContextTest extends TestCase
     /**
      * @dataProvider caFileDataProvider
      */
-    public function testWithCaFile($caFile)
-    {
+    public function testWithCaFile($caFile) {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withCaFile($caFile);
         $this->assertNotSame($origContext, $clonedContext);
@@ -165,8 +147,7 @@ class ServerTlsContextTest extends TestCase
         $this->assertSame($caFile, $clonedContext->getCaFile());
     }
 
-    public function caPathDataProvider()
-    {
+    public function caPathDataProvider() {
         return [
             [null],
             ['test'],
@@ -176,8 +157,7 @@ class ServerTlsContextTest extends TestCase
     /**
      * @dataProvider caPathDataProvider
      */
-    public function testWithCaPath($caPath)
-    {
+    public function testWithCaPath($caPath) {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withCaPath($caPath);
         $this->assertNotSame($origContext, $clonedContext);
@@ -185,8 +165,7 @@ class ServerTlsContextTest extends TestCase
         $this->assertSame($caPath, $clonedContext->getCaPath());
     }
 
-    public function testWithPeerCapturing()
-    {
+    public function testWithPeerCapturing() {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withPeerCapturing();
         $this->assertNotSame($origContext, $clonedContext);
@@ -194,8 +173,7 @@ class ServerTlsContextTest extends TestCase
         $this->assertTrue($clonedContext->hasPeerCapturing());
     }
 
-    public function testWithoutPeerCapturing()
-    {
+    public function testWithoutPeerCapturing() {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withoutPeerCapturing();
         $this->assertNotSame($origContext, $clonedContext);
@@ -203,8 +181,7 @@ class ServerTlsContextTest extends TestCase
         $this->assertFalse($clonedContext->hasPeerCapturing());
     }
 
-    public function defaultCertificateDataProvider()
-    {
+    public function defaultCertificateDataProvider() {
         return [
             [null],
             [new Certificate('test')]
@@ -214,8 +191,7 @@ class ServerTlsContextTest extends TestCase
     /**
      * @dataProvider defaultCertificateDataProvider
      */
-    public function testWithDefaultCertificate($defaultCertificate)
-    {
+    public function testWithDefaultCertificate($defaultCertificate) {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withDefaultCertificate($defaultCertificate);
         $this->assertNotSame($origContext, $clonedContext);

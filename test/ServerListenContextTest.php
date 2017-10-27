@@ -2,14 +2,11 @@
 
 namespace Amp\Socket\Test;
 
-
 use Amp\Socket\ServerListenContext;
 use PHPUnit\Framework\TestCase;
 
-class ServerListenContextTest extends TestCase
-{
-    public function bindToDataProvider()
-    {
+class ServerListenContextTest extends TestCase {
+    public function bindToDataProvider() {
         return [
             [null],
             ['127.0.0.1:123'],
@@ -19,8 +16,7 @@ class ServerListenContextTest extends TestCase
     /**
      * @dataProvider bindToDataProvider
      */
-    public function testWithBindTo($bindTo)
-    {
+    public function testWithBindTo($bindTo) {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withBindTo($bindTo);
         $this->assertNotSame($origContext, $clonedContext);
@@ -28,8 +24,7 @@ class ServerListenContextTest extends TestCase
         $this->assertSame($bindTo, $clonedContext->getBindTo());
     }
 
-    public function backlogDataProvider()
-    {
+    public function backlogDataProvider() {
         return [
             [10],
             [123],
@@ -39,8 +34,7 @@ class ServerListenContextTest extends TestCase
     /**
      * @dataProvider backlogDataProvider
      */
-    public function testWithBacklog($backlog)
-    {
+    public function testWithBacklog($backlog) {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withBacklog($backlog);
         $this->assertNotSame($origContext, $clonedContext);
@@ -48,8 +42,7 @@ class ServerListenContextTest extends TestCase
         $this->assertSame($backlog, $clonedContext->getBacklog());
     }
 
-    public function testWithReusePort()
-    {
+    public function testWithReusePort() {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withReusePort();
         $this->assertNotSame($origContext, $clonedContext);
@@ -57,8 +50,7 @@ class ServerListenContextTest extends TestCase
         $this->assertTrue($clonedContext->hasReusePort());
     }
 
-    public function testWithoutReusePort()
-    {
+    public function testWithoutReusePort() {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withoutReusePort();
         $this->assertNotSame($origContext, $clonedContext);
@@ -66,8 +58,7 @@ class ServerListenContextTest extends TestCase
         $this->assertFalse($clonedContext->hasReusePort());
     }
 
-    public function testWithBroadcast()
-    {
+    public function testWithBroadcast() {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withBroadcast();
         $this->assertNotSame($origContext, $clonedContext);
@@ -75,8 +66,7 @@ class ServerListenContextTest extends TestCase
         $this->assertTrue($clonedContext->hasBroadcast());
     }
 
-    public function testWithoutBroadcast()
-    {
+    public function testWithoutBroadcast() {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withoutBroadcast();
         $this->assertNotSame($origContext, $clonedContext);
