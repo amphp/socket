@@ -19,7 +19,6 @@ class ServerListenContextTest extends TestCase {
     public function testWithBindTo($bindTo) {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withBindTo($bindTo);
-        $this->assertNotSame($origContext, $clonedContext);
         $this->assertNull($origContext->getBindTo());
         $this->assertSame($bindTo, $clonedContext->getBindTo());
     }
@@ -37,7 +36,6 @@ class ServerListenContextTest extends TestCase {
     public function testWithBacklog($backlog) {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withBacklog($backlog);
-        $this->assertNotSame($origContext, $clonedContext);
         $this->assertSame(128, $origContext->getBacklog());
         $this->assertSame($backlog, $clonedContext->getBacklog());
     }
@@ -45,7 +43,6 @@ class ServerListenContextTest extends TestCase {
     public function testWithReusePort() {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withReusePort();
-        $this->assertNotSame($origContext, $clonedContext);
         $this->assertFalse($origContext->hasReusePort());
         $this->assertTrue($clonedContext->hasReusePort());
     }
@@ -53,7 +50,6 @@ class ServerListenContextTest extends TestCase {
     public function testWithoutReusePort() {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withoutReusePort();
-        $this->assertNotSame($origContext, $clonedContext);
         $this->assertFalse($origContext->hasReusePort());
         $this->assertFalse($clonedContext->hasReusePort());
     }
@@ -61,7 +57,6 @@ class ServerListenContextTest extends TestCase {
     public function testWithBroadcast() {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withBroadcast();
-        $this->assertNotSame($origContext, $clonedContext);
         $this->assertFalse($origContext->hasBroadcast());
         $this->assertTrue($clonedContext->hasBroadcast());
     }
@@ -69,7 +64,6 @@ class ServerListenContextTest extends TestCase {
     public function testWithoutBroadcast() {
         $origContext = new ServerListenContext();
         $clonedContext = $origContext->withoutBroadcast();
-        $this->assertNotSame($origContext, $clonedContext);
         $this->assertFalse($origContext->hasBroadcast());
         $this->assertFalse($clonedContext->hasBroadcast());
     }

@@ -21,7 +21,6 @@ class ClientConnectContextTest extends TestCase {
         $context = new ClientConnectContext();
         $clonedContext = $context->withBindTo($bindTo);
 
-        $this->assertNotSame($clonedContext, $context);
         $this->assertNull($context->getBindTo());
         $this->assertSame($bindTo, $clonedContext->getBindTo());
     }
@@ -40,7 +39,6 @@ class ClientConnectContextTest extends TestCase {
         $context = new ClientConnectContext();
         $clonedContext = $context->withConnectTimeout($timeout);
 
-        $this->assertNotSame($clonedContext, $context);
         $this->assertSame(10000, $context->getConnectTimeout());
         $this->assertSame($timeout, $clonedContext->getConnectTimeout());
     }
@@ -77,7 +75,6 @@ class ClientConnectContextTest extends TestCase {
         $context = new ClientConnectContext();
         $clonedContext = $context->withMaxAttempts($maxAttempts);
 
-        $this->assertNotSame($clonedContext, $context);
         $this->assertSame(2, $context->getMaxAttempts());
         $this->assertSame($maxAttempts, $clonedContext->getMaxAttempts());
     }
@@ -115,7 +112,6 @@ class ClientConnectContextTest extends TestCase {
         $context = new ClientConnectContext();
         $clonedContext = $context->withDnsTypeRestriction($type);
 
-        $this->assertNotSame($clonedContext, $context);
         $this->assertNull($context->getDnsTypeRestriction());
         $this->assertSame($type, $clonedContext->getDnsTypeRestriction());
     }
