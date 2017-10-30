@@ -78,6 +78,13 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
         } else {
             // Host is not an IP address, so resolve the domain name.
             $records = yield Dns\resolve($host, $socketContext->getDnsTypeRestriction());
+
+            // Usually the faster response should be preferred, but we don't have a reliable way of determining IPv6
+            // support, so we always prefer IPv4 here.
+            \usort($records, function (Dns\Record $a, Dns\Record $b) {
+                return $a->getType() - $b->getType();
+            });
+
             foreach ($records as $record) {
                 /** @var Dns\Record $record */
                 if ($record->getType() === Dns\Record::AAAA) {
