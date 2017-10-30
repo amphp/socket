@@ -78,13 +78,13 @@ final class ClientTlsContext {
 
     public function withCiphers(string $ciphers = null): self {
         $clone = clone $this;
-        $clone->ciphers = $ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS;
+        $clone->ciphers = $ciphers;
 
         return $clone;
     }
 
-    public function getCiphers() {
-        return $this->ciphers;
+    public function getCiphers(): string {
+        return $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS;
     }
 
     public function withCaFile(string $cafile = null): self {

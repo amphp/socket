@@ -43,8 +43,9 @@ final class ServerTlsContext {
      * Defaults to TLS 1.0.
      *
      * @param int $version `ServerTlsContext::TLSv1_0`, `ServerTlsContext::TLSv1_1`, or `ServerTlsContext::TLSv1_2`.
+     *
      * @return ServerTlsContext Cloned, modified instance.
-     * @throws \Error When invalid minimum version is given.
+     * @throws \Error If an invalid minimum version is given.
      */
     public function withMinimumVersion(int $version): self {
         if ($version !== self::TLSv1_0 && $version !== self::TLSv1_1 && $version !== self::TLSv1_2) {

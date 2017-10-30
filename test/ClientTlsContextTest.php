@@ -124,7 +124,7 @@ class ClientTlsContextTest extends TestCase {
         $origContext = new ClientTlsContext();
         $clonedContext = $origContext->withCiphers($ciphers);
         $this->assertNotSame($origContext, $clonedContext);
-        $this->assertNull($origContext->getCiphers());
+        $this->assertSame(\OPENSSL_DEFAULT_STREAM_CIPHERS, $origContext->getCiphers());
         $this->assertSame($ciphers, $clonedContext->getCiphers());
     }
 

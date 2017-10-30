@@ -161,7 +161,7 @@ function normalizeBindToOption(string $bindTo = null) {
     if ($bindTo === null) {
         // all fine
         return null;
-    } elseif (\preg_match("/\\[(?P<ip>[0-9a-f:]+)\\](:(?P<port>\\d+))*$/", $bindTo ?? "", $match)) {
+    } elseif (\preg_match("/\\[(?P<ip>[0-9a-f:]+)\\](:(?P<port>\\d+))?$/", $bindTo ?? "", $match)) {
         $ip = $match['ip'];
         $port = $match['port'] ?? 0;
 
@@ -176,7 +176,7 @@ function normalizeBindToOption(string $bindTo = null) {
         return "[{$ip}]:{$port}";
     }
 
-    if (\preg_match("/(?P<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)(:(?P<port>\\d+))*$/", $bindTo ?? "", $match)) {
+    if (\preg_match("/(?P<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)(:(?P<port>\\d+))?$/", $bindTo ?? "", $match)) {
         $ip = $match['ip'];
         $port = $match['port'] ?? 0;
 
