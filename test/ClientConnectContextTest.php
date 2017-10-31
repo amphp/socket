@@ -53,9 +53,9 @@ class ClientConnectContextTest extends TestCase {
 
     /**
      * @dataProvider withConnectTimeoutInvalidTimeoutDataProvider
-     * @expectedException \Error
      */
     public function testWithConnectTimeoutInvalidTimeout($timeout) {
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage("Invalid connect timeout ({$timeout}), must be greater than 0");
         $context = new ClientConnectContext();
         $context->withConnectTimeout($timeout);
@@ -89,9 +89,9 @@ class ClientConnectContextTest extends TestCase {
 
     /**
      * @dataProvider withMaxAttemptsInvalidTimeoutDataProvider
-     * @expectedException \Error
      */
     public function testWithMaxAttemptsInvalidTimeout($maxAttempts) {
+        $this->expectException(\Error::class);
         $this->expectExceptionMessage("Invalid max attempts ({$maxAttempts}), must be greater than 0");
         $context = new ClientConnectContext();
         $context->withMaxAttempts($maxAttempts);
