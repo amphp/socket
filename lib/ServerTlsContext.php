@@ -153,7 +153,7 @@ final class ServerTlsContext {
      */
     public function withCiphers(string $ciphers = null): self {
         $clone = clone $this;
-        $clone->ciphers = $ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS;
+        $clone->ciphers = $ciphers;
 
         return $clone;
     }
@@ -161,8 +161,8 @@ final class ServerTlsContext {
     /**
      * @return string List of ciphers in OpenSSL's format (colon separated).
      */
-    public function getCiphers() {
-        return $this->ciphers;
+    public function getCiphers(): string {
+        return $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS;
     }
 
     /**

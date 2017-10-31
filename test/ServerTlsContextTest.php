@@ -119,7 +119,7 @@ class ServerTlsContextTest extends TestCase {
     public function testWithCiphers($ciphers) {
         $origContext = new ServerTlsContext();
         $clonedContext = $origContext->withCiphers($ciphers);
-        $this->assertNull($origContext->getCiphers());
+        $this->assertSame(\OPENSSL_DEFAULT_STREAM_CIPHERS, $origContext->getCiphers());
         $this->assertSame($ciphers, $clonedContext->getCiphers());
     }
 
