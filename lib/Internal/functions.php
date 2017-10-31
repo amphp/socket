@@ -160,8 +160,10 @@ function disableCrypto($socket): Promise {
 function normalizeBindToOption(string $bindTo = null) {
     if ($bindTo === null) {
         // all fine
-    } elseif (\preg_match("(\\[([0-9a-f.:]+)\\](:\\d+))", $bindTo ?? "", $match)) {
-        list($ip, $port) = $match;
+        return null;
+    } elseif (\preg_match("/\\[(?P<ip>[0-9a-f:]+)\\](:(?P<port>\\d+))?$/", $bindTo ?? "", $match)) {
+        $ip = $match['ip'];
+        $port = $match['port'] ?? 0;
 
         if (@\inet_pton($ip) === false) {
             throw new \Error("Invalid IPv6 address: {$ip}");
@@ -171,11 +173,12 @@ function normalizeBindToOption(string $bindTo = null) {
             throw new \Error("Invalid port: {$port}");
         }
 
-        return "[{$ip}]:" . ($port ?: 0);
+        return "[{$ip}]:{$port}";
     }
 
-    if (\preg_match("((\\d+\\.\\d+\\.\\d+\\.\\d+)(:\\d+))", $bindTo ?? "", $match)) {
-        list($ip, $port) = $match;
+    if (\preg_match("/(?P<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)(:(?P<port>\\d+))?$/", $bindTo ?? "", $match)) {
+        $ip = $match['ip'];
+        $port = $match['port'] ?? 0;
 
         if (@\inet_pton($ip) === false) {
             throw new \Error("Invalid IPv4 address: {$ip}");
@@ -185,7 +188,7 @@ function normalizeBindToOption(string $bindTo = null) {
             throw new \Error("Invalid port: {$port}");
         }
 
-        return "{$ip}:" . ($port ?: 0);
+        return "{$ip}:{$port}";
     }
 
     throw new \Error("Invalid bindTo value: {$bindTo}");

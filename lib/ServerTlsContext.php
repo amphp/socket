@@ -45,6 +45,7 @@ final class ServerTlsContext {
      * @param int $version `ServerTlsContext::TLSv1_0`, `ServerTlsContext::TLSv1_1`, or `ServerTlsContext::TLSv1_2`.
      *
      * @return ServerTlsContext Cloned, modified instance.
+     * @throws \Error If an invalid minimum version is given.
      */
     public function withMinimumVersion(int $version): self {
         if ($version !== self::TLSv1_0 && $version !== self::TLSv1_1 && $version !== self::TLSv1_2) {
@@ -131,7 +132,7 @@ final class ServerTlsContext {
         }
 
         $clone = clone $this;
-        $clone->verifyPeer = $verifyDepth;
+        $clone->verifyDepth = $verifyDepth;
 
         return $clone;
     }
@@ -152,7 +153,7 @@ final class ServerTlsContext {
      */
     public function withCiphers(string $ciphers = null): self {
         $clone = clone $this;
-        $clone->ciphers = $ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS;
+        $clone->ciphers = $ciphers;
 
         return $clone;
     }
@@ -161,7 +162,7 @@ final class ServerTlsContext {
      * @return string List of ciphers in OpenSSL's format (colon separated).
      */
     public function getCiphers(): string {
-        return $this->ciphers;
+        return $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS;
     }
 
     /**
