@@ -212,6 +212,10 @@ class ServerTlsContextTest extends TestCase {
     }
 
     public function testWithCertificatesWithDifferentPathsBeforePhp72() {
+        if (\PHP_VERSION_ID >= 70200) {
+            $this->markTestSkipped("Only relevant in versions lower to PHP 7.2");
+        }
+
         $this->expectException(\Error::class);
         $this->expectExceptionMessage("Different files for cert and key are not supported on this version of PHP. Please upgrade to PHP 7.2 or later.");
 
