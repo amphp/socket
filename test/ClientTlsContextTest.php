@@ -240,6 +240,14 @@ class ClientTlsContextTest extends TestCase {
         }
     }
 
+    public function testWithSecurityLevelDefaultValue() {
+        if (\OPENSSL_VERSION_NUMBER >= 0x10100000) {
+            $this->assertSame(2, (new ClientTlsContext)->getSecurityLevel());
+        } else {
+            $this->assertSame(0, (new ClientTlsContext)->getSecurityLevel());
+        }
+    }
+
     public function testStreamContextArray() {
         $context = (new ClientTlsContext)
             ->withCaPath("/var/foobar");

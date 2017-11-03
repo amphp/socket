@@ -267,4 +267,12 @@ class ServerTlsContextTest extends TestCase {
             (new ServerTlsContext)->withSecurityLevel($level);
         }
     }
+
+    public function testWithSecurityLevelDefaultValue() {
+        if (\OPENSSL_VERSION_NUMBER >= 0x10100000) {
+            $this->assertSame(2, (new ServerTlsContext)->getSecurityLevel());
+        } else {
+            $this->assertSame(0, (new ServerTlsContext)->getSecurityLevel());
+        }
+    }
 }

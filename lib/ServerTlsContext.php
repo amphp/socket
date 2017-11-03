@@ -37,6 +37,9 @@ final class ServerTlsContext {
     /** @var Certificate[] */
     private $certificates = [];
 
+    /** @var int */
+    private $securityLevel = 2;
+
     /**
      * Minimum TLS version to negotiate.
      *
