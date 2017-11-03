@@ -221,4 +221,50 @@ class ServerTlsContextTest extends TestCase {
 
         (new ServerTlsContext)->withCertificates(["example.com" => new Certificate("/var/foo", "/foo/bar")]);
     }
+
+    public function invalidSecurityLevelDataProvider() {
+        return [
+            [-1],
+            [6],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidSecurityLevelDataProvider
+     */
+    public function testWithSecurityLevelInvalid($level) {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage("Invalid security level ({$level}), must be between 0 and 5.");
+
+        (new ServerTlsContext)->withSecurityLevel($level);
+    }
+
+    public function validSecurityLevelDataProvider() {
+        return [
+            [0],
+            [1],
+            [2],
+            [3],
+            [4],
+            [5],
+        ];
+    }
+
+    /**
+     * @dataProvider validSecurityLevelDataProvider
+     */
+    public function testWithSecurityLevelValid($level) {
+        if (\OPENSSL_VERSION_NUMBER >= 0x10100000) {
+            $value = (new ServerTlsContext)
+                ->withSecurityLevel($level)
+                ->getSecurityLevel();
+
+            $this->assertSame($level, $value);
+        } else {
+            $this->expectException(\Error::class);
+            $this->expectExceptionMessage("Can't set a security level, as PHP is compiled with OpenSSL < 1.1.0.");
+
+            (new ServerTlsContext)->withSecurityLevel($level);
+        }
+    }
 }
