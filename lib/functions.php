@@ -71,7 +71,7 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
 
         list($scheme, $host, $port) = Internal\parseUri($uri);
 
-        if (substr($host, 0, 1) === '[') {
+        if ($host[0] === '[') {
             $host = substr($host, 1, -1);
         }
         
