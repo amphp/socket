@@ -71,6 +71,10 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
 
         list($scheme, $host, $port) = Internal\parseUri($uri);
 
+        if (substr($host, 0, 1) === '[') {
+            $host = substr($host, 1, -1);
+        }
+        
         if ($port === 0 || @\inet_pton($host)) {
             // Host is already an IP address or file path.
             $uris = [$uri];
