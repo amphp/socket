@@ -54,5 +54,10 @@
         "psr-4": {
             "Amp\\Socket\\Test\\": "test"
         }
+    },
+    "config": {
+        "platform": {
+            "php": "7.0.0"
+        }
     }
 }
