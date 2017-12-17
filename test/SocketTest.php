@@ -23,4 +23,18 @@ class SocketTest extends TestCase {
             }
         });
     }
+
+    public function testLocalAddressAsUnixSocket() {
+        @unlink(__DIR__ . '/socket.sock');
+
+        $socket = \socket_create(AF_UNIX, SOCK_STREAM, 0);
+        \socket_bind($socket, __DIR__ . '/socket.sock');
+
+        socket_set_nonblock($socket);
+        socket_listen($socket);
+
+        $clientSocket = new Socket\ClientSocket(stream_socket_client('unix://' . __DIR__ . '/socket.sock'));
+
+        self::assertEquals($clientSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
+    }
 }

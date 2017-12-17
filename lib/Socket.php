@@ -104,7 +104,7 @@ abstract class Socket implements InputStream, OutputStream {
     }
 
     public function getLocalAddress() {
-        return Internal\cleanupSocketName(@\stream_socket_get_name($this->getResource(), false));
+        return Internal\cleanupSocketName(@\stream_socket_get_name($this->getResource(), false)) ?? $this->getRemoteAddress();
     }
 
     public function getRemoteAddress() {
