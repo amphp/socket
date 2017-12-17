@@ -17,8 +17,7 @@ final class ClientTlsContext {
     private $capturePeer = false;
     private $sniEnabled = true;
     private $securityLevel = 2;
-    private $clientCert = null;
-    private $clientCertKey = null;
+    private $certificate = null;
 
     /**
      * Minimum TLS version to negotiate.
@@ -300,28 +299,15 @@ final class ClientTlsContext {
      *
      * @return ClientTlsContext Cloned, modified instance.
      */
-    public function withCertificate(string $certificate, string $key = null): self {
+    public function withCertificate(Certificate $certificate = null): self {
         $clone = clone $this;
-        $clone->clientCert = $certificate;
-        $clone->clientCertKey = $key;
-
-        return $clone;
-    }
-
-    public function withoutCertificate(): self {
-        $clone = clone $this;
-        $clone->clientCert = null;
-        $clone->clientCertKey = null;
+        $clone->certificate = $certificate;
 
         return $clone;
     }
 
     public function getCertificate() {
-        return $this->clientCert;
-    }
-
-    public function getCertificateKey() {
-        return $this->clientCertKey;
+        return $this->certificate;
     }
 
     /**
@@ -342,11 +328,11 @@ final class ClientTlsContext {
             "SNI_enabled" => $this->sniEnabled,
         ];
 
-        if ($this->clientCert !== null) {
-            $options['local_cert'] = $this->clientCert;
+        if ($this->certificate !== null) {
+            $options["local_cert"] = $this->certificate->getCertFile();
 
-            if ($this->clientCertKey !== null) {
-                $options['local_pk'] = $this->clientCertKey;
+            if ($this->certificate->getCertFile() !== $this->certificate->getKeyFile()) {
+                $options["local_pk"] = $this->certificate->getKeyFile();
             }
         }
 

@@ -2,6 +2,7 @@
 
 namespace Amp\Socket\Test;
 
+use Amp\Socket\Certificate;
 use Amp\Socket\ClientTlsContext;
 use PHPUnit\Framework\TestCase;
 
@@ -74,34 +75,22 @@ class ClientTlsContextTest extends TestCase {
         $this->assertFalse($clonedContext->hasPeerVerification());
     }
 
-    public function clientCertificateDataProvider() {
+    public function certificateDataProvider() {
         return [
-            ['cert.pem', 'cert.key'],
-            ['cert.pem', null],
+            [null],
+            [new Certificate('cert.pem')],
         ];
     }
 
     /**
-     * @dataProvider clientCertificateDataProvider
+     * @dataProvider certificateDataProvider
      */
-    public function testWithClientCertificate($cert, $key) {
+    public function testWithCertificate($certificate) {
         $context = new ClientTlsContext;
-        $clonedContext = $context->withCertificate($cert, $key);
+        $clonedContext = $context->withCertificate($certificate);
 
         $this->assertNull($context->getCertificate());
-        $this->assertNull($context->getCertificateKey());
-        $this->assertSame($cert, $clonedContext->getCertificate());
-        $this->assertSame($key, $clonedContext->getCertificateKey());
-    }
-
-    public function testWithoutClientCertificate() {
-        $context = new ClientTlsContext;
-        $clonedContext = $context->withoutCertificate();
-
-        $this->assertNull($context->getCertificate());
-        $this->assertNull($context->getCertificateKey());
-        $this->assertNull($clonedContext->getCertificate());
-        $this->assertNull($clonedContext->getCertificateKey());
+        $this->assertSame($certificate, $clonedContext->getCertificate());
     }
 
     public function verifyDepthDataProvider() {
