@@ -74,6 +74,37 @@ class ClientTlsContextTest extends TestCase {
         $this->assertFalse($clonedContext->hasPeerVerification());
     }
 
+    public function clientCertificateDataProvider() {
+        return [
+            ['cert.pem', 'cert.key'],
+            ['cert.pem', null],
+        ];
+    }
+
+    /**
+     * @dataProvider clientCertificateDataProvider
+     */
+    public function testWithClientCertificate($cert, $key)
+    {
+        $context = new ClientTlsContext;
+        $clonedContext = $context->withClientCertificate($cert, $key);
+
+        $this->assertNull($context->getClientCertificate());
+        $this->assertNull($context->getClientCertificateKey());
+        $this->assertSame($cert, $clonedContext->getClientCertificate());
+        $this->assertSame($key, $clonedContext->getClientCertificateKey());
+    }
+
+    public function testWithoutClientCertificate() {
+        $context = new ClientTlsContext;
+        $clonedContext = $context->withoutPeerVerification();
+
+        $this->assertNull($context->getClientCertificate());
+        $this->assertNull($context->getClientCertificateKey());
+        $this->assertNull($clonedContext->getClientCertificate());
+        $this->assertNull($clonedContext->getClientCertificateKey());
+    }
+
     public function verifyDepthDataProvider() {
         return [
             [0],
