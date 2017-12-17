@@ -27,9 +27,9 @@ install:
 script:
     # PHPDBG segfaults on versions other than 7.0 currently
   - if [ "$TRAVIS_PHP_VERSION" = "7.0" ]; then
-      phpdbg -qrr vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml
+      phpdbg -qrr vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml;
     else
-      vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml
+      vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml;
     fi
   - PHP_CS_FIXER_IGNORE_ENV=1 php vendor/bin/php-cs-fixer --diff --dry-run -v fix
 
