@@ -2,6 +2,7 @@
 
 namespace Amp\Socket\Test;
 
+use Amp\Socket\Certificate;
 use Amp\Socket\ClientTlsContext;
 use PHPUnit\Framework\TestCase;
 
@@ -72,6 +73,24 @@ class ClientTlsContextTest extends TestCase {
 
         $this->assertTrue($context->hasPeerVerification());
         $this->assertFalse($clonedContext->hasPeerVerification());
+    }
+
+    public function certificateDataProvider() {
+        return [
+            [null],
+            [new Certificate('cert.pem')],
+        ];
+    }
+
+    /**
+     * @dataProvider certificateDataProvider
+     */
+    public function testWithCertificate($certificate) {
+        $context = new ClientTlsContext;
+        $clonedContext = $context->withCertificate($certificate);
+
+        $this->assertNull($context->getCertificate());
+        $this->assertSame($certificate, $clonedContext->getCertificate());
     }
 
     public function verifyDepthDataProvider() {
