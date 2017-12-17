@@ -300,8 +300,7 @@ final class ClientTlsContext {
      *
      * @return ClientTlsContext Cloned, modified instance.
      */
-    public function withClientCertificate(string $certificate, string $key = null): self
-    {
+    public function withCertificate(string $certificate, string $key = null): self {
         $clone = clone $this;
         $clone->clientCert = $certificate;
         $clone->clientCertKey = $key;
@@ -309,8 +308,7 @@ final class ClientTlsContext {
         return $clone;
     }
 
-    public function withoutClientCertificate(): self
-    {
+    public function withoutCertificate(): self {
         $clone = clone $this;
         $clone->clientCert = null;
         $clone->clientCertKey = null;
@@ -318,13 +316,11 @@ final class ClientTlsContext {
         return $clone;
     }
 
-    public function getClientCertificate()
-    {
+    public function getCertificate() {
         return $this->clientCert;
     }
 
-    public function getClientCertificateKey()
-    {
+    public function getCertificateKey() {
         return $this->clientCertKey;
     }
 

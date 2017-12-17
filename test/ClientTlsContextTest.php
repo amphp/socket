@@ -84,25 +84,24 @@ class ClientTlsContextTest extends TestCase {
     /**
      * @dataProvider clientCertificateDataProvider
      */
-    public function testWithClientCertificate($cert, $key)
-    {
+    public function testWithClientCertificate($cert, $key) {
         $context = new ClientTlsContext;
-        $clonedContext = $context->withClientCertificate($cert, $key);
+        $clonedContext = $context->withCertificate($cert, $key);
 
-        $this->assertNull($context->getClientCertificate());
-        $this->assertNull($context->getClientCertificateKey());
-        $this->assertSame($cert, $clonedContext->getClientCertificate());
-        $this->assertSame($key, $clonedContext->getClientCertificateKey());
+        $this->assertNull($context->getCertificate());
+        $this->assertNull($context->getCertificateKey());
+        $this->assertSame($cert, $clonedContext->getCertificate());
+        $this->assertSame($key, $clonedContext->getCertificateKey());
     }
 
     public function testWithoutClientCertificate() {
         $context = new ClientTlsContext;
-        $clonedContext = $context->withoutPeerVerification();
+        $clonedContext = $context->withoutCertificate();
 
-        $this->assertNull($context->getClientCertificate());
-        $this->assertNull($context->getClientCertificateKey());
-        $this->assertNull($clonedContext->getClientCertificate());
-        $this->assertNull($clonedContext->getClientCertificateKey());
+        $this->assertNull($context->getCertificate());
+        $this->assertNull($context->getCertificateKey());
+        $this->assertNull($clonedContext->getCertificate());
+        $this->assertNull($clonedContext->getCertificateKey());
     }
 
     public function verifyDepthDataProvider() {
