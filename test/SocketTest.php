@@ -26,6 +26,7 @@ class SocketTest extends TestCase {
 
     public function testLocalAddressAsUnixSocket() {
         $socket = \socket_create(AF_UNIX, SOCK_STREAM, 0);
+        // Prepending the path with a null byte will abstract the socket and remove it when not used anymore see http://man7.org/linux/man-pages/man7/unix.7.html
         \socket_bind($socket, "\0". __DIR__ . '/socket.sock');
 
         socket_set_nonblock($socket);
