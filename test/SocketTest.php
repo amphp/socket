@@ -24,17 +24,19 @@ class SocketTest extends TestCase {
         });
     }
 
-    public function testLocalAddressAsUnixSocket() {
-        @unlink(__DIR__ . '/socket.sock');
-        $socket = \socket_create(AF_UNIX, SOCK_STREAM, 0);
-        // Prepending the path with a null byte will abstract the socket and remove it when not used anymore see http://man7.org/linux/man-pages/man7/unix.7.html
-        \socket_bind($socket,  __DIR__ . '/socket.sock');
+    public function testSocketAddress() {
+        @unlink( __DIR__ . '/socket.sock');
 
-        socket_set_nonblock($socket);
-        socket_listen($socket);
+        $s = stream_socket_server('unix://' . __DIR__ . '/socket.sock');
+        $c = stream_socket_client('unix://' . __DIR__ . '/socket.sock');
 
-        $clientSocket = new Socket\ClientSocket(stream_socket_client("unix://" . __DIR__ . '/socket.sock'));
+        $clientSocket = new Socket\ClientSocket($c);
+        $serverSocket = new Socket\ServerSocket($s);
 
+        self::assertNotNull($clientSocket->getRemoteAddress());
+        self::assertEquals( __DIR__ . '/socket.sock', $clientSocket->getLocalAddress());
         self::assertEquals($clientSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
+        self::assertEquals($serverSocket->getRemoteAddress(), $serverSocket->getLocalAddress());
+        self::assertEquals($serverSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
     }
 }

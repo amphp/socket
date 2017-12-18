@@ -104,10 +104,26 @@ abstract class Socket implements InputStream, OutputStream {
     }
 
     public function getLocalAddress() {
-        return Internal\cleanupSocketName(@\stream_socket_get_name($this->getResource(), false)) ?? $this->getRemoteAddress();
+        return $this->getAddress(false);
     }
 
     public function getRemoteAddress() {
-        return Internal\cleanupSocketName(@\stream_socket_get_name($this->getResource(), true));
+        return $this->getAddress(true);
+    }
+
+    private function getAddress(bool $wantPeer) {
+        $remoteCleaned = Internal\cleanupSocketName(@\stream_socket_get_name($this->getResource(), $wantPeer));
+
+        if ($remoteCleaned !== null) {
+            return $remoteCleaned;
+        }
+
+        $meta = @stream_get_meta_data($this->getResource()) ?? [];
+
+        if (array_key_exists('stream_type', $meta) && $meta['stream_type'] === 'unix_socket') {
+            return Internal\cleanupSocketName(@\stream_socket_get_name($this->getResource(), !$wantPeer));
+        }
+
+        return null;
     }
 }
