@@ -33,10 +33,10 @@ class SocketTest extends TestCase {
         $clientSocket = new Socket\ClientSocket($c);
         $serverSocket = new Socket\ServerSocket($s);
 
-        self::assertNotNull($clientSocket->getRemoteAddress());
-        self::assertEquals(__DIR__ . '/socket.sock', $clientSocket->getLocalAddress());
-        self::assertEquals($clientSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
-        self::assertEquals($serverSocket->getRemoteAddress(), $serverSocket->getLocalAddress());
-        self::assertEquals($serverSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
+        $this->assertNotNull($clientSocket->getRemoteAddress());
+        $this->assertSame(__DIR__ . '/socket.sock', $clientSocket->getLocalAddress());
+        $this->assertSame($clientSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
+        $this->assertSame($serverSocket->getRemoteAddress(), $serverSocket->getLocalAddress());
+        $this->assertSame($serverSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
     }
 }
