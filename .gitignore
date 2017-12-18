@@ -3,4 +3,3 @@
 /vendor/
 /.idea/
 /.php_cs.cache
-/test/socket.sock
