@@ -25,7 +25,7 @@ class SocketTest extends TestCase {
     }
 
     public function testSocketAddress() {
-        @unlink( __DIR__ . '/socket.sock');
+        @unlink(__DIR__ . '/socket.sock');
 
         $s = stream_socket_server('unix://' . __DIR__ . '/socket.sock');
         $c = stream_socket_client('unix://' . __DIR__ . '/socket.sock');
@@ -34,7 +34,7 @@ class SocketTest extends TestCase {
         $serverSocket = new Socket\ServerSocket($s);
 
         self::assertNotNull($clientSocket->getRemoteAddress());
-        self::assertEquals( __DIR__ . '/socket.sock', $clientSocket->getLocalAddress());
+        self::assertEquals(__DIR__ . '/socket.sock', $clientSocket->getLocalAddress());
         self::assertEquals($clientSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
         self::assertEquals($serverSocket->getRemoteAddress(), $serverSocket->getLocalAddress());
         self::assertEquals($serverSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
