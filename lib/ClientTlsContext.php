@@ -26,7 +26,7 @@ final class ClientTlsContext {
      *
      * @param int $version `ServerTlsContext::TLSv1_0`, `ServerTlsContext::TLSv1_1`, or `ServerTlsContext::TLSv1_2`.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      * @throws \Error If an invalid minimum version is given.
      */
     public function withMinimumVersion(int $version): self {
@@ -54,7 +54,7 @@ final class ClientTlsContext {
      *
      * @param string|null $peerName
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withPeerName(string $peerName = null): self {
         $clone = clone $this;
@@ -73,7 +73,7 @@ final class ClientTlsContext {
     /**
      * Enable peer verification.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withPeerVerification(): self {
         $clone = clone $this;
@@ -85,7 +85,7 @@ final class ClientTlsContext {
     /**
      * Disable peer verification, this is the default for servers.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withoutPeerVerification(): self {
         $clone = clone $this;
@@ -106,7 +106,7 @@ final class ClientTlsContext {
      *
      * @param int $verifyDepth Maximum length of the certificate chain.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withVerificationDepth(int $verifyDepth): self {
         if ($verifyDepth < 0) {
@@ -131,7 +131,7 @@ final class ClientTlsContext {
      *
      * @param string|null $ciphers List of ciphers in OpenSSL's format (colon separated).
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withCiphers(string $ciphers = null): self {
         $clone = clone $this;
@@ -152,7 +152,7 @@ final class ClientTlsContext {
      *
      * @param string|null $cafile Path to the file or `null` to unset.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withCaFile(string $cafile = null): self {
         $clone = clone $this;
@@ -173,7 +173,7 @@ final class ClientTlsContext {
      *
      * @param string|null $capath Path to the file or `null` to unset.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withCaPath(string $capath = null): self {
         $clone = clone $this;
@@ -194,7 +194,7 @@ final class ClientTlsContext {
      *
      * Note: This is the chain as sent by the peer, NOT the verified chain.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withPeerCapturing(): self {
         $clone = clone $this;
@@ -206,7 +206,7 @@ final class ClientTlsContext {
     /**
      * Don't capture the certificates sent by the peer.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withoutPeerCapturing(): self {
         $clone = clone $this;
@@ -225,7 +225,7 @@ final class ClientTlsContext {
     /**
      * Enable SNI.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withSni(): self {
         $clone = clone $this;
@@ -237,7 +237,7 @@ final class ClientTlsContext {
     /**
      * Disable SNI.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withoutSni(): self {
         $clone = clone $this;
@@ -260,7 +260,7 @@ final class ClientTlsContext {
      *
      * @param int $level Must be between 0 and 5.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withSecurityLevel(int $level): self {
         // See https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html
@@ -297,7 +297,7 @@ final class ClientTlsContext {
     /**
      * Client certificate to use, if key is no present it assumes it is present in the same file as the certificate.
      *
-     * @return ClientTlsContext Cloned, modified instance.
+     * @return self Cloned, modified instance.
      */
     public function withCertificate(Certificate $certificate = null): self {
         $clone = clone $this;
