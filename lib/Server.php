@@ -123,4 +123,13 @@ class Server {
             $this->acceptor = null;
         }
     }
+
+    /**
+     * Raw stream socket resource.
+     *
+     * @return resource|null
+     */
+    public function getResource() {
+        return $this->socket;
+    }
 }
