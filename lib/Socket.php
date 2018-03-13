@@ -11,6 +11,8 @@ use Amp\Failure;
 use Amp\Promise;
 
 abstract class Socket implements InputStream, OutputStream {
+    const DEFAULT_CHUNK_SIZE = ResourceInputStream::DEFAULT_CHUNK_SIZE;
+
     /** @var \Amp\ByteStream\ResourceInputStream */
     private $reader;
 
@@ -23,7 +25,7 @@ abstract class Socket implements InputStream, OutputStream {
      *
      * @throws \Error If a stream resource is not given for $resource.
      */
-    public function __construct($resource, int $chunkSize = 65536) {
+    public function __construct($resource, int $chunkSize = self::DEFAULT_CHUNK_SIZE) {
         $this->reader = new ResourceInputStream($resource, $chunkSize);
         $this->writer = new ResourceOutputStream($resource, $chunkSize);
     }
