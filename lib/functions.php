@@ -27,7 +27,6 @@ use function Amp\call;
  */
 function listen(string $uri, ServerListenContext $socketContext = null, ServerTlsContext $tlsContext = null): Server {
     $socketContext = $socketContext ?? new ServerListenContext;
-    $tlsContext = $tlsContext ?? new ServerTlsContext;
 
     $scheme = \strstr($uri, "://", true);
 
@@ -39,10 +38,16 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
         throw new \Error("Only tcp, udp, unix and udg schemes allowed for server creation");
     }
 
-    $context = \stream_context_create(\array_merge(
-        $socketContext->toStreamContextArray(),
-        $tlsContext->toStreamContextArray()
-    ));
+    if ($tlsContext) {
+        $context = \array_merge(
+            $socketContext->toStreamContextArray(),
+            $tlsContext->toStreamContextArray()
+        );
+    } else {
+        $context = $socketContext->toStreamContextArray();
+    }
+
+    $context = \stream_context_create($context);
 
     // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
     $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $context);
