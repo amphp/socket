@@ -1,5 +1,5 @@
-/coverage/
-/composer.lock
-/vendor/
-/.idea/
-/.php_cs.cache
+.php_cs.cache
+build
+composer.lock
+phpunit.xml
+vendor
