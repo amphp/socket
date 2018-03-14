@@ -1,17 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<phpunit bootstrap="./vendor/autoload.php" colors="true">
+<phpunit
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/5.7/phpunit.xsd"
+        backupGlobals="false"
+        bootstrap="vendor/autoload.php"
+        colors="true"
+>
     <testsuites>
-        <testsuite name="Tests">
-            <directory>./test</directory>
+        <testsuite name="Amp Socket">
+            <directory>test</directory>
         </testsuite>
     </testsuites>
-    <listeners>
-        <listener class="Amp\PHPUnit\LoopReset" />
-    </listeners>
     <filter>
-        <whitelist addUncoveredFilesFromWhitelist="true">
-            <directory>./lib</directory>
+        <whitelist>
+            <directory suffix=".php">src</directory>
         </whitelist>
     </filter>
+    <listeners>
+        <listener class="Amp\PHPUnit\LoopReset"/>
+    </listeners>
+    <logging>
+        <log type="coverage-html" target="build/coverage" title="Router" highlight="true"/>
+        <log type="coverage-clover" target="build/logs/clover.xml"/>
+    </logging>
 </phpunit>

@@ -43,11 +43,11 @@
     },
     "autoload": {
         "psr-4": {
-            "Amp\\Socket\\": "lib"
+            "Amp\\Socket\\": "src"
         },
         "files": [
-            "lib/functions.php",
-            "lib/Internal/functions.php"
+            "src/functions.php",
+            "src/Internal/functions.php"
         ]
     },
     "autoload-dev": {
