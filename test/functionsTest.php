@@ -21,4 +21,9 @@ class functionsTest extends TestCase {
     public function testListenStreamSocketServerError() {
         Socket\listen('error');
     }
+
+    public function testListenIPv6() {
+        $socket = Socket\listen('[::1]:0');
+        $this->assertRegExp('(\[::1\]:\d+)', $socket->getAddress());
+    }
 }

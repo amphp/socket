@@ -207,5 +207,15 @@ function cleanupSocketName($address) {
         return null;
     }
 
+	// Check if this is an IPv6 address which includes multiple colons but no square brackets
+    // @see https://github.com/reactphp/socket/blob/v0.8.10/src/TcpServer.php#L179-L184
+    // @license https://github.com/reactphp/socket/blob/v0.8.10/LICENSE
+	$pos = strrpos($address, ':');
+	if ($pos !== false && strpos($address, ':') < $pos && substr($address, 0, 1) !== '[') {
+		$port = substr($address, $pos + 1);
+		$address = '[' . substr($address, 0, $pos) . ']:' . $port;
+	}
+	// -- End of imported code ----- //
+
     return $address;
 }
