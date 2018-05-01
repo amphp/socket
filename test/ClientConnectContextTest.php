@@ -25,6 +25,14 @@ class ClientConnectContextTest extends TestCase {
         $this->assertSame($bindTo, $clonedContext->getBindTo());
     }
 
+    public function testWithTcpNoDelay() {
+        $context = new ClientConnectContext();
+        $clonedContext = $context->withTcpNoDelay();
+
+        $this->assertFalse($context->hasTcpNoDelay());
+        $this->assertTrue($clonedContext->hasTcpNoDelay());
+    }
+
     public function withConnectTimeoutDataProvider() {
         return [
             [1],
@@ -137,7 +145,10 @@ class ClientConnectContextTest extends TestCase {
         $context = new ClientConnectContext();
         $clonedContext = $context->withBindTo('127.0.0.1:12345');
 
-        $this->assertSame(['socket' => []], $context->toStreamContextArray());
-        $this->assertSame(['socket' => ['bindto' => '127.0.0.1:12345']], $clonedContext->toStreamContextArray());
+        $this->assertSame(['socket' => ['tcp_nodelay' => false]], $context->toStreamContextArray());
+        $this->assertSame(['socket' => [
+            'tcp_nodelay' => false,
+            'bindto' => '127.0.0.1:12345',
+        ]], $clonedContext->toStreamContextArray());
     }
 }

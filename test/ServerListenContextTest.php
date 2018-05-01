@@ -23,6 +23,14 @@ class ServerListenContextTest extends TestCase {
         $this->assertSame($bindTo, $clonedContext->getBindTo());
     }
 
+    public function testWithTcpNoDelay() {
+        $context = new ServerListenContext();
+        $clonedContext = $context->withTcpNoDelay();
+
+        $this->assertFalse($context->hasTcpNoDelay());
+        $this->assertTrue($clonedContext->hasTcpNoDelay());
+    }
+
     public function backlogDataProvider() {
         return [
             [10],

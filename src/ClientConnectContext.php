@@ -10,6 +10,7 @@ final class ClientConnectContext {
     private $connectTimeout = 10000;
     private $maxAttempts = 2;
     private $typeRestriction = null;
+    private $tcpNoDelay = false;
 
     public function withBindTo(string $bindTo = null): self {
         $bindTo = normalizeBindToOption($bindTo);
@@ -69,8 +70,28 @@ final class ClientConnectContext {
         return $this->typeRestriction;
     }
 
+    public function hasTcpNoDelay(): bool {
+        return $this->tcpNoDelay;
+    }
+
+    public function withTcpNoDelay(): self {
+        $clone = clone $this;
+        $clone->tcpNoDelay = true;
+
+        return $clone;
+    }
+
+    public function withoutTcpNoDelay(): self {
+        $clone = clone $this;
+        $clone->tcpNoDelay = false;
+
+        return $clone;
+    }
+
     public function toStreamContextArray(): array {
-        $options = [];
+        $options = [
+            "tcp_nodelay" => $this->tcpNoDelay,
+        ];
 
         if ($this->bindTo !== null) {
             $options["bindto"] = $this->bindTo;

@@ -9,6 +9,7 @@ final class ServerListenContext {
     private $backlog = 128;
     private $reusePort = false;
     private $broadcast = false;
+    private $tcpNoDelay = false;
 
     public function withBindTo(string $bindTo = null): self {
         $bindTo = normalizeBindToOption($bindTo);
@@ -70,6 +71,24 @@ final class ServerListenContext {
         return $clone;
     }
 
+    public function hasTcpNoDelay(): bool {
+        return $this->tcpNoDelay;
+    }
+
+    public function withTcpNoDelay(): self {
+        $clone = clone $this;
+        $clone->tcpNoDelay = true;
+
+        return $clone;
+    }
+
+    public function withoutTcpNoDelay(): self {
+        $clone = clone $this;
+        $clone->tcpNoDelay = false;
+
+        return $clone;
+    }
+
     public function toStreamContextArray(): array {
         return ["socket" => [
             "bindto" => $this->bindTo,
@@ -79,6 +98,7 @@ final class ServerListenContext {
             "so_reuseaddr" => $this->reusePort && \stripos(\PHP_OS, "WIN") === 0,
             "so_reuseport" => $this->reusePort,
             "so_broadcast" => $this->broadcast,
+            "tcp_nodelay"  => $this->tcpNoDelay,
         ]];
     }
 }
