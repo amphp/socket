@@ -6,3 +6,4 @@ test export-ignore
 .travis.yml export-ignore
 Makefile export-ignore
 phpunit.xml.dist export-ignore
+docs/asset export-ignore
