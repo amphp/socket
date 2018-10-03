@@ -15,7 +15,7 @@ class ServerSocket extends Socket {
 
         $ctx = \stream_context_get_options($resource);
         if (empty($ctx['ssl'])) {
-            return new Failure(new SocketException(
+            return new Failure(new CryptoException(
                 "Can't enable TLS without configuration. " .
                 "If you used Amp\\Socket\\listen(), be sure to pass a ServerTlsContext as third argument, " .
                 "otherwise set the 'ssl' context option to the PHP stream resource."

@@ -24,6 +24,11 @@ install:
   - wget https://github.com/php-coveralls/php-coveralls/releases/download/v1.0.2/coveralls.phar
   - chmod +x coveralls.phar
 
+before_script:
+  - pushd test/tls
+  - ./regenerate.sh
+  - popd
+
 script:
     # PHPDBG segfaults on versions other than 7.0 currently
   - if [ "$TRAVIS_PHP_VERSION" = "7.0" ]; then
