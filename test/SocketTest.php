@@ -5,6 +5,8 @@ namespace Amp\Socket\Test;
 use Amp\Loop;
 use Amp\Socket;
 use PHPUnit\Framework\TestCase;
+use function Amp\asyncCall;
+use function Amp\Promise\wait;
 
 class SocketTest extends TestCase {
     public function testReadAndClose() {
@@ -38,5 +40,21 @@ class SocketTest extends TestCase {
         $this->assertSame($clientSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
         $this->assertSame($serverSocket->getRemoteAddress(), $serverSocket->getLocalAddress());
         $this->assertSame($serverSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
+    }
+
+    public function testEnableCryptoWithoutTlsContext() {
+        $server = Socket\listen('127.0.0.1:0');
+
+        asyncCall(function () use ($server) {
+            yield Socket\connect($server->getAddress());
+        });
+
+        /** @var Socket\ServerSocket $client */
+        $client = wait($server->accept());
+
+        $this->expectException(Socket\CryptoException::class);
+        $this->expectExceptionMessage("Can't enable TLS without configuration.");
+
+        wait($client->enableCrypto());
     }
 }

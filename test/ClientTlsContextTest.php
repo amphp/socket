@@ -271,6 +271,9 @@ class ClientTlsContextTest extends TestCase {
         $context = (new ClientTlsContext)
             ->withCaPath("/var/foobar");
 
+        $contextArray = $context->toStreamContextArray();
+        unset($contextArray['ssl']['security_level']); // present depending on OpenSSL version
+
         $this->assertSame(["ssl" => [
             "crypto_method" => $context->toStreamCryptoMethod(),
             "peer_name" => $context->getPeerName(),
@@ -282,6 +285,6 @@ class ClientTlsContextTest extends TestCase {
             "capture_peer_cert_chain" => $context->hasPeerCapturing(),
             "SNI_enabled" => $context->hasSni(),
             "capath" => $context->getCaPath(),
-        ]], $context->toStreamContextArray());
+        ]], $contextArray);
     }
 }
