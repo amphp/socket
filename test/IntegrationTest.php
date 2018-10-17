@@ -2,8 +2,12 @@
 
 namespace Amp\Socket\Test;
 
+use Amp\CancelledException;
+use Amp\Socket\ClientConnectContext;
 use Amp\Socket\ClientSocket;
 use Amp\Socket\ClientTlsContext;
+use Amp\Socket\ConnectException;
+use Amp\TimeoutCancellationToken;
 use PHPUnit\Framework\TestCase;
 
 class IntegrationTest extends TestCase {
@@ -21,6 +25,22 @@ class IntegrationTest extends TestCase {
             ['www.google.com:80'],
             ['www.yahoo.com:80'],
         ];
+    }
+
+    public function testConnectFailure() {
+        $this->expectException(ConnectException::class);
+        $promise = \Amp\Socket\connect('8.8.8.8:80', (new ClientConnectContext)->withConnectTimeout(1000));
+        $sock = \Amp\Promise\wait($promise);
+    }
+
+    /**
+     * @depends testConnectFailure
+     */
+    public function testConnectCancellation() {
+        $this->expectException(CancelledException::class);
+        $token = new TimeoutCancellationToken(1000);
+        $promise = \Amp\Socket\connect('8.8.8.8:80', (new ClientConnectContext)->withConnectTimeout(2000), $token);
+        $sock = \Amp\Promise\wait($promise);
     }
 
     /**

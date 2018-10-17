@@ -109,10 +109,6 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
         $timeout = $socketContext->getConnectTimeout();
 
         foreach ($uris as $builtUri) {
-            if ($token) {
-                $token->throwIfRequested();
-            }
-
             try {
                 $context = \stream_context_create($socketContext->toStreamContextArray());
 
@@ -130,6 +126,7 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
 
                 $deferred = new Deferred;
                 $watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
+                $id = $token->subscribe([$deferred, 'fail']);
 
                 try {
                     yield Promise\timeout($deferred->promise(), $timeout);
@@ -142,6 +139,7 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
                     ), 110); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
                 } finally {
                     Loop::cancel($watcher);
+                    $token->unsubscribe($id);
                 }
 
                 // The following hack looks like the only way to detect connection refused errors with PHP's stream sockets.
@@ -153,7 +151,7 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
                         $failures ? "; previous attempts: " . \implode($failures) : ""
                     ), 111); // See ECONNREFUSED in http://www.virtsync.com/c-error-codes-include-errno
                 }
-            } catch (\Exception $e) {
+            } catch (ConnectException $e) {
                 // Includes only error codes used in this file, as error codes on other OS families might be different.
                 // In fact, this might show a confusing error message on OS families that return 110 or 111 by itself.
                 $knownReasons = [
