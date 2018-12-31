@@ -39,7 +39,7 @@ class TlsFragmentationTest extends TestCase
                     asyncCall(function () use ($client) {
                         yield $client->enableCrypto();
                         $this->assertInstanceOf(Socket\ServerSocket::class, $client);
-                        $this->assertSame("Hello World", yield $client->read());
+                        $this->assertSame("Hello World", yield from $this->read($client, 11));
                         $client->write("test");
                     });
                 }
@@ -53,7 +53,7 @@ class TlsFragmentationTest extends TestCase
             $client = yield Socket\cryptoConnect($proxyServer->getAddress(), null, $context);
             yield $client->write("Hello World");
 
-            $this->assertSame("test", yield $client->read());
+            $this->assertSame("test", yield from $this->read($client, 4));
 
             $server->close();
 
@@ -71,5 +71,20 @@ class TlsFragmentationTest extends TestCase
                 }
             }
         });
+    }
+
+    private function read(ByteStream\InputStream $source, int $minLength)
+    {
+        $buffer = "";
+
+        while (null !== $chunk = yield $source->read()) {
+            $buffer .= $chunk;
+
+            if (\strlen($buffer) >= $minLength) {
+                return $buffer;
+            }
+        }
+
+        throw new \RuntimeException("Stream ended prior to {$minLength} bytes being read.");
     }
 }
