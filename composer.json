@@ -34,7 +34,7 @@
         "amphp/amp": "^2",
         "amphp/dns": "^0.9",
         "amphp/byte-stream": "^1.1",
-        "amphp/uri": "^0.1"
+        "league/uri-schemes": "^1.1"
     },
     "require-dev": {
         "amphp/phpunit-util": "^1",

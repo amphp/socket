@@ -9,7 +9,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Struct;
 use Amp\Success;
-use Amp\Uri\Uri;
+use League\Uri\UriException;
 use function Amp\call;
 
 final class BasicSocketPool implements SocketPool {
@@ -26,11 +26,19 @@ final class BasicSocketPool implements SocketPool {
     }
 
     private function normalizeUri(string $uri): string {
-        if (stripos($uri, 'unix://') === 0) {
-            return $uri;
+        try {
+            $uri = Internal\Uri::createFromString($uri); // Validates and normalizes.
+        } catch (UriException $exception) {
+            throw new SocketException('Invalid URI for socket pool', 0, $exception);
         }
 
-        return (new Uri($uri))->normalize();
+        $scheme = $uri->getScheme();
+
+        if ($scheme === 'unix') {
+            return $scheme . '://' . $uri->getPath();
+        }
+
+        return $scheme . '://' . $uri->getAuthority();
     }
 
     /** @inheritdoc */
@@ -54,8 +62,10 @@ final class BasicSocketPool implements SocketPool {
         foreach ($this->sockets[$uri] as $socketId => $socket) {
             if (!$socket->isAvailable) {
                 continue;
-            } elseif (!\is_resource($socket->resource) || \feof($socket->resource)) {
-                $this->clear(new ClientSocket($socket->resource));
+            }
+
+            if (!\is_resource($socket->resource) || \feof($socket->resource)) {
+                $this->clearFromId((int) $socket->resource);
                 continue;
             }
 
@@ -110,8 +120,13 @@ final class BasicSocketPool implements SocketPool {
 
     /** @inheritdoc */
     public function clear(ClientSocket $socket) {
-        $socketId = (int) $socket->getResource();
+        $this->clearFromId((int) $socket->getResource());
+    }
 
+    /**
+     * @param int $socketId
+     */
+    private function clearFromId(int $socketId) {
         if (!isset($this->socketIdUriMap[$socketId])) {
             throw new \Error(
                 sprintf('Unknown socket: %d', $socketId)
@@ -147,8 +162,10 @@ final class BasicSocketPool implements SocketPool {
 
         $uri = $this->socketIdUriMap[$socketId];
 
-        if (!\is_resource($socket->getResource()) || \feof($socket->getResource())) {
-            $this->clear($socket);
+        $resource = $socket->getResource();
+
+        if (!\is_resource($resource) || \feof($resource)) {
+            $this->clearFromId((int) $resource);
             return;
         }
 
@@ -159,7 +176,7 @@ final class BasicSocketPool implements SocketPool {
             Loop::enable($socket->idleWatcher);
         } else {
             $socket->idleWatcher = Loop::delay($this->idleTimeout, function () use ($socket) {
-                $this->clear(new ClientSocket($socket->resource));
+                $this->clearFromId((int) $socket->resource);
             });
 
             Loop::unreference($socket->idleWatcher);

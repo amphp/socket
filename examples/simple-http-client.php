@@ -7,7 +7,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use Amp\ByteStream\ResourceOutputStream;
 use Amp\Loop;
 use Amp\Socket\Socket;
-use Amp\Uri\Uri;
+use League\Uri;
 use function Amp\Socket\connect;
 use function Amp\Socket\cryptoConnect;
 
@@ -19,18 +19,20 @@ Loop::run(function () use ($argv) {
         exit(1);
     }
 
-    $uri = new Uri($argv[1]);
+    $uri = Uri\Http::createFromString($argv[1]);
     $host = $uri->getHost();
+
+    $path = $uri->getPath() ?: '/';
 
     if ($uri->getScheme() === "https") {
         /** @var Socket $socket */
-        $socket = yield cryptoConnect("tcp://" . $host . ":" . $uri->getPort());
+        $socket = yield cryptoConnect("tcp://" . $host . ":" . ($uri->getPort() ?? 443));
     } else {
         /** @var Socket $socket */
-        $socket = yield connect("tcp://" . $host . ":" . $uri->getPort());
+        $socket = yield connect("tcp://" . $host . ":" . ($uri->getPort() ?? 80));
     }
 
-    yield $socket->write("GET {$uri} HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n");
+    yield $socket->write("GET {$path} HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n");
 
     while (null !== $chunk = yield $socket->read()) {
         yield $stdout->write($chunk);
