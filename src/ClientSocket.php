@@ -6,7 +6,7 @@ use Amp\ByteStream\ClosedException;
 use Amp\Failure;
 use Amp\Promise;
 
-class ClientSocket extends Socket {
+class ClientSocket extends ResourceSocket {
     /**
      * {@inheritdoc}
      *

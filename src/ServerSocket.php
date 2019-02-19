@@ -6,7 +6,7 @@ use Amp\ByteStream\ClosedException;
 use Amp\Failure;
 use Amp\Promise;
 
-class ServerSocket extends Socket {
+class ServerSocket extends ResourceSocket {
     /** @inheritdoc */
     public function enableCrypto(): Promise {
         if (($resource = $this->getResource()) === null) {
