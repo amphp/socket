@@ -6,10 +6,13 @@ php:
   - 7.0
   - 7.1
   - 7.2
+  - 7.3
+  - 7.4snapshot
   - nightly
 
 matrix:
   allow_failures:
+    - php: 7.4snapshot
     - php: nightly
   fast_finish: true
 
@@ -30,12 +33,7 @@ before_script:
   - popd
 
 script:
-    # PHPDBG segfaults on versions other than 7.0 currently
-  - if [ "$TRAVIS_PHP_VERSION" = "7.0" ]; then
-      phpdbg -qrr vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml;
-    else
-      vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml;
-    fi
+  - phpdbg -qrr vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml
   - PHP_CS_FIXER_IGNORE_ENV=1 php vendor/bin/php-cs-fixer --diff --dry-run -v fix
 
 after_script:
