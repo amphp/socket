@@ -2,6 +2,8 @@
 
 namespace Amp\Socket;
 
+use Amp\Promise;
+
 interface StreamSocket extends Socket {
     /**
      * Raw stream socket resource.
@@ -9,6 +11,13 @@ interface StreamSocket extends Socket {
      * @return resource|null
      */
     public function getResource();
+
+    /**
+     * Enables encryption on this socket.
+     *
+     * @return Promise
+     */
+    public function enableCrypto(): Promise;
 
     /**
      * @return string|null
