@@ -7,7 +7,8 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
 
-class Server {
+class Server
+{
     /** @var resource Stream socket server resource. */
     private $socket;
 
@@ -29,7 +30,8 @@ class Server {
      *
      * @throws \Error If a stream resource is not given for $socket.
      */
-    public function __construct($socket, int $chunkSize = ServerSocket::DEFAULT_CHUNK_SIZE) {
+    public function __construct($socket, int $chunkSize = ServerSocket::DEFAULT_CHUNK_SIZE)
+    {
         if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
         }
@@ -62,7 +64,8 @@ class Server {
     /**
      * Automatically cancels the loop watcher.
      */
-    public function __destruct() {
+    public function __destruct()
+    {
         if (!$this->socket) {
             return;
         }
@@ -75,7 +78,8 @@ class Server {
      *
      * @throws \Amp\Socket\PendingAcceptError If another accept request is pending.
      */
-    public function accept(): Promise {
+    public function accept(): Promise
+    {
         if ($this->acceptor) {
             throw new PendingAcceptError;
         }
@@ -98,7 +102,8 @@ class Server {
     /**
      * Closes the server and stops accepting connections. Any socket clients accepted will not be closed.
      */
-    public function close() {
+    public function close()
+    {
         if ($this->socket) {
             \fclose($this->socket);
         }
@@ -109,11 +114,13 @@ class Server {
     /**
      * @return string|null
      */
-    public function getAddress() {
+    public function getAddress()
+    {
         return $this->address;
     }
 
-    private function free() {
+    private function free()
+    {
         Loop::cancel($this->watcher);
 
         $this->socket = null;
@@ -129,7 +136,8 @@ class Server {
      *
      * @return resource|null
      */
-    public function getResource() {
+    public function getResource()
+    {
         return $this->socket;
     }
 }

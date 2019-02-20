@@ -12,7 +12,8 @@ use Amp\Success;
 use League\Uri\UriException;
 use function Amp\call;
 
-final class BasicSocketPool implements SocketPool {
+final class BasicSocketPool implements SocketPool
+{
     private $sockets = [];
     private $socketIdUriMap = [];
     private $pendingCount = [];
@@ -20,12 +21,14 @@ final class BasicSocketPool implements SocketPool {
     private $idleTimeout;
     private $socketContext;
 
-    public function __construct(int $idleTimeout = 10000, ClientConnectContext $socketContext = null) {
+    public function __construct(int $idleTimeout = 10000, ClientConnectContext $socketContext = null)
+    {
         $this->idleTimeout = $idleTimeout;
         $this->socketContext = $socketContext ?? new ClientConnectContext;
     }
 
-    private function normalizeUri(string $uri): string {
+    private function normalizeUri(string $uri): string
+    {
         try {
             $uri = Internal\Uri::createFromString($uri); // Validates and normalizes.
         } catch (UriException $exception) {
@@ -42,7 +45,8 @@ final class BasicSocketPool implements SocketPool {
     }
 
     /** @inheritdoc */
-    public function checkout(string $uri, CancellationToken $token = null): Promise {
+    public function checkout(string $uri, CancellationToken $token = null): Promise
+    {
         // A request might already be cancelled before we reach the checkout, so do not even attempt to checkout in that
         // case. The weird logic is required to throw the token's exception instead of creating a new one.
         if ($token && $token->isRequested()) {
@@ -81,7 +85,8 @@ final class BasicSocketPool implements SocketPool {
         return $this->checkoutNewSocket($uri, $token);
     }
 
-    private function checkoutNewSocket(string $uri, CancellationToken $token = null): Promise {
+    private function checkoutNewSocket(string $uri, CancellationToken $token = null): Promise
+    {
         return call(function () use ($uri, $token) {
             $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
@@ -119,17 +124,19 @@ final class BasicSocketPool implements SocketPool {
     }
 
     /** @inheritdoc */
-    public function clear(StreamSocket $socket) {
+    public function clear(StreamSocket $socket)
+    {
         $this->clearFromId((int) $socket->getResource());
     }
 
     /**
      * @param int $socketId
      */
-    private function clearFromId(int $socketId) {
+    private function clearFromId(int $socketId)
+    {
         if (!isset($this->socketIdUriMap[$socketId])) {
             throw new \Error(
-                sprintf('Unknown socket: %d', $socketId)
+                \sprintf('Unknown socket: %d', $socketId)
             );
         }
 
@@ -151,7 +158,8 @@ final class BasicSocketPool implements SocketPool {
     }
 
     /** @inheritdoc */
-    public function checkin(StreamSocket $socket) {
+    public function checkin(StreamSocket $socket)
+    {
         $socketId = (int) $socket->getResource();
 
         if (!isset($this->socketIdUriMap[$socketId])) {

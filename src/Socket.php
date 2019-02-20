@@ -4,9 +4,9 @@ namespace Amp\Socket;
 
 use Amp\ByteStream\InputStream;
 use Amp\ByteStream\OutputStream;
-use Amp\ByteStream\ResourceInputStream;
 
-interface Socket extends InputStream, OutputStream {
+interface Socket extends InputStream, OutputStream
+{
     /**
      * References the read watcher, so the loop keeps running in case there's an active read.
      *

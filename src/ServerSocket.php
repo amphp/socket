@@ -6,9 +6,11 @@ use Amp\ByteStream\ClosedException;
 use Amp\Failure;
 use Amp\Promise;
 
-class ServerSocket extends ResourceSocket {
+class ServerSocket extends ResourceSocket
+{
     /** @inheritdoc */
-    public function enableCrypto(): Promise {
+    public function enableCrypto(): Promise
+    {
         if (($resource = $this->getResource()) === null) {
             return new Failure(new ClosedException("The socket has been closed"));
         }

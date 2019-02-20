@@ -5,12 +5,14 @@ namespace Amp\Socket\Test;
 use Amp\Socket;
 use PHPUnit\Framework\TestCase;
 
-class functionsTest extends TestCase {
+class functionsTest extends TestCase
+{
     /**
      * @expectedException \Error
      * @expectedExceptionMessage Only tcp, udp, unix and udg schemes allowed for server creation
      */
-    public function testListenInvalidScheme() {
+    public function testListenInvalidScheme()
+    {
         Socket\listen("invalid://127.0.0.1:0");
     }
 
@@ -18,11 +20,13 @@ class functionsTest extends TestCase {
      * @expectedException \Amp\Socket\SocketException
      * @expectedExceptionMessageRegExp /Could not create server .*: \[Error: #.*\] .*$/
      */
-    public function testListenStreamSocketServerError() {
+    public function testListenStreamSocketServerError()
+    {
         Socket\listen('error');
     }
 
-    public function testListenIPv6() {
+    public function testListenIPv6()
+    {
         try {
             $socket = Socket\listen('[::1]:0');
             $this->assertRegExp('(\[::1\]:\d+)', $socket->getAddress());

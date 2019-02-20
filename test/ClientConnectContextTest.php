@@ -6,8 +6,10 @@ use Amp\Dns\Record;
 use Amp\Socket\ClientConnectContext;
 use PHPUnit\Framework\TestCase;
 
-class ClientConnectContextTest extends TestCase {
-    public function bindToDataProvider() {
+class ClientConnectContextTest extends TestCase
+{
+    public function bindToDataProvider()
+    {
         return [
             [null],
             ['127.0.0.1:12345']
@@ -17,7 +19,8 @@ class ClientConnectContextTest extends TestCase {
     /**
      * @dataProvider bindToDataProvider
      */
-    public function testWithBindTo($bindTo) {
+    public function testWithBindTo($bindTo)
+    {
         $context = new ClientConnectContext();
         $clonedContext = $context->withBindTo($bindTo);
 
@@ -25,7 +28,8 @@ class ClientConnectContextTest extends TestCase {
         $this->assertSame($bindTo, $clonedContext->getBindTo());
     }
 
-    public function testWithTcpNoDelay() {
+    public function testWithTcpNoDelay()
+    {
         $context = new ClientConnectContext();
         $clonedContext = $context->withTcpNoDelay();
 
@@ -33,7 +37,8 @@ class ClientConnectContextTest extends TestCase {
         $this->assertTrue($clonedContext->hasTcpNoDelay());
     }
 
-    public function withConnectTimeoutDataProvider() {
+    public function withConnectTimeoutDataProvider()
+    {
         return [
             [1],
             [12345]
@@ -43,7 +48,8 @@ class ClientConnectContextTest extends TestCase {
     /**
      * @dataProvider withConnectTimeoutDataProvider
      */
-    public function testWithConnectTimeout($timeout) {
+    public function testWithConnectTimeout($timeout)
+    {
         $context = new ClientConnectContext();
         $clonedContext = $context->withConnectTimeout($timeout);
 
@@ -51,7 +57,8 @@ class ClientConnectContextTest extends TestCase {
         $this->assertSame($timeout, $clonedContext->getConnectTimeout());
     }
 
-    public function withConnectTimeoutInvalidTimeoutDataProvider() {
+    public function withConnectTimeoutInvalidTimeoutDataProvider()
+    {
         return [
             [0],
             [-1],
@@ -62,14 +69,16 @@ class ClientConnectContextTest extends TestCase {
     /**
      * @dataProvider withConnectTimeoutInvalidTimeoutDataProvider
      */
-    public function testWithConnectTimeoutInvalidTimeout($timeout) {
+    public function testWithConnectTimeoutInvalidTimeout($timeout)
+    {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage("Invalid connect timeout ({$timeout}), must be greater than 0");
         $context = new ClientConnectContext();
         $context->withConnectTimeout($timeout);
     }
 
-    public function withMaxAttemptsDataProvider() {
+    public function withMaxAttemptsDataProvider()
+    {
         return [
             [1],
             [12345]
@@ -79,7 +88,8 @@ class ClientConnectContextTest extends TestCase {
     /**
      * @dataProvider withMaxAttemptsDataProvider
      */
-    public function testWithMaxAttempts($maxAttempts) {
+    public function testWithMaxAttempts($maxAttempts)
+    {
         $context = new ClientConnectContext();
         $clonedContext = $context->withMaxAttempts($maxAttempts);
 
@@ -87,7 +97,8 @@ class ClientConnectContextTest extends TestCase {
         $this->assertSame($maxAttempts, $clonedContext->getMaxAttempts());
     }
 
-    public function withMaxAttemptsInvalidTimeoutDataProvider() {
+    public function withMaxAttemptsInvalidTimeoutDataProvider()
+    {
         return [
             [0],
             [-1],
@@ -98,14 +109,16 @@ class ClientConnectContextTest extends TestCase {
     /**
      * @dataProvider withMaxAttemptsInvalidTimeoutDataProvider
      */
-    public function testWithMaxAttemptsInvalidTimeout($maxAttempts) {
+    public function testWithMaxAttemptsInvalidTimeout($maxAttempts)
+    {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage("Invalid max attempts ({$maxAttempts}), must be greater than 0");
         $context = new ClientConnectContext();
         $context->withMaxAttempts($maxAttempts);
     }
 
-    public function withDnsTypeRestrictionDataProvider() {
+    public function withDnsTypeRestrictionDataProvider()
+    {
         return [
             [null],
             [Record::AAAA],
@@ -116,7 +129,8 @@ class ClientConnectContextTest extends TestCase {
     /**
      * @dataProvider withDnsTypeRestrictionDataProvider
      */
-    public function testWithDnsTypeRestriction($type) {
+    public function testWithDnsTypeRestriction($type)
+    {
         $context = new ClientConnectContext();
         $clonedContext = $context->withDnsTypeRestriction($type);
 
@@ -124,7 +138,8 @@ class ClientConnectContextTest extends TestCase {
         $this->assertSame($type, $clonedContext->getDnsTypeRestriction());
     }
 
-    public function withDnsTypeRestrictionInvalidTypeDataProvider() {
+    public function withDnsTypeRestrictionInvalidTypeDataProvider()
+    {
         return [
             [Record::NS],
             [Record::MX],
@@ -136,12 +151,14 @@ class ClientConnectContextTest extends TestCase {
      * @expectedException \Error
      * @expectedExceptionMessage Invalid resolver type restriction
      */
-    public function testWithDnsTypeRestrictionInvalidType($type) {
+    public function testWithDnsTypeRestrictionInvalidType($type)
+    {
         $context = new ClientConnectContext();
         $context->withDnsTypeRestriction($type);
     }
 
-    public function testToStreamContextArray() {
+    public function testToStreamContextArray()
+    {
         $context = new ClientConnectContext();
         $clonedContext = $context->withBindTo('127.0.0.1:12345');
 

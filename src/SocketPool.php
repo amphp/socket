@@ -8,7 +8,8 @@ use Amp\Promise;
 /**
  * Allows pooling of connections for stateless protocols.
  */
-interface SocketPool {
+interface SocketPool
+{
     /**
      * Checkout a socket from the specified URI authority.
      *

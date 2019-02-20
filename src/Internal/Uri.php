@@ -4,7 +4,8 @@ namespace Amp\Socket\Internal;
 
 use League\Uri\AbstractUri;
 
-final class Uri extends AbstractUri {
+final class Uri extends AbstractUri
+{
     protected static $supported_schemes = [
         'tcp' => null,
         'udp' => null,
@@ -12,7 +13,8 @@ final class Uri extends AbstractUri {
         'udg' => null,
     ];
 
-    protected function isValidUri(): bool {
+    protected function isValidUri(): bool
+    {
         if ($this->scheme === null || !\array_key_exists($this->scheme, self::$supported_schemes)) {
             return false;
         }

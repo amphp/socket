@@ -4,7 +4,8 @@ namespace Amp\Socket;
 
 use Amp\Promise;
 
-interface StreamSocket extends Socket {
+interface StreamSocket extends Socket
+{
     /**
      * Raw stream socket resource.
      *

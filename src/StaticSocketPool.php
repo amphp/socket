@@ -5,27 +5,32 @@ namespace Amp\Socket;
 use Amp\CancellationToken;
 use Amp\Promise;
 
-final class StaticSocketPool implements SocketPool {
+final class StaticSocketPool implements SocketPool
+{
     private $uri;
     private $socketPool;
 
-    public function __construct(string $uri, SocketPool $socketPool = null) {
+    public function __construct(string $uri, SocketPool $socketPool = null)
+    {
         $this->uri = $uri;
         $this->socketPool = $socketPool ?? new BasicSocketPool;
     }
 
     /** @inheritdoc */
-    public function checkout(string $uri, CancellationToken $token = null): Promise {
+    public function checkout(string $uri, CancellationToken $token = null): Promise
+    {
         return $this->socketPool->checkout($this->uri, $token);
     }
 
     /** @inheritdoc */
-    public function checkin(StreamSocket $socket) {
+    public function checkin(StreamSocket $socket)
+    {
         $this->socketPool->checkin($socket);
     }
 
     /** @inheritdoc */
-    public function clear(StreamSocket $socket) {
+    public function clear(StreamSocket $socket)
+    {
         $this->socketPool->clear($socket);
     }
 }

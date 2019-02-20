@@ -21,7 +21,8 @@ use function Amp\call;
  *
  * @internal
  */
-function parseUri(string $uri): array {
+function parseUri(string $uri): array
+{
     if (\stripos($uri, "unix://") === 0 || \stripos($uri, "udg://") === 0) {
         list($scheme, $path) = \explode("://", $uri, 2);
         return [$scheme, \ltrim($path, "/"), 0];
@@ -69,11 +70,12 @@ function parseUri(string $uri): array {
  *
  * @internal
  */
-function enableCrypto($socket, array $options = [], bool $force = false): Promise {
+function enableCrypto($socket, array $options = [], bool $force = false): Promise
+{
     $ctx = \stream_context_get_options($socket);
 
     if (!$force && !empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
-        $cmp = array_merge($ctx["ssl"], $options["ssl"] ?? []);
+        $cmp = \array_merge($ctx["ssl"], $options["ssl"] ?? []);
         $ctx = $ctx['ssl'];
 
         // Use weak comparison so the order of the items doesn't matter
@@ -140,7 +142,8 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
  *
  * @internal
  */
-function disableCrypto($socket): Promise {
+function disableCrypto($socket): Promise
+{
     // note that disabling crypto *ALWAYS* returns false, immediately
     \stream_context_set_option($socket, ["ssl" => ["_enabled" => false]]);
     @\stream_socket_enable_crypto($socket, false);
@@ -157,7 +160,8 @@ function disableCrypto($socket): Promise {
  *
  * @throws \Error If an invalid option has been passed.
  */
-function normalizeBindToOption(string $bindTo = null) {
+function normalizeBindToOption(string $bindTo = null)
+{
     if ($bindTo === null) {
         // all fine
         return null;
@@ -201,7 +205,8 @@ function normalizeBindToOption(string $bindTo = null) {
  *
  * @return string|null
  */
-function cleanupSocketName($address) {
+function cleanupSocketName($address)
+{
     // https://3v4l.org/5C1lo
     if ($address === false || $address === "\0") {
         return null;
@@ -210,10 +215,10 @@ function cleanupSocketName($address) {
     // Check if this is an IPv6 address which includes multiple colons but no square brackets
     // @see https://github.com/reactphp/socket/blob/v0.8.10/src/TcpServer.php#L179-L184
     // @license https://github.com/reactphp/socket/blob/v0.8.10/LICENSE
-    $pos = strrpos($address, ':');
-    if ($pos !== false && strpos($address, ':') < $pos && substr($address, 0, 1) !== '[') {
-        $port = substr($address, $pos + 1);
-        $address = '[' . substr($address, 0, $pos) . ']:' . $port;
+    $pos = \strrpos($address, ':');
+    if ($pos !== false && \strpos($address, ':') < $pos && \substr($address, 0, 1) !== '[') {
+        $port = \substr($address, $pos + 1);
+        $address = '[' . \substr($address, 0, $pos) . ']:' . $port;
     }
     // -- End of imported code ----- //
 

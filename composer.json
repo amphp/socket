@@ -37,9 +37,9 @@
         "league/uri-schemes": "^1.1"
     },
     "require-dev": {
-        "amphp/phpunit-util": "^1",
         "phpunit/phpunit": "^6",
-        "friendsofphp/php-cs-fixer": "^2.3"
+        "amphp/phpunit-util": "^1",
+        "amphp/php-cs-fixer-config": "dev-master"
     },
     "autoload": {
         "psr-4": {
@@ -57,7 +57,7 @@
     },
     "config": {
         "platform": {
-            "php": "7.0.0"
+            "php": "7.0.13"
         }
     },
     "scripts": {

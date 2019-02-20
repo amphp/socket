@@ -7,8 +7,10 @@ use Amp\Socket\ClientSocket;
 use Amp\Socket\SocketPool;
 use Amp\Socket\StaticSocketPool;
 
-class StaticSocketPoolTest extends TestCase {
-    public function testCheckout() {
+class StaticSocketPoolTest extends TestCase
+{
+    public function testCheckout()
+    {
         $underlyingSocketPool = $this->prophesize(SocketPool::class);
         $staticSocketPool = new StaticSocketPool('override-uri', $underlyingSocketPool->reveal());
 
@@ -20,21 +22,23 @@ class StaticSocketPoolTest extends TestCase {
         self::assertEquals($expected, $returned);
     }
 
-    public function testCheckin() {
+    public function testCheckin()
+    {
         $underlyingSocketPool = $this->prophesize(SocketPool::class);
         $staticSocketPool = new StaticSocketPool('override-uri', $underlyingSocketPool->reveal());
 
-        $clientSocket = new ClientSocket(fopen('php://memory', 'rw+'));
+        $clientSocket = new ClientSocket(\fopen('php://memory', 'rw+'));
         $underlyingSocketPool->checkin($clientSocket)->shouldBeCalled();
 
         $staticSocketPool->checkin($clientSocket);
     }
 
-    public function testClear() {
+    public function testClear()
+    {
         $underlyingSocketPool = $this->prophesize(SocketPool::class);
         $staticSocketPool = new StaticSocketPool('override-uri', $underlyingSocketPool->reveal());
 
-        $clientSocket = new ClientSocket(fopen('php://memory', 'rw+'));
+        $clientSocket = new ClientSocket(\fopen('php://memory', 'rw+'));
         $underlyingSocketPool->clear($clientSocket)->shouldBeCalled();
 
         $staticSocketPool->clear($clientSocket);

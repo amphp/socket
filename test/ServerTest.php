@@ -8,8 +8,10 @@ use Amp\Socket;
 use PHPUnit\Framework\TestCase;
 use function Amp\asyncCall;
 
-class ServerTest extends TestCase {
-    public function testAccept() {
+class ServerTest extends TestCase
+{
+    public function testAccept()
+    {
         Loop::run(function () {
             $server = Socket\listen("127.0.0.1:0");
 
@@ -25,7 +27,8 @@ class ServerTest extends TestCase {
         });
     }
 
-    public function testTls() {
+    public function testTls()
+    {
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
                 ->withDefaultCertificate(new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem"));
@@ -59,7 +62,8 @@ class ServerTest extends TestCase {
         });
     }
 
-    public function testSniWorksWithCorrectHostName() {
+    public function testSniWorksWithCorrectHostName()
+    {
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
                 ->withCertificates(["amphp.org" => new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem")]);
@@ -93,7 +97,8 @@ class ServerTest extends TestCase {
         });
     }
 
-    public function testSniWorksWithMultipleCertificates() {
+    public function testSniWorksWithMultipleCertificates()
+    {
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)->withCertificates([
                 "amphp.org" => new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem"),
@@ -136,7 +141,8 @@ class ServerTest extends TestCase {
         });
     }
 
-    public function testSniWorksWithMultipleCertificatesAndDifferentFilesForCertAndKey() {
+    public function testSniWorksWithMultipleCertificatesAndDifferentFilesForCertAndKey()
+    {
         if (\PHP_VERSION_ID < 70200) {
             $this->markTestSkipped("This test requires PHP 7.2 or higher.");
         }

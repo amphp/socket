@@ -2,5 +2,6 @@
 
 namespace Amp\Socket;
 
-class ConnectException extends SocketException {
+class ConnectException extends SocketException
+{
 }

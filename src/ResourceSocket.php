@@ -8,7 +8,8 @@ use Amp\ByteStream\ResourceOutputStream;
 use Amp\Failure;
 use Amp\Promise;
 
-abstract class ResourceSocket implements StreamSocket {
+abstract class ResourceSocket implements StreamSocket
+{
     const DEFAULT_CHUNK_SIZE = ResourceInputStream::DEFAULT_CHUNK_SIZE;
 
     /** @var \Amp\ByteStream\ResourceInputStream */
@@ -23,7 +24,8 @@ abstract class ResourceSocket implements StreamSocket {
      *
      * @throws \Error If a stream resource is not given for $resource.
      */
-    public function __construct($resource, int $chunkSize = self::DEFAULT_CHUNK_SIZE) {
+    public function __construct($resource, int $chunkSize = self::DEFAULT_CHUNK_SIZE)
+    {
         $this->reader = new ResourceInputStream($resource, $chunkSize);
         $this->writer = new ResourceOutputStream($resource, $chunkSize);
     }
@@ -33,7 +35,8 @@ abstract class ResourceSocket implements StreamSocket {
      *
      * @return resource|null
      */
-    public function getResource() {
+    public function getResource()
+    {
         return $this->reader->getResource();
     }
 
@@ -42,7 +45,8 @@ abstract class ResourceSocket implements StreamSocket {
      *
      * @return Promise
      */
-    public function disableCrypto(): Promise {
+    public function disableCrypto(): Promise
+    {
         if (($resource = $this->reader->getResource()) === null) {
             return new Failure(new ClosedException("The socket has been closed"));
         }
@@ -51,17 +55,20 @@ abstract class ResourceSocket implements StreamSocket {
     }
 
     /** @inheritdoc */
-    public function read(): Promise {
+    public function read(): Promise
+    {
         return $this->reader->read();
     }
 
     /** @inheritdoc */
-    public function write(string $data): Promise {
+    public function write(string $data): Promise
+    {
         return $this->writer->write($data);
     }
 
     /** @inheritdoc */
-    public function end(string $data = ""): Promise {
+    public function end(string $data = ""): Promise
+    {
         $promise = $this->writer->end($data);
         $promise->onResolve(function () {
             $this->close();
@@ -75,7 +82,8 @@ abstract class ResourceSocket implements StreamSocket {
      *
      * @see Loop::reference()
      */
-    public function reference() {
+    public function reference()
+    {
         $this->reader->reference();
     }
 
@@ -84,36 +92,41 @@ abstract class ResourceSocket implements StreamSocket {
      *
      * @see Loop::unreference()
      */
-    public function unreference() {
+    public function unreference()
+    {
         $this->reader->unreference();
     }
 
     /**
      * Force closes the socket, failing any pending reads or writes.
      */
-    public function close() {
+    public function close()
+    {
         $this->reader->close();
         $this->writer->close();
     }
 
-    public function getLocalAddress() {
+    public function getLocalAddress()
+    {
         return $this->getAddress(false);
     }
 
-    public function getRemoteAddress() {
+    public function getRemoteAddress()
+    {
         return $this->getAddress(true);
     }
 
-    private function getAddress(bool $wantPeer) {
+    private function getAddress(bool $wantPeer)
+    {
         $remoteCleaned = Internal\cleanupSocketName(@\stream_socket_get_name($this->getResource(), $wantPeer));
 
         if ($remoteCleaned !== null) {
             return $remoteCleaned;
         }
 
-        $meta = @stream_get_meta_data($this->getResource()) ?? [];
+        $meta = @\stream_get_meta_data($this->getResource()) ?? [];
 
-        if (array_key_exists('stream_type', $meta) && $meta['stream_type'] === 'unix_socket') {
+        if (\array_key_exists('stream_type', $meta) && $meta['stream_type'] === 'unix_socket') {
             return Internal\cleanupSocketName(@\stream_socket_get_name($this->getResource(), !$wantPeer));
         }
 

@@ -14,7 +14,7 @@ use function Amp\Socket\cryptoConnect;
 Loop::run(function () use ($argv) {
     $stdout = new ResourceOutputStream(STDOUT);
 
-    if (count($argv) !== 2) {
+    if (\count($argv) !== 2) {
         yield $stdout->write("Usage: examples/simple-http-client.php url" . PHP_EOL);
         exit(1);
     }

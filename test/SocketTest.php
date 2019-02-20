@@ -8,8 +8,10 @@ use PHPUnit\Framework\TestCase;
 use function Amp\asyncCall;
 use function Amp\Promise\wait;
 
-class SocketTest extends TestCase {
-    public function testReadAndClose() {
+class SocketTest extends TestCase
+{
+    public function testReadAndClose()
+    {
         Loop::run(function () {
             $data = "Testing\n";
 
@@ -26,10 +28,11 @@ class SocketTest extends TestCase {
         });
     }
 
-    public function testSocketAddress() {
+    public function testSocketAddress()
+    {
         try {
-            $s = stream_socket_server('unix://' . __DIR__ . '/socket.sock');
-            $c = stream_socket_client('unix://' . __DIR__ . '/socket.sock');
+            $s = \stream_socket_server('unix://' . __DIR__ . '/socket.sock');
+            $c = \stream_socket_client('unix://' . __DIR__ . '/socket.sock');
 
             $clientSocket = new Socket\ClientSocket($c);
             $serverSocket = new Socket\ServerSocket($s);
@@ -44,7 +47,8 @@ class SocketTest extends TestCase {
         }
     }
 
-    public function testEnableCryptoWithoutTlsContext() {
+    public function testEnableCryptoWithoutTlsContext()
+    {
         $server = Socket\listen('127.0.0.1:0');
 
         asyncCall(function () use ($server) {

@@ -2,7 +2,8 @@
 
 namespace Amp\Socket;
 
-final class ClientTlsContext {
+final class ClientTlsContext
+{
     const TLSv1_0 = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
     const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
     const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
@@ -29,7 +30,8 @@ final class ClientTlsContext {
      * @return self Cloned, modified instance.
      * @throws \Error If an invalid minimum version is given.
      */
-    public function withMinimumVersion(int $version): self {
+    public function withMinimumVersion(int $version): self
+    {
         if ($version !== self::TLSv1_0 && $version !== self::TLSv1_1 && $version !== self::TLSv1_2) {
             throw new \Error("Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed");
         }
@@ -45,7 +47,8 @@ final class ClientTlsContext {
      *
      * @return int
      */
-    public function getMinimumVersion(): int {
+    public function getMinimumVersion(): int
+    {
         return $this->minVersion;
     }
 
@@ -56,7 +59,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withPeerName(string $peerName = null): self {
+    public function withPeerName(string $peerName = null): self
+    {
         $clone = clone $this;
         $clone->peerName = $peerName;
 
@@ -66,7 +70,8 @@ final class ClientTlsContext {
     /**
      * @return null|string Expected name of the peer or `null` if such an expectation doesn't exist.
      */
-    public function getPeerName() {
+    public function getPeerName()
+    {
         return $this->peerName;
     }
 
@@ -75,7 +80,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withPeerVerification(): self {
+    public function withPeerVerification(): self
+    {
         $clone = clone $this;
         $clone->verifyPeer = true;
 
@@ -87,7 +93,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withoutPeerVerification(): self {
+    public function withoutPeerVerification(): self
+    {
         $clone = clone $this;
         $clone->verifyPeer = false;
 
@@ -97,7 +104,8 @@ final class ClientTlsContext {
     /**
      * @return bool Whether peer verification is enabled.
      */
-    public function hasPeerVerification(): bool {
+    public function hasPeerVerification(): bool
+    {
         return $this->verifyPeer;
     }
 
@@ -108,7 +116,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withVerificationDepth(int $verifyDepth): self {
+    public function withVerificationDepth(int $verifyDepth): self
+    {
         if ($verifyDepth < 0) {
             throw new \Error("Invalid verification depth ({$verifyDepth}), must be greater than or equal to 0");
         }
@@ -122,7 +131,8 @@ final class ClientTlsContext {
     /**
      * @return int Maximum length of the certificate chain.
      */
-    public function getVerificationDepth(): int {
+    public function getVerificationDepth(): int
+    {
         return $this->verifyDepth;
     }
 
@@ -133,7 +143,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withCiphers(string $ciphers = null): self {
+    public function withCiphers(string $ciphers = null): self
+    {
         $clone = clone $this;
         $clone->ciphers = $ciphers;
 
@@ -143,7 +154,8 @@ final class ClientTlsContext {
     /**
      * @return string List of ciphers in OpenSSL's format (colon separated).
      */
-    public function getCiphers(): string {
+    public function getCiphers(): string
+    {
         return $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS;
     }
 
@@ -154,7 +166,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withCaFile(string $cafile = null): self {
+    public function withCaFile(string $cafile = null): self
+    {
         $clone = clone $this;
         $clone->caFile = $cafile;
 
@@ -164,7 +177,8 @@ final class ClientTlsContext {
     /**
      * @return null|string Path to the file if one is set, otherwise `null`.
      */
-    public function getCaFile() {
+    public function getCaFile()
+    {
         return $this->caFile;
     }
 
@@ -175,7 +189,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withCaPath(string $capath = null): self {
+    public function withCaPath(string $capath = null): self
+    {
         $clone = clone $this;
         $clone->caPath = $capath;
 
@@ -185,7 +200,8 @@ final class ClientTlsContext {
     /**
      * @return null|string Path to the file if one is set, otherwise `null`.
      */
-    public function getCaPath() {
+    public function getCaPath()
+    {
         return $this->caPath;
     }
 
@@ -196,7 +212,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withPeerCapturing(): self {
+    public function withPeerCapturing(): self
+    {
         $clone = clone $this;
         $clone->capturePeer = true;
 
@@ -208,7 +225,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withoutPeerCapturing(): self {
+    public function withoutPeerCapturing(): self
+    {
         $clone = clone $this;
         $clone->capturePeer = false;
 
@@ -218,7 +236,8 @@ final class ClientTlsContext {
     /**
      * @return bool Whether to capture the certificates sent by the peer.
      */
-    public function hasPeerCapturing(): bool {
+    public function hasPeerCapturing(): bool
+    {
         return $this->capturePeer;
     }
 
@@ -227,7 +246,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withSni(): self {
+    public function withSni(): self
+    {
         $clone = clone $this;
         $clone->sniEnabled = true;
 
@@ -239,7 +259,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withoutSni(): self {
+    public function withoutSni(): self
+    {
         $clone = clone $this;
         $clone->sniEnabled = false;
 
@@ -249,7 +270,8 @@ final class ClientTlsContext {
     /**
      * @return bool Whether SNI is enabled or not.
      */
-    public function hasSni(): bool {
+    public function hasSni(): bool
+    {
         return $this->sniEnabled;
     }
 
@@ -262,7 +284,8 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withSecurityLevel(int $level): self {
+    public function withSecurityLevel(int $level): self
+    {
         // See https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_security_level.html
         // Level 2 is not recommended, because of SHA-1 by that document,
         // but SHA-1 should be phased out now on general internet use.
@@ -285,7 +308,8 @@ final class ClientTlsContext {
     /**
      * @return int Security level between 0 and 5. Always 0 for OpenSSL < 1.1.0.
      */
-    public function getSecurityLevel(): int {
+    public function getSecurityLevel(): int
+    {
         // 0 is equivalent to previous versions of OpenSSL and just does nothing
         if (\OPENSSL_VERSION_NUMBER < 0x10100000) {
             return 0;
@@ -299,14 +323,16 @@ final class ClientTlsContext {
      *
      * @return self Cloned, modified instance.
      */
-    public function withCertificate(Certificate $certificate = null): self {
+    public function withCertificate(Certificate $certificate = null): self
+    {
         $clone = clone $this;
         $clone->certificate = $certificate;
 
         return $clone;
     }
 
-    public function getCertificate() {
+    public function getCertificate()
+    {
         return $this->certificate;
     }
 
@@ -315,7 +341,8 @@ final class ClientTlsContext {
      *
      * @return array Stream context array compatible with PHP's streams.
      */
-    public function toStreamContextArray(): array {
+    public function toStreamContextArray(): array
+    {
         $options = [
             "crypto_method" => $this->toStreamCryptoMethod(),
             "peer_name" => $this->peerName,
@@ -354,7 +381,8 @@ final class ClientTlsContext {
     /**
      * @return int Crypto method compatible with PHP's streams.
      */
-    public function toStreamCryptoMethod(): int {
+    public function toStreamCryptoMethod(): int
+    {
         // -2 to clear client flag and then make all lower versions bits 1
         return (~($this->minVersion - 2) & \STREAM_CRYPTO_METHOD_ANY_CLIENT) | 1;
     }

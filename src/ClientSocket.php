@@ -6,13 +6,15 @@ use Amp\ByteStream\ClosedException;
 use Amp\Failure;
 use Amp\Promise;
 
-class ClientSocket extends ResourceSocket {
+class ClientSocket extends ResourceSocket
+{
     /**
      * {@inheritdoc}
      *
      * @param ClientTlsContext|null $tlsContext
      */
-    public function enableCrypto(ClientTlsContext $tlsContext = null): Promise {
+    public function enableCrypto(ClientTlsContext $tlsContext = null): Promise
+    {
         if (($resource = $this->getResource()) === null) {
             return new Failure(new ClosedException("The socket has been closed"));
         }

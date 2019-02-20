@@ -25,7 +25,8 @@ use function Amp\call;
  * @throws SocketException If binding to the specified URI failed.
  * @throws \Error If an invalid scheme is given.
  */
-function listen(string $uri, ServerListenContext $socketContext = null, ServerTlsContext $tlsContext = null): Server {
+function listen(string $uri, ServerListenContext $socketContext = null, ServerTlsContext $tlsContext = null): Server
+{
     $socketContext = $socketContext ?? new ServerListenContext;
 
     $scheme = \strstr($uri, "://", true);
@@ -68,7 +69,8 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
  *
  * @return Promise<\Amp\Socket\ClientSocket>
  */
-function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise {
+function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise
+{
     return call(function () use ($uri, $socketContext, $token) {
         $socketContext = $socketContext ?? new ClientConnectContext;
         $token = $token ?? new NullCancellationToken;
@@ -79,7 +81,7 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
         list($scheme, $host, $port) = Internal\parseUri($uri);
 
         if ($host[0] === '[') {
-            $host = substr($host, 1, -1);
+            $host = \substr($host, 1, -1);
         }
 
         if ($port === 0 || @\inet_pton($host)) {
@@ -249,7 +251,8 @@ function cryptoConnect(
  *
  * @throws \Amp\Socket\SocketException If creating the sockets fails.
  */
-function pair(): array {
+function pair(): array
+{
     if (($sockets = @\stream_socket_pair(\stripos(PHP_OS, "win") === 0 ? STREAM_PF_INET : STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP)) === false) {
         $message = "Failed to create socket pair.";
         if ($error = \error_get_last()) {

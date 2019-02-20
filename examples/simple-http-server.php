@@ -13,7 +13,7 @@ use function Amp\asyncCoroutine;
 
 Loop::run(function () {
     $clientHandler = asyncCoroutine(function (ServerSocket $socket) {
-        list($ip, $port) = explode(":", $socket->getRemoteAddress());
+        list($ip, $port) = \explode(":", $socket->getRemoteAddress());
 
         echo "Accepted connection from {$ip}:{$port}." . PHP_EOL;
 
