@@ -7,8 +7,6 @@ use Amp\ByteStream\OutputStream;
 use Amp\ByteStream\ResourceInputStream;
 
 interface Socket extends InputStream, OutputStream {
-    const DEFAULT_CHUNK_SIZE = ResourceInputStream::DEFAULT_CHUNK_SIZE;
-
     /**
      * References the read watcher, so the loop keeps running in case there's an active read.
      *

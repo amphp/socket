@@ -56,7 +56,7 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
         throw new SocketException(\sprintf("Could not create server %s: [Error: #%d] %s", $uri, $errno, $errstr), $errno);
     }
 
-    return new Server($server, Socket::DEFAULT_CHUNK_SIZE);
+    return new Server($server, ServerSocket::DEFAULT_CHUNK_SIZE);
 }
 
 /**

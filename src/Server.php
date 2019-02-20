@@ -29,7 +29,7 @@ class Server {
      *
      * @throws \Error If a stream resource is not given for $socket.
      */
-    public function __construct($socket, int $chunkSize = Socket::DEFAULT_CHUNK_SIZE) {
+    public function __construct($socket, int $chunkSize = ServerSocket::DEFAULT_CHUNK_SIZE) {
         if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
         }

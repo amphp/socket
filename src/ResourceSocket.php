@@ -9,6 +9,8 @@ use Amp\Failure;
 use Amp\Promise;
 
 abstract class ResourceSocket implements StreamSocket {
+    const DEFAULT_CHUNK_SIZE = ResourceInputStream::DEFAULT_CHUNK_SIZE;
+
     /** @var \Amp\ByteStream\ResourceInputStream */
     private $reader;
 
