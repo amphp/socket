@@ -20,12 +20,12 @@ final class StaticSocketPool implements SocketPool {
     }
 
     /** @inheritdoc */
-    public function checkin(ClientSocket $socket) {
+    public function checkin(StreamSocket $socket) {
         $this->socketPool->checkin($socket);
     }
 
     /** @inheritdoc */
-    public function clear(ClientSocket $socket) {
+    public function clear(StreamSocket $socket) {
         $this->socketPool->clear($socket);
     }
 }
