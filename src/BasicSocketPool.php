@@ -9,11 +9,17 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Struct;
 use Amp\Success;
-use League\Uri\UriException;
 use function Amp\call;
 
 final class BasicSocketPool implements SocketPool
 {
+    const ALLOWED_SCHEMES = [
+        'tcp'  => null,
+        'udp'  => null,
+        'unix' => null,
+        'udg'  => null,
+    ];
+
     private $sockets = [];
     private $socketIdUriMap = [];
     private $pendingCount = [];
@@ -27,21 +33,58 @@ final class BasicSocketPool implements SocketPool
         $this->socketContext = $socketContext ?? new ClientConnectContext;
     }
 
-    private function normalizeUri(string $uri): string
+    /**
+     * @param string $uri
+     *
+     * @return bool
+     *
+     * @throws SocketException
+     */
+    private function normalizeUri(string $uri): bool
     {
-        try {
-            $uri = Internal\Uri::createFromString($uri); // Validates and normalizes.
-        } catch (UriException $exception) {
-            throw new SocketException('Invalid URI for socket pool', 0, $exception);
+        if (\stripos($uri, 'unix://') === 0) {
+            return $uri;
         }
 
-        $scheme = $uri->getScheme();
+        $parts = \parse_url($uri);
 
-        if ($scheme === 'unix') {
-            return $scheme . '://' . $uri->getPath();
+        if (!$parts) {
+            throw new SocketException("Could not parse URI");
         }
 
-        return $scheme . '://' . $uri->getAuthority();
+        $scheme = isset($parts['scheme']) ? \strtolower($parts['scheme']) : null;
+        $host = isset($parts['host']) ? \strtolower($parts['host']) : null;
+        $port = $parts['port'] ?? 0;
+
+        if ($scheme === null) {
+            throw new SocketException("Invalid URI for socket pool; no scheme given");
+        }
+
+        if (!\array_key_exists($scheme, self::ALLOWED_SCHEMES)) {
+            throw new SocketException(\sprintf(
+                "Invalid URI for socket pool; '%s' scheme not allowed - scheme must be one of %s",
+                $scheme,
+                \implode(', ', \array_keys(self::ALLOWED_SCHEMES))
+            ));
+        }
+
+        if ($host === null || $port === 0) {
+            throw new SocketException("Invalid URI for socket pool; missing host or port");
+        }
+
+        if (isset($parts['query']) || isset($parts['fragment'])) {
+            throw new SocketException("Invalid URI for socket pool; query or fragment components not allowed");
+        }
+
+        if (isset($parts['path'])) {
+            throw new SocketException("Invalid URI for socket pool; path component must be empty");
+        }
+
+        if (isset($parts['user'])) {
+            throw new SocketException("Invalid URI for socket pool; user component not allowed");
+        }
+
+        return $scheme . '://' . $host . ':' . $port;
     }
 
     /** @inheritdoc */
