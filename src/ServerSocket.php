@@ -9,7 +9,7 @@ use Amp\Promise;
 class ServerSocket extends ResourceSocket
 {
     /** @inheritdoc */
-    public function enableCrypto(): Promise
+    final public function enableCrypto(): Promise
     {
         if (($resource = $this->getResource()) === null) {
             return new Failure(new ClosedException("The socket has been closed"));

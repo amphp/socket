@@ -136,7 +136,7 @@ class Server
      *
      * @return resource|null
      */
-    public function getResource()
+    final public function getResource()
     {
         return $this->socket;
     }

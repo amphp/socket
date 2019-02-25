@@ -13,7 +13,7 @@ class ClientSocket extends ResourceSocket
      *
      * @param ClientTlsContext|null $tlsContext
      */
-    public function enableCrypto(ClientTlsContext $tlsContext = null): Promise
+    final public function enableCrypto(ClientTlsContext $tlsContext = null): Promise
     {
         if (($resource = $this->getResource()) === null) {
             return new Failure(new ClosedException("The socket has been closed"));

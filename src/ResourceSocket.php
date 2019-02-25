@@ -35,7 +35,7 @@ abstract class ResourceSocket implements StreamSocket
      *
      * @return resource|null
      */
-    public function getResource()
+    final public function getResource()
     {
         return $this->reader->getResource();
     }
@@ -52,7 +52,7 @@ abstract class ResourceSocket implements StreamSocket
      *
      * @return Promise
      */
-    public function disableCrypto(): Promise
+    final public function disableCrypto(): Promise
     {
         if (($resource = $this->reader->getResource()) === null) {
             return new Failure(new ClosedException("The socket has been closed"));
@@ -89,7 +89,7 @@ abstract class ResourceSocket implements StreamSocket
      *
      * @see Loop::reference()
      */
-    public function reference()
+    final public function reference()
     {
         $this->reader->reference();
     }
@@ -99,7 +99,7 @@ abstract class ResourceSocket implements StreamSocket
      *
      * @see Loop::unreference()
      */
-    public function unreference()
+    final public function unreference()
     {
         $this->reader->unreference();
     }
@@ -107,18 +107,18 @@ abstract class ResourceSocket implements StreamSocket
     /**
      * Force closes the socket, failing any pending reads or writes.
      */
-    public function close()
+    final public function close()
     {
         $this->reader->close();
         $this->writer->close();
     }
 
-    public function getLocalAddress()
+    final public function getLocalAddress()
     {
         return $this->getAddress(false);
     }
 
-    public function getRemoteAddress()
+    final public function getRemoteAddress()
     {
         return $this->getAddress(true);
     }
