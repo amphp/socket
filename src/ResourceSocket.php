@@ -41,6 +41,13 @@ abstract class ResourceSocket implements StreamSocket
     }
 
     /**
+     * Enables encryption on this socket.
+     *
+     * @return Promise
+     */
+    abstract public function enableCrypto(): Promise;
+
+    /**
      * Disables encryption on this socket.
      *
      * @return Promise
