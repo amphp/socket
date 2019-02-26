@@ -10,14 +10,4 @@ interface StreamSocket extends Socket
      * @return resource|null
      */
     public function getResource();
-
-    /**
-     * @return string|null
-     */
-    public function getLocalAddress();
-
-    /**
-     * @return string|null
-     */
-    public function getRemoteAddress();
 }
