@@ -7,7 +7,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
 
-class Server
+class Server implements StreamSocket
 {
     /** @var resource Stream socket server resource. */
     private $socket;
@@ -112,9 +112,29 @@ class Server
     }
 
     /**
+     * References the accept watcher.
+     *
+     * @see Loop::reference()
+     */
+    final public function reference()
+    {
+        Loop::reference($this->watcher);
+    }
+
+    /**
+     * Unreferences the accept watcher.
+     *
+     * @see Loop::unreference()
+     */
+    final public function unreference()
+    {
+        Loop::unreference($this->watcher);
+    }
+
+    /**
      * @return string|null
      */
-    public function getAddress()
+    public function getLocalAddress()
     {
         return $this->address;
     }

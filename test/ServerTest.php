@@ -21,7 +21,7 @@ class ServerTest extends TestCase
                 }
             });
 
-            yield Socket\connect($server->getAddress());
+            yield Socket\connect($server->getLocalAddress());
 
             Loop::delay(100, [$server, 'close']);
         });
@@ -51,7 +51,7 @@ class ServerTest extends TestCase
                 ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getLocalAddress(), null, $context);
             yield $client->write("Hello World");
 
             $this->assertSame("test", yield $client->read());
@@ -86,7 +86,7 @@ class ServerTest extends TestCase
                 ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getLocalAddress(), null, $context);
             yield $client->write("Hello World");
 
             $this->assertSame("test", yield $client->read());
@@ -124,7 +124,7 @@ class ServerTest extends TestCase
                 ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getLocalAddress(), null, $context);
             yield $client->write("Hello World");
 
             $context = (new Socket\ClientTlsContext)
@@ -132,7 +132,7 @@ class ServerTest extends TestCase
                 ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getLocalAddress(), null, $context);
             yield $client->write("Hello World");
 
             yield new Delayed(1);
@@ -172,7 +172,7 @@ class ServerTest extends TestCase
                 ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getLocalAddress(), null, $context);
             yield $client->write("Hello World");
 
             $context = (new Socket\ClientTlsContext)
@@ -180,7 +180,7 @@ class ServerTest extends TestCase
                 ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getLocalAddress(), null, $context);
             yield $client->write("Hello World");
 
             yield new Delayed(1);
