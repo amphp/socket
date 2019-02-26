@@ -10,19 +10,14 @@ class Packet
     /** @var string */
     private $address;
 
-    /** @var int */
-    private $port;
-
     /**
      * @param string $data
      * @param string $address
-     * @param int    $port
      */
-    public function __construct(string $data, string $address, int $port)
+    public function __construct(string $data, string $address)
     {
         $this->data = $data;
         $this->address = $address;
-        $this->port = $port;
     }
 
     /**
@@ -39,13 +34,5 @@ class Packet
     public function getAddress(): string
     {
         return $this->address;
-    }
-
-    /**
-     * @return int
-     */
-    public function getPort(): int
-    {
-        return $this->port;
     }
 }
