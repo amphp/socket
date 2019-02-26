@@ -22,4 +22,9 @@ interface Socket
      * Force closes the socket, failing any pending reads or writes.
      */
     public function close();
+
+    /**
+     * @return string|null
+     */
+    public function getLocalAddress();
 }

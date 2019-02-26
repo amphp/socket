@@ -17,9 +17,4 @@ interface UdpSocket extends Socket
      * @return Promise<int>
      */
     public function send(Packet $packet): Promise;
-
-    /**
-     * @return string|null
-     */
-    public function getAddress();
 }

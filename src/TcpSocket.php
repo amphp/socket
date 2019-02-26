@@ -25,10 +25,5 @@ interface TcpSocket extends Socket, InputStream, OutputStream
     /**
      * @return string|null
      */
-    public function getLocalAddress();
-
-    /**
-     * @return string|null
-     */
     public function getRemoteAddress();
 }
