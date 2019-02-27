@@ -216,7 +216,7 @@ function cleanupSocketName($address)
     // @see https://github.com/reactphp/socket/blob/v0.8.10/src/TcpServer.php#L179-L184
     // @license https://github.com/reactphp/socket/blob/v0.8.10/LICENSE
     $pos = \strrpos($address, ':');
-    if ($pos !== false && \strpos($address, ':') < $pos && \substr($address, 0, 1) !== '[') {
+    if ($pos !== false && \strpos($address, ':') < $pos && $address[0] !== '[') {
         $port = \substr($address, $pos + 1);
         $address = '[' . \substr($address, 0, $pos) . ']:' . $port;
     }
