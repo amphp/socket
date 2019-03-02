@@ -18,15 +18,14 @@ class DatagramTest extends TestCase
             $this->assertInternalType('resource', $datagram->getResource());
 
             $socket = yield Socket\connect('udp://' . $datagram->getLocalAddress());
-            $address = $socket->getLocalAddress();
+            $remote = $socket->getLocalAddress();
 
             yield $socket->write('Hello!');
 
-            asyncCall(function () use ($datagram, $address) {
-                while ($packet = yield $datagram->receive()) {
-                    $this->assertInstanceOf(Socket\Packet::class, $packet);
-                    $this->assertSame('Hello!', $packet->getData());
-                    $this->assertSame($address, $packet->getAddress());
+            asyncCall(function () use ($datagram, $remote) {
+                while (list($data, $address) = yield $datagram->receive()) {
+                    $this->assertSame('Hello!', $data);
+                    $this->assertSame($remote, $address);
                 }
             });
         });
@@ -41,14 +40,15 @@ class DatagramTest extends TestCase
             $this->assertInternalType('resource', $datagram->getResource());
 
             $socket = yield Socket\connect('udp://' . $datagram->getLocalAddress());
+            $remote = $socket->getLocalAddress();
 
             yield $socket->write('a');
 
-            asyncCall(function () use ($datagram) {
-                while ($packet = yield $datagram->receive()) {
-                    $this->assertInstanceOf(Socket\Packet::class, $packet);
-                    $this->assertSame('a', $packet->getData());
-                    $datagram->send($packet->withData('b'));
+            asyncCall(function () use ($datagram, $remote) {
+                while (list($data, $address) = yield $datagram->receive()) {
+                    $this->assertSame('a', $data);
+                    $this->assertSame($remote, $address);
+                    $datagram->send('b', $address);
                 }
             });
 
@@ -71,8 +71,8 @@ class DatagramTest extends TestCase
 
             yield $socket->write('Hello!');
 
-            while ($packet = yield $datagram->receive()) {
-                $datagram->send($packet->withData(\str_repeat('-', 2 ** 20)));
+            while (list($data, $address) = yield $datagram->receive()) {
+                $datagram->send(\str_repeat('-', 2 ** 20), $address);
             }
         });
     }

@@ -41,13 +41,13 @@ class Datagram implements UdpStreamSocket
 
             $data = @\stream_socket_recvfrom($socket, $chunkSize, 0, $address);
 
-            if ($data == false) {
+            if ($data === false) {
                 Loop::cancel($watcher);
                 $deferred->resolve();
                 return;
             }
 
-            $deferred->resolve(new Packet($data, Internal\cleanupSocketName($address)));
+            $deferred->resolve([$data, Internal\cleanupSocketName($address)]);
 
             if (!$reader) {
                 Loop::disable($watcher);
@@ -55,6 +55,18 @@ class Datagram implements UdpStreamSocket
         });
 
         Loop::disable($this->watcher);
+    }
+
+    /**
+     * Automatically cancels the loop watcher.
+     */
+    public function __destruct()
+    {
+        if (!$this->socket) {
+            return;
+        }
+
+        $this->free();
     }
 
     public function receive(): Promise
@@ -73,13 +85,15 @@ class Datagram implements UdpStreamSocket
         return $this->reader->promise();
     }
 
-    public function send(Packet $packet): int
+    public function send(string $data, string $address): int
     {
+        \assert($this->isAddressValid($address), "Invalid packet address");
+
         if (!$this->socket) {
             throw new SocketException('The datagram is not writable');
         }
 
-        $result = @\stream_socket_sendto($this->socket, $packet->getData(), 0, $packet->getAddress());
+        $result = @\stream_socket_sendto($this->socket, $data, 0, $address);
 
         if ($result < 0 || $result === false) {
             $error = \error_get_last();
@@ -134,5 +148,25 @@ class Datagram implements UdpStreamSocket
             $this->reader->resolve();
             $this->reader = null;
         }
+    }
+
+    /**
+     * Rough address validation to catch programming mistakes.
+     *
+     * @param string $address
+     *
+     * @return bool
+     */
+    private function isAddressValid(string $address): bool
+    {
+        $position = \strrpos($address, ':');
+        if ($position === false) {
+            return ($address[0] ?? '') === "\0"; // udg socket address.
+        }
+
+        $ip = \trim(\substr($address, 0, $position), '[]');
+        $port = (int) \substr($address, $position + 1);
+
+        return \inet_pton($ip) !== false && $port > 0 && $port < 65536;
     }
 }
