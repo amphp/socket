@@ -3,6 +3,7 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 // This is a very simple HTTP client that just prints the response without parsing.
+// league/uri-schemes required for this example.
 
 use Amp\ByteStream\ResourceOutputStream;
 use Amp\Loop;

@@ -25,8 +25,8 @@ Loop::run(function () {
 
     $server = Amp\Socket\listen("127.0.0.1:0");
 
-    echo "Listening for new connections on " . $server->getAddress() . " ..." . PHP_EOL;
-    echo "Open your browser and visit http://" . $server->getAddress() . "/" . PHP_EOL;
+    echo "Listening for new connections on " . $server->getLocalAddress() . " ..." . PHP_EOL;
+    echo "Open your browser and visit http://" . $server->getLocalAddress() . "/" . PHP_EOL;
 
     while ($socket = yield $server->accept()) {
         $clientHandler($socket);
