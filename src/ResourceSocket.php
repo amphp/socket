@@ -100,7 +100,7 @@ abstract class ResourceSocket implements TcpStreamSocket
     /**
      * Force closes the socket, failing any pending reads or writes.
      */
-    final public function close()
+    public function close()
     {
         $this->reader->close();
         $this->writer->close();
