@@ -36,11 +36,11 @@ final class BasicSocketPool implements SocketPool
     /**
      * @param string $uri
      *
-     * @return bool
+     * @return string
      *
      * @throws SocketException
      */
-    private function normalizeUri(string $uri): bool
+    private function normalizeUri(string $uri): string
     {
         if (\stripos($uri, 'unix://') === 0) {
             return $uri;
