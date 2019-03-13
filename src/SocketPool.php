@@ -20,18 +20,18 @@ interface SocketPool
      * @param string            $uri A string of the form tcp://example.com:80 or tcp://192.168.1.1:443.
      * @param CancellationToken $token Optional cancellation token to cancel the checkout request.
      *
-     * @return Promise<StreamSocket> Resolves to a StreamSocket instance once a connection is available.
+     * @return Promise<ClientSocket> Resolves to a ClientSocket instance once a connection is available.
      */
     public function checkout(string $uri, CancellationToken $token = null): Promise;
 
     /**
      * Return a previously checked-out socket to the pool so it can be reused.
      *
-     * @param StreamSocket $socket Socket instance.
+     * @param ClientSocket $socket Socket instance.
      *
      * @throws \Error If the provided resource is unknown to the pool.
      */
-    public function checkin(StreamSocket $socket);
+    public function checkin(ClientSocket $socket);
 
     /**
      * Remove the specified socket from the pool.
@@ -40,5 +40,5 @@ interface SocketPool
      *
      * @throws \Error If the provided resource is unknown to the pool.
      */
-    public function clear(StreamSocket $socket);
+    public function clear(ClientSocket $socket);
 }
