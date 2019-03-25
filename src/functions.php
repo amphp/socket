@@ -64,12 +64,12 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
  * @param string $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
  * @param ServerListenContext $socketContext Context options for listening.
  *
- * @return Datagram
+ * @return Endpoint
  *
  * @throws SocketException If binding to the specified URI failed.
  * @throws \Error If an invalid scheme is given.
  */
-function datagram(string $uri, ServerListenContext $socketContext = null): Datagram
+function endpoint(string $uri, ServerListenContext $socketContext = null): Endpoint
 {
     $socketContext = $socketContext ?? new ServerListenContext;
 
@@ -90,7 +90,7 @@ function datagram(string $uri, ServerListenContext $socketContext = null): Datag
         throw new SocketException(\sprintf("Could not create datagram %s: [Error: #%d] %s", $uri, $errno, $errstr), $errno);
     }
 
-    return new Datagram($server, Datagram::DEFAULT_CHUNK_SIZE);
+    return new Endpoint($server, Endpoint::DEFAULT_CHUNK_SIZE);
 }
 
 /**

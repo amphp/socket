@@ -20,9 +20,9 @@ class functionsTest extends TestCase
      * @expectedException \Error
      * @expectedExceptionMessage Only udp scheme allowed for datagram creation
      */
-    public function testDatagramInvalidScheme()
+    public function testEndpointInvalidScheme()
     {
-        Socket\datagram("invalid://127.0.0.1:0");
+        Socket\endpoint("invalid://127.0.0.1:0");
     }
 
     /**
@@ -38,9 +38,9 @@ class functionsTest extends TestCase
      * @expectedException \Amp\Socket\SocketException
      * @expectedExceptionMessageRegExp /Could not create datagram .*: \[Error: #.*\] .*$/
      */
-    public function testDatagramError()
+    public function testEndpointError()
     {
-        Socket\datagram('error');
+        Socket\endpoint('error');
     }
 
     public function testListenIPv6()

@@ -8,11 +8,11 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
 
-class Datagram implements UdpStreamSocket
+class Endpoint implements UdpStreamSocket
 {
     const DEFAULT_CHUNK_SIZE = 8192;
 
-    /** @var resource Stream socket datagram resource. */
+    /** @var resource UDP socket resource. */
     private $socket;
 
     /** @var string Watcher ID. */
@@ -77,7 +77,7 @@ class Datagram implements UdpStreamSocket
         }
 
         if (!$this->socket) {
-            return new Success; // Resolve with null when datagram is closed.
+            return new Success; // Resolve with null when endpoint is closed.
         }
 
         $this->reader = new Deferred;
@@ -91,14 +91,14 @@ class Datagram implements UdpStreamSocket
         \assert($this->isAddressValid($address), "Invalid packet address");
 
         if (!$this->socket) {
-            return new Failure(new SocketException('The datagram is not writable'));
+            return new Failure(new SocketException('The endpoint is not writable'));
         }
 
         $result = @\stream_socket_sendto($this->socket, $data, 0, $address);
 
         if ($result < 0 || $result === false) {
             $error = \error_get_last();
-            return new Failure(new SocketException('Could not send packet on datagram: ' . $error['message']));
+            return new Failure(new SocketException('Could not send packet on endpoint: ' . $error['message']));
         }
 
         return new Success($result);
@@ -120,7 +120,7 @@ class Datagram implements UdpStreamSocket
     }
 
     /**
-     * Closes the datagram and stops receiving data. Any pending read is resolved with null.
+     * Closes the endpoint and stops receiving data. Any pending read is resolved with null.
      */
     public function close()
     {
