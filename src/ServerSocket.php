@@ -6,7 +6,7 @@ use Amp\ByteStream\ClosedException;
 use Amp\Failure;
 use Amp\Promise;
 
-class ServerSocket extends ResourceSocket
+class ServerSocket extends ResourceStreamSocket
 {
     /** @inheritdoc */
     final public function enableCrypto(): Promise

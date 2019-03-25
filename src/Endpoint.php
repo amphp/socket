@@ -8,7 +8,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
 
-class Endpoint implements UdpStreamSocket
+class Endpoint implements UdpResourceSocket
 {
     const DEFAULT_CHUNK_SIZE = 8192;
 
