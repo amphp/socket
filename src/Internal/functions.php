@@ -8,6 +8,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Socket\CryptoException;
 use Amp\Success;
+use League\Uri;
 use function Amp\call;
 
 /**
@@ -28,13 +29,18 @@ function parseUri(string $uri): array
         return [$scheme, \ltrim($path, "/"), 0];
     }
 
-    if (!$uriParts = @\parse_url($uri)) {
-        throw new \Error(
-            "Invalid URI: {$uri}"
-        );
+    if (\strpos($uri, "://") === false) {
+        // Set a default scheme of tcp if none was given.
+        $uri = "tcp://" . $uri;
     }
 
-    $scheme = $uriParts["scheme"] ?? "tcp";
+    try {
+        $uriParts = Uri\parse($uri);
+    } catch (\Exception $exception) {
+        throw new \Error("Invalid URI: {$uri}", 0, $exception);
+    }
+
+    $scheme = $uriParts["scheme"];
     $host = $uriParts["host"] ?? "";
     $port = $uriParts["port"] ?? 0;
 
@@ -46,7 +52,7 @@ function parseUri(string $uri): array
 
     if (empty($host) || empty($port)) {
         throw new \Error(
-            "Invalid URI ({$uri}); host and port components required"
+            "Invalid URI: {$uri}; host and port components required"
         );
     }
 
