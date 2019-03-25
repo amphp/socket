@@ -48,7 +48,7 @@ class DatagramTest extends TestCase
                 while (list($data, $address) = yield $datagram->receive()) {
                     $this->assertSame('a', $data);
                     $this->assertSame($remote, $address);
-                    $datagram->send('b', $address);
+                    yield $datagram->send('b', $address);
                 }
             });
 
@@ -72,7 +72,7 @@ class DatagramTest extends TestCase
             yield $socket->write('Hello!');
 
             while (list($data, $address) = yield $datagram->receive()) {
-                $datagram->send(\str_repeat('-', 2 ** 20), $address);
+                yield $datagram->send(\str_repeat('-', 2 ** 20), $address);
             }
         });
     }

@@ -3,6 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\Deferred;
+use Amp\Failure;
 use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
@@ -85,22 +86,22 @@ class Datagram implements UdpStreamSocket
         return $this->reader->promise();
     }
 
-    public function send(string $data, string $address): int
+    public function send(string $data, string $address): Promise
     {
         \assert($this->isAddressValid($address), "Invalid packet address");
 
         if (!$this->socket) {
-            throw new SocketException('The datagram is not writable');
+            return new Failure(new SocketException('The datagram is not writable'));
         }
 
         $result = @\stream_socket_sendto($this->socket, $data, 0, $address);
 
         if ($result < 0 || $result === false) {
             $error = \error_get_last();
-            throw new SocketException('Could not send packet on datagram: ' . $error['message']);
+            return new Failure(new SocketException('Could not send packet on datagram: ' . $error['message']));
         }
 
-        return $result;
+        return new Success($result);
     }
 
     final public function getResource()
