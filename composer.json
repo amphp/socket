@@ -32,7 +32,7 @@
     "require": {
         "php": ">=7.0",
         "amphp/amp": "^2",
-        "amphp/dns": "^0.9",
+        "amphp/dns": "^1 || ^0.9",
         "amphp/byte-stream": "^1.1",
         "league/uri-parser": "^1.4"
     },
