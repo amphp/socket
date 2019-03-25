@@ -9,6 +9,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Struct;
 use Amp\Success;
+use League\Uri;
 use function Amp\call;
 
 final class BasicSocketPool implements SocketPool
@@ -46,19 +47,24 @@ final class BasicSocketPool implements SocketPool
             return $uri;
         }
 
-        $parts = \parse_url($uri);
-
-        if (!$parts) {
-            throw new SocketException("Could not parse URI");
+        try {
+            $parts = Uri\parse($uri);
+        } catch (\Exception $exception) {
+            throw new SocketException("Could not parse URI", 0, $exception);
         }
 
-        $scheme = isset($parts['scheme']) ? \strtolower($parts['scheme']) : null;
-        $host = isset($parts['host']) ? \strtolower($parts['host']) : null;
-        $port = $parts['port'] ?? 0;
-
-        if ($scheme === null) {
+        if ($parts['scheme'] === null) {
             throw new SocketException("Invalid URI for socket pool; no scheme given");
         }
+
+        $port = $parts['port'] ?? 0;
+
+        if ($parts['host'] === null || $port === 0) {
+            throw new SocketException("Invalid URI for socket pool; missing host or port");
+        }
+
+        $scheme = \strtolower($parts['scheme']);
+        $host = \strtolower($parts['host']);
 
         if (!\array_key_exists($scheme, self::ALLOWED_SCHEMES)) {
             throw new SocketException(\sprintf(
@@ -66,10 +72,6 @@ final class BasicSocketPool implements SocketPool
                 $scheme,
                 \implode(', ', \array_keys(self::ALLOWED_SCHEMES))
             ));
-        }
-
-        if ($host === null || $port === 0) {
-            throw new SocketException("Invalid URI for socket pool; missing host or port");
         }
 
         if (isset($parts['query']) || isset($parts['fragment'])) {
