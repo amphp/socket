@@ -74,15 +74,15 @@ final class BasicSocketPool implements SocketPool
             ));
         }
 
-        if (isset($parts['query']) || isset($parts['fragment'])) {
+        if ($parts['query'] !== null || $parts['fragment'] !== null) {
             throw new SocketException("Invalid URI for socket pool; query or fragment components not allowed");
         }
 
-        if (isset($parts['path'])) {
+        if ($parts['path'] !== '') {
             throw new SocketException("Invalid URI for socket pool; path component must be empty");
         }
 
-        if (isset($parts['user'])) {
+        if ($parts['user'] !== null) {
             throw new SocketException("Invalid URI for socket pool; user component not allowed");
         }
 
