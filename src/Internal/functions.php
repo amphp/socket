@@ -50,7 +50,7 @@ function parseUri(string $uri): array
         );
     }
 
-    if (empty($host) || empty($port)) {
+    if ($host === "" || $port === 0) {
         throw new \Error(
             "Invalid URI: {$uri}; host and port components required"
         );
