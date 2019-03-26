@@ -25,7 +25,7 @@ class TlsFragmentationTest extends TestCase
                 /** @var Socket\ServerSocket $proxyClient */
                 while ($proxyClient = yield $proxyServer->accept()) {
                     asyncCall(function () use ($proxyClient, $server) {
-                        $proxyUpstream = yield Socket\connect($server->getAddress());
+                        $proxyUpstream = yield Socket\connect($server->getLocalAddress());
 
                         $this->pipe($proxyClient, $proxyUpstream);
                         $this->pipe($proxyUpstream, $proxyClient);
@@ -50,7 +50,7 @@ class TlsFragmentationTest extends TestCase
                 ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($proxyServer->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($proxyServer->getLocalAddress(), null, $context);
             yield $client->write("Hello World");
 
             $this->assertSame("test", yield from $this->read($client, 4));
