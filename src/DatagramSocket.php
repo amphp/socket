@@ -8,7 +8,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
 
-class Endpoint implements UdpResourceSocket
+class DatagramSocket
 {
     const DEFAULT_CHUNK_SIZE = 8192;
 
@@ -134,7 +134,7 @@ class Endpoint implements UdpResourceSocket
     /**
      * @return string|null
      */
-    public function getLocalAddress()
+    public function getAddress()
     {
         return $this->address;
     }

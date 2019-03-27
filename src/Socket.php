@@ -2,7 +2,10 @@
 
 namespace Amp\Socket;
 
-interface Socket
+use Amp\ByteStream\InputStream;
+use Amp\ByteStream\OutputStream;
+
+interface Socket extends InputStream, OutputStream
 {
     /**
      * References the read watcher, so the loop keeps running in case there's an active read.
@@ -27,4 +30,9 @@ interface Socket
      * @return string|null
      */
     public function getLocalAddress();
+
+    /**
+     * @return string|null
+     */
+    public function getRemoteAddress();
 }

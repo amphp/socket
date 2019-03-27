@@ -7,7 +7,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
 
-class Server implements ResourceSocket
+class Server
 {
     /** @var resource Stream socket server resource. */
     private $socket;
@@ -134,7 +134,7 @@ class Server implements ResourceSocket
     /**
      * @return string|null
      */
-    public function getLocalAddress()
+    public function getAddress()
     {
         return $this->address;
     }

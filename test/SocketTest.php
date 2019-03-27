@@ -52,7 +52,7 @@ class SocketTest extends TestCase
         $server = Socket\listen('127.0.0.1:0');
 
         asyncCall(function () use ($server) {
-            yield Socket\connect($server->getLocalAddress());
+            yield Socket\connect($server->getAddress());
         });
 
         /** @var Socket\ServerSocket $client */

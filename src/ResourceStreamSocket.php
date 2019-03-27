@@ -8,7 +8,7 @@ use Amp\ByteStream\ResourceOutputStream;
 use Amp\Failure;
 use Amp\Promise;
 
-abstract class ResourceStreamSocket implements TcpResourceSocket
+abstract class ResourceStreamSocket implements ResourceSocket
 {
     const DEFAULT_CHUNK_SIZE = ResourceInputStream::DEFAULT_CHUNK_SIZE;
 
@@ -39,6 +39,13 @@ abstract class ResourceStreamSocket implements TcpResourceSocket
     {
         return $this->reader->getResource();
     }
+
+    /**
+     * Enables encryption on this socket.
+     *
+     * @return Promise
+     */
+    abstract public function enableCrypto(): Promise;
 
     /**
      * Disables encryption on this socket.

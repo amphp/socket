@@ -7,7 +7,7 @@ use Amp\Socket;
 use PHPUnit\Framework\TestCase;
 use function Amp\asyncCall;
 
-class EndpointTest extends TestCase
+class DatagramSocketTest extends TestCase
 {
     public function testReceive()
     {
@@ -17,7 +17,7 @@ class EndpointTest extends TestCase
 
             $this->assertInternalType('resource', $endpoint->getResource());
 
-            $socket = yield Socket\connect('udp://' . $endpoint->getLocalAddress());
+            $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
             $remote = $socket->getLocalAddress();
 
             yield $socket->write('Hello!');
@@ -39,7 +39,7 @@ class EndpointTest extends TestCase
 
             $this->assertInternalType('resource', $endpoint->getResource());
 
-            $socket = yield Socket\connect('udp://' . $endpoint->getLocalAddress());
+            $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
             $remote = $socket->getLocalAddress();
 
             yield $socket->write('a');
@@ -67,7 +67,7 @@ class EndpointTest extends TestCase
             $endpoint = Socket\endpoint('127.0.0.1:0');
             Loop::delay(100, [$endpoint, 'close']);
 
-            $socket = yield Socket\connect('udp://' . $endpoint->getLocalAddress());
+            $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
 
             yield $socket->write('Hello!');
 
