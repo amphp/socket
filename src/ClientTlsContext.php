@@ -8,17 +8,28 @@ final class ClientTlsContext
     const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
     const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
 
+    /** @var int */
     private $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
-    private $peerName = null;
+    /** @var string|null */
+    private $peerName;
+    /** @var bool */
     private $verifyPeer = true;
+    /** @var int */
     private $verifyDepth = 10;
-    private $ciphers = null;
-    private $caFile = null;
-    private $caPath = null;
+    /** @var string|null */
+    private $ciphers;
+    /** @var string|null */
+    private $caFile;
+    /** @var string|null */
+    private $caPath;
+    /** @var bool */
     private $capturePeer = false;
+    /** @var bool */
     private $sniEnabled = true;
+    /** @var int */
     private $securityLevel = 2;
-    private $certificate = null;
+    /** @var Certificate|null */
+    private $certificate;
 
     /**
      * Minimum TLS version to negotiate.
@@ -33,7 +44,7 @@ final class ClientTlsContext
     public function withMinimumVersion(int $version): self
     {
         if ($version !== self::TLSv1_0 && $version !== self::TLSv1_1 && $version !== self::TLSv1_2) {
-            throw new \Error("Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed");
+            throw new \Error('Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed');
         }
 
         $clone = clone $this;
@@ -321,6 +332,8 @@ final class ClientTlsContext
     /**
      * Client certificate to use, if key is no present it assumes it is present in the same file as the certificate.
      *
+     * @param Certificate $certificate Certificate and private key info
+     *
      * @return self Cloned, modified instance.
      */
     public function withCertificate(Certificate $certificate = null): self
@@ -344,38 +357,38 @@ final class ClientTlsContext
     public function toStreamContextArray(): array
     {
         $options = [
-            "crypto_method" => $this->toStreamCryptoMethod(),
-            "peer_name" => $this->peerName,
-            "verify_peer" => $this->verifyPeer,
-            "verify_peer_name" => $this->verifyPeer,
-            "verify_depth" => $this->verifyDepth,
-            "ciphers" => $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS,
-            "capture_peer_cert" => $this->capturePeer,
-            "capture_peer_cert_chain" => $this->capturePeer,
-            "SNI_enabled" => $this->sniEnabled,
+            'crypto_method' => $this->toStreamCryptoMethod(),
+            'peer_name' => $this->peerName,
+            'verify_peer' => $this->verifyPeer,
+            'verify_peer_name' => $this->verifyPeer,
+            'verify_depth' => $this->verifyDepth,
+            'ciphers' => $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS,
+            'capture_peer_cert' => $this->capturePeer,
+            'capture_peer_cert_chain' => $this->capturePeer,
+            'SNI_enabled' => $this->sniEnabled,
         ];
 
         if ($this->certificate !== null) {
-            $options["local_cert"] = $this->certificate->getCertFile();
+            $options['local_cert'] = $this->certificate->getCertFile();
 
             if ($this->certificate->getCertFile() !== $this->certificate->getKeyFile()) {
-                $options["local_pk"] = $this->certificate->getKeyFile();
+                $options['local_pk'] = $this->certificate->getKeyFile();
             }
         }
 
         if ($this->caFile !== null) {
-            $options["cafile"] = $this->caFile;
+            $options['cafile'] = $this->caFile;
         }
 
         if ($this->caPath !== null) {
-            $options["capath"] = $this->caPath;
+            $options['capath'] = $this->caPath;
         }
 
         if (\OPENSSL_VERSION_NUMBER >= 0x10100000) {
-            $options["security_level"] = $this->securityLevel;
+            $options['security_level'] = $this->securityLevel;
         }
 
-        return ["ssl" => $options];
+        return ['ssl' => $options];
     }
 
     /**

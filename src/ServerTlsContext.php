@@ -10,34 +10,24 @@ final class ServerTlsContext
 
     /** @var int */
     private $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
-
     /** @var null|string */
-    private $peerName = null;
-
+    private $peerName;
     /** @var bool */
     private $verifyPeer = false;
-
     /** @var int */
     private $verifyDepth = 10;
-
     /** @var null|string */
-    private $ciphers = null;
-
+    private $ciphers;
     /** @var null|string */
-    private $caFile = null;
-
+    private $caFile;
     /** @var null|string */
-    private $caPath = null;
-
+    private $caPath;
     /** @var bool */
     private $capturePeer = false;
-
     /** @var null|Certificate */
-    private $defaultCertificate = null;
-
+    private $defaultCertificate;
     /** @var Certificate[] */
     private $certificates = [];
-
     /** @var int */
     private $securityLevel = 2;
 
@@ -54,7 +44,7 @@ final class ServerTlsContext
     public function withMinimumVersion(int $version): self
     {
         if ($version !== self::TLSv1_0 && $version !== self::TLSv1_1 && $version !== self::TLSv1_2) {
-            throw new \Error("Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed");
+            throw new \Error('Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed');
         }
 
         $clone = clone $this;
@@ -296,17 +286,17 @@ final class ServerTlsContext
     {
         foreach ($certificates as $key => $certificate) {
             if (!\is_string($key)) {
-                throw new \TypeError("Expected an array mapping domain names to Certificate instances");
+                throw new \TypeError('Expected an array mapping domain names to Certificate instances');
             }
 
             if (!$certificate instanceof Certificate) {
-                throw new \TypeError("Expected an array of Certificate instances");
+                throw new \TypeError('Expected an array of Certificate instances');
             }
 
             if (\PHP_VERSION_ID < 70200 && $certificate->getCertFile() !== $certificate->getKeyFile()) {
                 throw new \Error(
-                    "Different files for cert and key are not supported on this version of PHP. " .
-                    "Please upgrade to PHP 7.2 or later."
+                    'Different files for cert and key are not supported on this version of PHP. ' .
+                    'Please upgrade to PHP 7.2 or later.'
                 );
             }
         }
@@ -376,53 +366,53 @@ final class ServerTlsContext
     public function toStreamContextArray(): array
     {
         $options = [
-            "crypto_method" => $this->toStreamCryptoMethod(),
-            "peer_name" => $this->peerName,
-            "verify_peer" => $this->verifyPeer,
-            "verify_peer_name" => $this->verifyPeer,
-            "verify_depth" => $this->verifyDepth,
-            "ciphers" => $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS,
-            "honor_cipher_order" => true,
-            "single_dh_use" => true,
-            "no_ticket" => true,
-            "capture_peer_cert" => $this->capturePeer,
-            "capture_peer_chain" => $this->capturePeer,
+            'crypto_method' => $this->toStreamCryptoMethod(),
+            'peer_name' => $this->peerName,
+            'verify_peer' => $this->verifyPeer,
+            'verify_peer_name' => $this->verifyPeer,
+            'verify_depth' => $this->verifyDepth,
+            'ciphers' => $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS,
+            'honor_cipher_order' => true,
+            'single_dh_use' => true,
+            'no_ticket' => true,
+            'capture_peer_cert' => $this->capturePeer,
+            'capture_peer_chain' => $this->capturePeer,
         ];
 
         if ($this->defaultCertificate !== null) {
-            $options["local_cert"] = $this->defaultCertificate->getCertFile();
+            $options['local_cert'] = $this->defaultCertificate->getCertFile();
 
             if ($this->defaultCertificate->getCertFile() !== $this->defaultCertificate->getKeyFile()) {
-                $options["local_pk"] = $this->defaultCertificate->getKeyFile();
+                $options['local_pk'] = $this->defaultCertificate->getKeyFile();
             }
         }
 
         if ($this->certificates) {
-            $options["SNI_server_certs"] = \array_map(function (Certificate $certificate) {
+            $options['SNI_server_certs'] = \array_map(function (Certificate $certificate) {
                 if ($certificate->getCertFile() === $certificate->getKeyFile()) {
                     return $certificate->getCertFile();
                 }
 
                 return [
-                    "local_cert" => $certificate->getCertFile(),
-                    "local_pk" => $certificate->getKeyFile(),
+                    'local_cert' => $certificate->getCertFile(),
+                    'local_pk' => $certificate->getKeyFile(),
                 ];
             }, $this->certificates);
         }
 
         if ($this->caFile !== null) {
-            $options["cafile"] = $this->caFile;
+            $options['cafile'] = $this->caFile;
         }
 
         if ($this->caPath !== null) {
-            $options["capath"] = $this->caPath;
+            $options['capath'] = $this->caPath;
         }
 
         if (\OPENSSL_VERSION_NUMBER >= 0x10100000) {
-            $options["security_level"] = $this->securityLevel;
+            $options['security_level'] = $this->securityLevel;
         }
 
-        return ["ssl" => $options];
+        return ['ssl' => $options];
     }
 
     /**

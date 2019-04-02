@@ -31,6 +31,7 @@
     ],
     "require": {
         "php": ">=7.0",
+        "ext-openssl": "*",
         "amphp/amp": "^2",
         "amphp/dns": "^1 || ^0.9",
         "amphp/byte-stream": "^1.1",
