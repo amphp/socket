@@ -28,12 +28,12 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
 {
     $socketContext = $socketContext ?? new ServerListenContext;
 
-    $scheme = \strstr($uri, "://", true);
+    $scheme = \strstr($uri, '://', true);
 
     if ($scheme === false) {
-        $uri = "tcp://" . $uri;
-    } elseif (!\in_array($scheme, ["tcp", "unix"])) {
-        throw new \Error("Only tcp and unix schemes allowed for server creation");
+        $uri = 'tcp://' . $uri;
+    } elseif (!\in_array($scheme, ['tcp', 'unix'])) {
+        throw new \Error('Only tcp and unix schemes allowed for server creation');
     }
 
     if ($tlsContext) {
@@ -51,7 +51,7 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
     $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $context);
 
     if (!$server || $errno) {
-        throw new SocketException(\sprintf("Could not create server %s: [Error: #%d] %s", $uri, $errno, $errstr), $errno);
+        throw new SocketException(\sprintf('Could not create server %s: [Error: #%d] %s', $uri, $errno, $errstr), $errno);
     }
 
     return new Server($server, ServerSocket::DEFAULT_CHUNK_SIZE);
@@ -72,12 +72,12 @@ function endpoint(string $uri, ServerListenContext $socketContext = null): Datag
 {
     $socketContext = $socketContext ?? new ServerListenContext;
 
-    $scheme = \strstr($uri, "://", true);
+    $scheme = \strstr($uri, '://', true);
 
     if ($scheme === false) {
-        $uri = "udp://" . $uri;
-    } elseif ($scheme !== "udp") {
-        throw new \Error("Only udp scheme allowed for datagram creation");
+        $uri = 'udp://' . $uri;
+    } elseif ($scheme !== 'udp') {
+        throw new \Error('Only udp scheme allowed for datagram creation');
     }
 
     $context = \stream_context_create($socketContext->toStreamContextArray());
@@ -86,7 +86,7 @@ function endpoint(string $uri, ServerListenContext $socketContext = null): Datag
     $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND, $context);
 
     if (!$server || $errno) {
-        throw new SocketException(\sprintf("Could not create datagram %s: [Error: #%d] %s", $uri, $errno, $errstr), $errno);
+        throw new SocketException(\sprintf('Could not create datagram %s: [Error: #%d] %s', $uri, $errno, $errstr), $errno);
     }
 
     return new DatagramSocket($server, DatagramSocket::DEFAULT_CHUNK_SIZE);
@@ -107,7 +107,7 @@ function connector(Connector $connector = null): Connector
             return $connector;
         }
 
-        $connector = new DefaultConnector;
+        $connector = new DnsConnector;
     }
 
     Loop::setState(LOOP_CONNECTOR_IDENTIFIER, $connector);
@@ -160,7 +160,7 @@ function cryptoConnect(
 
         if ($token) {
             $deferred = new Deferred;
-            $id = $token->subscribe([$deferred, "fail"]);
+            $id = $token->subscribe([$deferred, 'fail']);
 
             $promise->onResolve(function ($exception) use ($id, $token, $deferred) {
                 if ($token->isRequested()) {
@@ -200,10 +200,10 @@ function cryptoConnect(
  */
 function pair(): array
 {
-    if (($sockets = @\stream_socket_pair(\stripos(PHP_OS, "win") === 0 ? STREAM_PF_INET : STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP)) === false) {
-        $message = "Failed to create socket pair.";
+    if (($sockets = @\stream_socket_pair(\stripos(PHP_OS, 'win') === 0 ? STREAM_PF_INET : STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP)) === false) {
+        $message = 'Failed to create socket pair.';
         if ($error = \error_get_last()) {
-            $message .= \sprintf(" Errno: %d; %s", $error["type"], $error["message"]);
+            $message .= \sprintf(' Errno: %d; %s', $error['type'], $error['message']);
         }
         throw new SocketException($message);
     }

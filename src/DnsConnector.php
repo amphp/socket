@@ -11,9 +11,9 @@ use Amp\Promise;
 use Amp\TimeoutException;
 use function Amp\call;
 
-class DefaultConnector implements Connector
+class DnsConnector implements Connector
 {
-    function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise
+    public function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise
     {
         return call(function () use ($uri, $socketContext, $token) {
             $socketContext = $socketContext ?? new ClientConnectContext;
@@ -44,9 +44,9 @@ class DefaultConnector implements Connector
                 foreach ($records as $record) {
                     /** @var Dns\Record $record */
                     if ($record->getType() === Dns\Record::AAAA) {
-                        $uris[] = \sprintf("%s://[%s]:%d", $scheme, $record->getValue(), $port);
+                        $uris[] = \sprintf('%s://[%s]:%d', $scheme, $record->getValue(), $port);
                     } else {
-                        $uris[] = \sprintf("%s://%s:%d", $scheme, $record->getValue(), $port);
+                        $uris[] = \sprintf('%s://%s:%d', $scheme, $record->getValue(), $port);
                     }
                 }
             }
@@ -60,11 +60,11 @@ class DefaultConnector implements Connector
 
                     if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $context)) {
                         throw new ConnectException(\sprintf(
-                            "Connection to %s failed: [Error #%d] %s%s",
+                            'Connection to %s failed: [Error #%d] %s%s',
                             $uri,
                             $errno,
                             $errstr,
-                            $failures ? "; previous attempts: " . \implode($failures) : ""
+                            $failures ? '; previous attempts: ' . \implode($failures) : ''
                         ), $errno);
                     }
 
@@ -78,10 +78,10 @@ class DefaultConnector implements Connector
                         yield Promise\timeout($deferred->promise(), $timeout);
                     } catch (TimeoutException $e) {
                         throw new ConnectException(\sprintf(
-                            "Connecting to %s failed: timeout exceeded (%d ms)%s",
+                            'Connecting to %s failed: timeout exceeded (%d ms)%s',
                             $uri,
                             $timeout,
-                            $failures ? "; previous attempts: " . \implode($failures) : ""
+                            $failures ? '; previous attempts: ' . \implode($failures) : ''
                         ), 110); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
                     } finally {
                         Loop::cancel($watcher);
@@ -92,21 +92,21 @@ class DefaultConnector implements Connector
                     if (\stream_socket_get_name($socket, true) === false) {
                         \fclose($socket);
                         throw new ConnectException(\sprintf(
-                            "Connection to %s refused%s",
+                            'Connection to %s refused%s',
                             $uri,
-                            $failures ? "; previous attempts: " . \implode($failures) : ""
+                            $failures ? '; previous attempts: ' . \implode($failures) : ''
                         ), 111); // See ECONNREFUSED in http://www.virtsync.com/c-error-codes-include-errno
                     }
                 } catch (ConnectException $e) {
                     // Includes only error codes used in this file, as error codes on other OS families might be different.
                     // In fact, this might show a confusing error message on OS families that return 110 or 111 by itself.
                     $knownReasons = [
-                        110 => "connection timeout",
-                        111 => "connection refused",
+                        110 => 'connection timeout',
+                        111 => 'connection refused',
                     ];
 
                     $code = $e->getCode();
-                    $reason = $knownReasons[$code] ?? ("Error #" . $code);
+                    $reason = $knownReasons[$code] ?? ('Error #' . $code);
 
                     if (++$attempt === $socketContext->getMaxAttempts()) {
                         break;
@@ -121,6 +121,7 @@ class DefaultConnector implements Connector
             }
 
             // This is reached if either all URIs failed or the maximum number of attempts is reached.
+            /** @noinspection PhpUndefinedVariableInspection */
             throw $e;
         });
     }
