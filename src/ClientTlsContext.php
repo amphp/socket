@@ -383,7 +383,18 @@ final class ClientTlsContext
      */
     public function toStreamCryptoMethod(): int
     {
-        // -2 to clear client flag and then make all lower versions bits 1
-        return (~($this->minVersion - 2) & \STREAM_CRYPTO_METHOD_ANY_CLIENT) | 1;
+        switch ($this->minVersion) {
+            case self::TLSv1_0:
+                return self::TLSv1_0 | self::TLSv1_1 | self::TLSv1_2;
+
+            case self::TLSv1_1:
+                return self::TLSv1_1 | self::TLSv1_2;
+
+            case self::TLSv1_2:
+                return self::TLSv1_2;
+
+            default:
+                throw new \RuntimeException('Unknown minimum TLS version: ' . $this->minVersion);
+        }
     }
 }
