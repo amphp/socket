@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php // basic (and dumb) HTTP client
 
 require __DIR__ . '/../vendor/autoload.php';
