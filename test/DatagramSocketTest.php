@@ -12,7 +12,7 @@ class DatagramSocketTest extends TestCase
     public function testReceive()
     {
         Loop::run(function () {
-            $endpoint = Socket\endpoint('127.0.0.1:0');
+            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
             Loop::delay(100, [$endpoint, 'close']);
 
             $this->assertInternalType('resource', $endpoint->getResource());
@@ -34,7 +34,7 @@ class DatagramSocketTest extends TestCase
     public function testSend()
     {
         Loop::run(function () {
-            $endpoint = Socket\endpoint('127.0.0.1:0');
+            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
             Loop::delay(100, [$endpoint, 'close']);
 
             $this->assertInternalType('resource', $endpoint->getResource());
@@ -64,7 +64,7 @@ class DatagramSocketTest extends TestCase
         $this->expectExceptionMessage('Could not send packet on endpoint: stream_socket_sendto(): Message too long');
 
         Loop::run(function () {
-            $endpoint = Socket\endpoint('127.0.0.1:0');
+            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
             Loop::delay(100, [$endpoint, 'close']);
 
             $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
@@ -80,7 +80,7 @@ class DatagramSocketTest extends TestCase
     public function testReceiveThenClose()
     {
         Loop::run(function () {
-            $endpoint = Socket\endpoint('127.0.0.1:0');
+            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
 
             $promise = $endpoint->receive();
 
@@ -93,7 +93,7 @@ class DatagramSocketTest extends TestCase
     public function testReceiveAfterClose()
     {
         Loop::run(function () {
-            $endpoint = Socket\endpoint('127.0.0.1:0');
+            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
 
             $endpoint->close();
 
@@ -106,7 +106,7 @@ class DatagramSocketTest extends TestCase
         $this->expectException(Socket\PendingReceiveError::class);
 
         Loop::run(function () {
-            $endpoint = Socket\endpoint('127.0.0.1:0');
+            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
             try {
                 $promise = $endpoint->receive();
                 $endpoint->receive();

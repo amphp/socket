@@ -6,7 +6,7 @@ use function Amp\Socket\Internal\normalizeBindToOption;
 
 final class ServerListenContext
 {
-    private $bindTo = null;
+    private $bindTo;
     private $backlog = 128;
     private $reusePort = false;
     private $broadcast = false;

@@ -22,7 +22,7 @@ class functionsTest extends TestCase
      */
     public function testEndpointInvalidScheme()
     {
-        Socket\endpoint("invalid://127.0.0.1:0");
+        Socket\bindDatagramSocket("invalid://127.0.0.1:0");
     }
 
     /**
@@ -40,7 +40,7 @@ class functionsTest extends TestCase
      */
     public function testEndpointError()
     {
-        Socket\endpoint('error');
+        Socket\bindDatagramSocket('error');
     }
 
     public function testListenIPv6()

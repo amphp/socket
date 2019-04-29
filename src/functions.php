@@ -68,7 +68,7 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
  * @throws SocketException If binding to the specified URI failed.
  * @throws \Error If an invalid scheme is given.
  */
-function endpoint(string $uri, ServerListenContext $socketContext = null): DatagramSocket
+function bindDatagramSocket(string $uri, ServerListenContext $socketContext = null): DatagramSocket
 {
     $socketContext = $socketContext ?? new ServerListenContext;
 
@@ -102,8 +102,7 @@ function endpoint(string $uri, ServerListenContext $socketContext = null): Datag
 function connector(Connector $connector = null): Connector
 {
     if ($connector === null) {
-        $connector = Loop::getState(LOOP_CONNECTOR_IDENTIFIER);
-        if ($connector) {
+        if ($connector = Loop::getState(LOOP_CONNECTOR_IDENTIFIER)) {
             return $connector;
         }
 
@@ -111,6 +110,7 @@ function connector(Connector $connector = null): Connector
     }
 
     Loop::setState(LOOP_CONNECTOR_IDENTIFIER, $connector);
+
     return $connector;
 }
 
@@ -121,7 +121,7 @@ function connector(Connector $connector = null): Connector
  * @param ClientConnectContext   $socketContext Socket connect context to use when connecting.
  * @param CancellationToken|null $token
  *
- * @return Promise<\Amp\Socket\ClientSocket>
+ * @return Promise<ClientSocket>
  */
 function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise
 {
@@ -146,7 +146,7 @@ function cryptoConnect(
     ClientTlsContext $tlsContext = null,
     CancellationToken $token = null
 ): Promise {
-    return call(function () use ($uri, $socketContext, $tlsContext, $token) {
+    return call(static function () use ($uri, $socketContext, $tlsContext, $token) {
         $tlsContext = $tlsContext ?? new ClientTlsContext;
 
         if ($tlsContext->getPeerName() === null) {
@@ -162,7 +162,7 @@ function cryptoConnect(
             $deferred = new Deferred;
             $id = $token->subscribe([$deferred, 'fail']);
 
-            $promise->onResolve(function ($exception) use ($id, $token, $deferred) {
+            $promise->onResolve(static function ($exception) use ($id, $token, $deferred) {
                 if ($token->isRequested()) {
                     return;
                 }
@@ -196,7 +196,7 @@ function cryptoConnect(
  *
  * @return resource[] Pair of socket resources.
  *
- * @throws \Amp\Socket\SocketException If creating the sockets fails.
+ * @throws SocketException If creating the sockets fails.
  */
 function pair(): array
 {
