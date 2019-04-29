@@ -19,7 +19,12 @@ final class ServerListenContext
     /** @var ServerTlsContext|null */
     private $tlsContext;
 
-    public function withBindTo(string $bindTo = null): self
+    public function withoutBindTo(): self
+    {
+        return $this->withBindTo(null);
+    }
+
+    public function withBindTo(?string $bindTo): self
     {
         $bindTo = normalizeBindToOption($bindTo);
 
@@ -115,18 +120,15 @@ final class ServerListenContext
         return $this->tlsContext;
     }
 
-    public function withTlsContext(ServerTlsContext $tlsContext): self
+    public function withoutTlsContext(): self
+    {
+        return $this->withTlsContext(null);
+    }
+
+    public function withTlsContext(?ServerTlsContext $tlsContext): self
     {
         $clone = clone $this;
         $clone->tlsContext = $tlsContext;
-
-        return $clone;
-    }
-
-    public function withoutTlsContext(): self
-    {
-        $clone = clone $this;
-        $clone->tlsContext = null;
 
         return $clone;
     }
