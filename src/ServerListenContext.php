@@ -6,11 +6,18 @@ use function Amp\Socket\Internal\normalizeBindToOption;
 
 final class ServerListenContext
 {
+    /** @var string|null */
     private $bindTo;
+    /** @var int */
     private $backlog = 128;
+    /** @var bool */
     private $reusePort = false;
+    /** @var bool */
     private $broadcast = false;
+    /** @var bool */
     private $tcpNoDelay = false;
+    /** @var ServerTlsContext|null */
+    private $tlsContext;
 
     public function withBindTo(string $bindTo = null): self
     {
@@ -22,12 +29,12 @@ final class ServerListenContext
         return $clone;
     }
 
-    public function getBindTo()
+    public function getBindTo(): ?string
     {
         return $this->bindTo;
     }
 
-    public function getBacklog()
+    public function getBacklog(): int
     {
         return $this->backlog;
     }
@@ -103,17 +110,44 @@ final class ServerListenContext
         return $clone;
     }
 
+    public function getTlsContext(): ?ServerTlsContext
+    {
+        return $this->tlsContext;
+    }
+
+    public function withTlsContext(ServerTlsContext $tlsContext): self
+    {
+        $clone = clone $this;
+        $clone->tlsContext = $tlsContext;
+
+        return $clone;
+    }
+
+    public function withoutTlsContext(): self
+    {
+        $clone = clone $this;
+        $clone->tlsContext = null;
+
+        return $clone;
+    }
+
     public function toStreamContextArray(): array
     {
-        return ["socket" => [
-            "bindto" => $this->bindTo,
-            "backlog" => $this->backlog,
-            "ipv6_v6only" => true,
+        $array = ['socket' => [
+            'bindto' => $this->bindTo,
+            'backlog' => $this->backlog,
+            'ipv6_v6only' => true,
             // SO_REUSEADDR has SO_REUSEPORT semantics on Windows
-            "so_reuseaddr" => $this->reusePort && \stripos(\PHP_OS, "WIN") === 0,
-            "so_reuseport" => $this->reusePort,
-            "so_broadcast" => $this->broadcast,
-            "tcp_nodelay"  => $this->tcpNoDelay,
+            'so_reuseaddr' => $this->reusePort && \stripos(\PHP_OS, 'WIN') === 0,
+            'so_reuseport' => $this->reusePort,
+            'so_broadcast' => $this->broadcast,
+            'tcp_nodelay' => $this->tcpNoDelay,
         ]];
+
+        if ($this->tlsContext) {
+            $array = \array_merge($array, $this->tlsContext->toStreamContextArray());
+        }
+
+        return $array;
     }
 }

@@ -4,9 +4,9 @@ namespace Amp\Socket;
 
 final class ServerTlsContext
 {
-    const TLSv1_0 = \STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
-    const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_SERVER;
-    const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_SERVER;
+    public const TLSv1_0 = \STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
+    public const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_SERVER;
+    public const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_SERVER;
 
     /** @var int */
     private $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
@@ -81,7 +81,7 @@ final class ServerTlsContext
     /**
      * @return null|string Expected name of the peer or `null` if such an expectation doesn't exist.
      */
-    public function getPeerName()
+    public function getPeerName(): ?string
     {
         return $this->peerName;
     }
@@ -188,7 +188,7 @@ final class ServerTlsContext
     /**
      * @return null|string Path to the file if one is set, otherwise `null`.
      */
-    public function getCaFile()
+    public function getCaFile(): ?string
     {
         return $this->caFile;
     }
@@ -211,7 +211,7 @@ final class ServerTlsContext
     /**
      * @return null|string Path to the file if one is set, otherwise `null`.
      */
-    public function getCaPath()
+    public function getCaPath(): ?string
     {
         return $this->caPath;
     }
@@ -270,7 +270,7 @@ final class ServerTlsContext
     /**
      * @return Certificate|null Default certificate to use in case no SNI certificate matches, or `null` if unset.
      */
-    public function getDefaultCertificate()
+    public function getDefaultCertificate(): ?Certificate
     {
         return $this->defaultCertificate;
     }
@@ -388,7 +388,7 @@ final class ServerTlsContext
         }
 
         if ($this->certificates) {
-            $options['SNI_server_certs'] = \array_map(function (Certificate $certificate) {
+            $options['SNI_server_certs'] = \array_map(static function (Certificate $certificate) {
                 if ($certificate->getCertFile() === $certificate->getKeyFile()) {
                     return $certificate->getCertFile();
                 }
