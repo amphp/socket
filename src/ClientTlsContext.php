@@ -4,9 +4,9 @@ namespace Amp\Socket;
 
 final class ClientTlsContext
 {
-    const TLSv1_0 = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
-    const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
-    const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+    public const TLSv1_0 = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
+    public const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
+    public const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
 
     /** @var int */
     private $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
@@ -81,7 +81,7 @@ final class ClientTlsContext
     /**
      * @return null|string Expected name of the peer or `null` if such an expectation doesn't exist.
      */
-    public function getPeerName()
+    public function getPeerName(): ?string
     {
         return $this->peerName;
     }
@@ -188,7 +188,7 @@ final class ClientTlsContext
     /**
      * @return null|string Path to the file if one is set, otherwise `null`.
      */
-    public function getCaFile()
+    public function getCaFile(): ?string
     {
         return $this->caFile;
     }
@@ -211,7 +211,7 @@ final class ClientTlsContext
     /**
      * @return null|string Path to the file if one is set, otherwise `null`.
      */
-    public function getCaPath()
+    public function getCaPath(): ?string
     {
         return $this->caPath;
     }
@@ -344,7 +344,7 @@ final class ClientTlsContext
         return $clone;
     }
 
-    public function getCertificate()
+    public function getCertificate(): ?Certificate
     {
         return $this->certificate;
     }

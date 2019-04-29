@@ -7,13 +7,23 @@ use function Amp\Socket\Internal\normalizeBindToOption;
 
 final class ClientConnectContext
 {
-    private $bindTo = null;
+    /** @var string|null */
+    private $bindTo;
+    /** @var int */
     private $connectTimeout = 10000;
+    /** @var int */
     private $maxAttempts = 2;
-    private $typeRestriction = null;
+    /** @var null|int */
+    private $typeRestriction;
+    /** @var bool */
     private $tcpNoDelay = false;
 
-    public function withBindTo(string $bindTo = null): self
+    public function withoutBindTo(): self
+    {
+        return $this->withBindTo(null);
+    }
+
+    public function withBindTo(?string $bindTo): self
     {
         $bindTo = normalizeBindToOption($bindTo);
 
@@ -23,7 +33,7 @@ final class ClientConnectContext
         return $clone;
     }
 
-    public function getBindTo()
+    public function getBindTo(): ?string
     {
         return $this->bindTo;
     }
@@ -62,10 +72,15 @@ final class ClientConnectContext
         return $this->maxAttempts;
     }
 
-    public function withDnsTypeRestriction(int $type = null): self
+    public function withoutDnsTypeRestriction(): self
+    {
+        return $this->withDnsTypeRestriction(null);
+    }
+
+    public function withDnsTypeRestriction(?int $type): self
     {
         if ($type !== null && $type !== Record::AAAA && $type !== Record::A) {
-            throw new \Error("Invalid resolver type restriction");
+            throw new \Error('Invalid resolver type restriction');
         }
 
         $clone = clone $this;
@@ -74,7 +89,7 @@ final class ClientConnectContext
         return $clone;
     }
 
-    public function getDnsTypeRestriction()
+    public function getDnsTypeRestriction(): ?int
     {
         return $this->typeRestriction;
     }
@@ -103,11 +118,11 @@ final class ClientConnectContext
     public function toStreamContextArray(): array
     {
         $options = [
-            "tcp_nodelay" => $this->tcpNoDelay,
+            'tcp_nodelay' => $this->tcpNoDelay,
         ];
 
         if ($this->bindTo !== null) {
-            $options["bindto"] = $this->bindTo;
+            $options['bindto'] = $this->bindTo;
         }
 
         return ["socket" => $options];

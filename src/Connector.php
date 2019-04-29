@@ -16,5 +16,5 @@ interface Connector
      *
      * @return Promise<ClientSocket>
      */
-    function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise;
+    public function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise;
 }
