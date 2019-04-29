@@ -30,7 +30,7 @@
         }
     ],
     "require": {
-        "php": ">=7.0",
+        "php": ">=7.1",
         "ext-openssl": "*",
         "amphp/amp": "^2",
         "amphp/dns": "^1 || ^0.9",
