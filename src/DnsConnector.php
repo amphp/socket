@@ -13,16 +13,16 @@ use function Amp\call;
 
 class DnsConnector implements Connector
 {
-    public function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise
+    public function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise
     {
-        return call(function () use ($uri, $socketContext, $token) {
-            $socketContext = $socketContext ?? new ClientConnectContext;
+        return call(static function () use ($uri, $context, $token) {
+            $context = $context ?? new ClientConnectContext;
             $token = $token ?? new NullCancellationToken;
             $attempt = 0;
             $uris = [];
             $failures = [];
 
-            list($scheme, $host, $port) = Internal\parseUri($uri);
+            [$scheme, $host, $port] = Internal\parseUri($uri);
 
             if ($host[0] === '[') {
                 $host = \substr($host, 1, -1);
@@ -33,11 +33,11 @@ class DnsConnector implements Connector
                 $uris = [$uri];
             } else {
                 // Host is not an IP address, so resolve the domain name.
-                $records = yield Dns\resolve($host, $socketContext->getDnsTypeRestriction());
+                $records = yield Dns\resolve($host, $context->getDnsTypeRestriction());
 
                 // Usually the faster response should be preferred, but we don't have a reliable way of determining IPv6
                 // support, so we always prefer IPv4 here.
-                \usort($records, function (Dns\Record $a, Dns\Record $b) {
+                \usort($records, static function (Dns\Record $a, Dns\Record $b) {
                     return $a->getType() - $b->getType();
                 });
 
@@ -52,13 +52,13 @@ class DnsConnector implements Connector
             }
 
             $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
-            $timeout = $socketContext->getConnectTimeout();
+            $timeout = $context->getConnectTimeout();
 
             foreach ($uris as $builtUri) {
                 try {
-                    $context = \stream_context_create($socketContext->toStreamContextArray());
+                    $streamContext = \stream_context_create($context->withoutTlsContext()->toStreamContextArray());
 
-                    if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $context)) {
+                    if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $streamContext)) {
                         throw new ConnectException(\sprintf(
                             'Connection to %s failed: [Error #%d] %s%s',
                             $uri,
@@ -108,7 +108,7 @@ class DnsConnector implements Connector
                     $code = $e->getCode();
                     $reason = $knownReasons[$code] ?? ('Error #' . $code);
 
-                    if (++$attempt === $socketContext->getMaxAttempts()) {
+                    if (++$attempt === $context->getMaxAttempts()) {
                         break;
                     }
 

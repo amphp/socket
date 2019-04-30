@@ -11,10 +11,10 @@ interface Connector
      * Asynchronously establish a socket connection to the specified URI.
      *
      * @param string                 $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
-     * @param ClientConnectContext   $socketContext Socket connect context to use when connecting.
+     * @param ClientConnectContext   $context Socket connect context to use when connecting.
      * @param CancellationToken|null $token
      *
      * @return Promise<ClientSocket>
      */
-    public function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise;
+    public function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise;
 }

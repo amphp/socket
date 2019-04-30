@@ -15,7 +15,7 @@ const LOOP_CONNECTOR_IDENTIFIER = Connector::class;
  *
  * If you want to accept TLS connections, you have to use `yield $socket->enableCrypto()` after accepting new clients.
  *
- * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param string              $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ServerListenContext $socketContext Context options for listening.
  *
  * @return Server
@@ -50,7 +50,7 @@ function listen(string $uri, ServerListenContext $socketContext = null): Server
 /**
  * Create a new Datagram (UDP server) on the specified server address.
  *
- * @param string $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
+ * @param string              $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
  * @param ServerListenContext $socketContext Context options for listening.
  *
  * @return DatagramSocket
@@ -124,27 +124,25 @@ function connect(string $uri, ClientConnectContext $socketContext = null, Cancel
  * Note: Once resolved the socket stream will already be set to non-blocking mode.
  *
  * @param string               $uri
- * @param ClientConnectContext $socketContext
- * @param ClientTlsContext     $tlsContext
+ * @param ClientConnectContext $context
  * @param CancellationToken    $token
  *
  * @return Promise<ClientSocket>
  */
 function cryptoConnect(
     string $uri,
-    ClientConnectContext $socketContext = null,
-    ClientTlsContext $tlsContext = null,
+    ClientConnectContext $context = null,
     CancellationToken $token = null
 ): Promise {
-    return call(static function () use ($uri, $socketContext, $tlsContext, $token) {
-        $tlsContext = $tlsContext ?? new ClientTlsContext;
+    return call(static function () use ($uri, $context, $token) {
+        $tlsContext = $context->getTlsContext() ?? new ClientTlsContext;
 
         if ($tlsContext->getPeerName() === null) {
             $tlsContext = $tlsContext->withPeerName(\parse_url($uri, PHP_URL_HOST));
         }
 
         /** @var ClientSocket $socket */
-        $socket = yield connect($uri, $socketContext, $token);
+        $socket = yield connect($uri, $context->withTlsContext($tlsContext), $token);
 
         $promise = $socket->enableCrypto($tlsContext);
 
