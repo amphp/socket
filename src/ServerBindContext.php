@@ -4,7 +4,7 @@ namespace Amp\Socket;
 
 use function Amp\Socket\Internal\normalizeBindToOption;
 
-final class ServerListenContext
+final class ServerBindContext
 {
     /** @var string|null */
     private $bindTo;
@@ -16,6 +16,8 @@ final class ServerListenContext
     private $broadcast = false;
     /** @var bool */
     private $tcpNoDelay = false;
+    /** @var int */
+    private $chunkSize = 8192;
     /** @var ServerTlsContext|null */
     private $tlsContext;
 
@@ -129,6 +131,19 @@ final class ServerListenContext
     {
         $clone = clone $this;
         $clone->tlsContext = $tlsContext;
+
+        return $clone;
+    }
+
+    public function getChunkSize(): int
+    {
+        return $this->chunkSize;
+    }
+
+    public function withChunkSize(int $chunkSize): self
+    {
+        $clone = clone $this;
+        $clone->chunkSize = $chunkSize;
 
         return $clone;
     }

@@ -43,7 +43,10 @@ class Server
         \stream_set_blocking($this->socket, false);
 
         $acceptor = &$this->acceptor;
-        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (&$acceptor, $chunkSize) {
+        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
+            &$acceptor,
+            $chunkSize
+        ) {
             // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
             if (!$client = @\stream_socket_accept($socket, 0)) {  // Timeout of 0 to be non-blocking.
                 return; // Accepting client failed.
@@ -51,6 +54,8 @@ class Server
 
             $deferred = $acceptor;
             $acceptor = null;
+
+            /** @noinspection NullPointerExceptionInspection */
             $deferred->resolve(new ServerSocket($client, $chunkSize));
 
             if (!$acceptor) {
@@ -73,10 +78,22 @@ class Server
         $this->free();
     }
 
+    private function free(): void
+    {
+        Loop::cancel($this->watcher);
+
+        $this->socket = null;
+
+        if ($this->acceptor) {
+            $this->acceptor->resolve();
+            $this->acceptor = null;
+        }
+    }
+
     /**
-     * @return \Amp\Promise<ServerSocket|null>
+     * @return Promise<ServerSocket|null>
      *
-     * @throws \Amp\Socket\PendingAcceptError If another accept request is pending.
+     * @throws PendingAcceptError If another accept request is pending.
      */
     public function accept(): Promise
     {
@@ -102,7 +119,7 @@ class Server
     /**
      * Closes the server and stops accepting connections. Any socket clients accepted will not be closed.
      */
-    public function close()
+    public function close(): void
     {
         if ($this->socket) {
             \fclose($this->socket);
@@ -116,7 +133,7 @@ class Server
      *
      * @see Loop::reference()
      */
-    final public function reference()
+    final public function reference(): void
     {
         Loop::reference($this->watcher);
     }
@@ -126,7 +143,7 @@ class Server
      *
      * @see Loop::unreference()
      */
-    final public function unreference()
+    final public function unreference(): void
     {
         Loop::unreference($this->watcher);
     }
@@ -134,21 +151,9 @@ class Server
     /**
      * @return string|null
      */
-    public function getAddress()
+    public function getAddress(): ?string
     {
         return $this->address;
-    }
-
-    private function free()
-    {
-        Loop::cancel($this->watcher);
-
-        $this->socket = null;
-
-        if ($this->acceptor) {
-            $this->acceptor->resolve();
-            $this->acceptor = null;
-        }
     }
 
     /**

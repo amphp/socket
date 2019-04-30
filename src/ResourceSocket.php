@@ -10,12 +10,12 @@ use Amp\Promise;
 
 abstract class ResourceSocket implements Socket
 {
-    const DEFAULT_CHUNK_SIZE = ResourceInputStream::DEFAULT_CHUNK_SIZE;
+    public const DEFAULT_CHUNK_SIZE = ResourceInputStream::DEFAULT_CHUNK_SIZE;
 
-    /** @var \Amp\ByteStream\ResourceInputStream */
+    /** @var ResourceInputStream */
     private $reader;
 
-    /** @var \Amp\ByteStream\ResourceOutputStream */
+    /** @var ResourceOutputStream */
     private $writer;
 
     /**
@@ -28,16 +28,6 @@ abstract class ResourceSocket implements Socket
     {
         $this->reader = new ResourceInputStream($resource, $chunkSize);
         $this->writer = new ResourceOutputStream($resource, $chunkSize);
-    }
-
-    /**
-     * Raw stream socket resource.
-     *
-     * @return resource|null
-     */
-    final public function getResource()
-    {
-        return $this->reader->getResource();
     }
 
     /**
@@ -55,7 +45,7 @@ abstract class ResourceSocket implements Socket
     final public function disableCrypto(): Promise
     {
         if (($resource = $this->reader->getResource()) === null) {
-            return new Failure(new ClosedException("The socket has been closed"));
+            return new Failure(new ClosedException('The socket has been closed'));
         }
 
         return Internal\disableCrypto($resource);
@@ -74,7 +64,7 @@ abstract class ResourceSocket implements Socket
     }
 
     /** @inheritdoc */
-    public function end(string $data = ""): Promise
+    public function end(string $data = ''): Promise
     {
         $promise = $this->writer->end($data);
         $promise->onResolve(function () {
@@ -85,11 +75,20 @@ abstract class ResourceSocket implements Socket
     }
 
     /**
+     * Force closes the socket, failing any pending reads or writes.
+     */
+    public function close(): void
+    {
+        $this->reader->close();
+        $this->writer->close();
+    }
+
+    /**
      * References the read watcher, so the loop keeps running in case there's an active read.
      *
      * @see Loop::reference()
      */
-    final public function reference()
+    final public function reference(): void
     {
         $this->reader->reference();
     }
@@ -99,31 +98,17 @@ abstract class ResourceSocket implements Socket
      *
      * @see Loop::unreference()
      */
-    final public function unreference()
+    final public function unreference(): void
     {
         $this->reader->unreference();
     }
 
-    /**
-     * Force closes the socket, failing any pending reads or writes.
-     */
-    public function close()
-    {
-        $this->reader->close();
-        $this->writer->close();
-    }
-
-    final public function getLocalAddress()
+    final public function getLocalAddress(): ?string
     {
         return $this->getAddress(false);
     }
 
-    final public function getRemoteAddress()
-    {
-        return $this->getAddress(true);
-    }
-
-    private function getAddress(bool $wantPeer)
+    private function getAddress(bool $wantPeer): ?string
     {
         $remoteCleaned = Internal\cleanupSocketName(@\stream_socket_get_name($this->getResource(), $wantPeer));
 
@@ -138,5 +123,20 @@ abstract class ResourceSocket implements Socket
         }
 
         return null;
+    }
+
+    /**
+     * Raw stream socket resource.
+     *
+     * @return resource|null
+     */
+    final public function getResource()
+    {
+        return $this->reader->getResource();
+    }
+
+    final public function getRemoteAddress(): ?string
+    {
+        return $this->getAddress(true);
     }
 }
