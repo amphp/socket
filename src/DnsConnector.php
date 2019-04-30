@@ -16,6 +16,10 @@ class DnsConnector implements Connector
     public function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise
     {
         return call(static function () use ($uri, $context, $token) {
+            if ($context->getTlsContext() !== null) {
+                throw new \Error('TLS context can\'t be provided to Connector::connect()');
+            }
+
             $context = $context ?? new ClientConnectContext;
             $token = $token ?? new NullCancellationToken;
             $attempt = 0;
@@ -56,7 +60,7 @@ class DnsConnector implements Connector
 
             foreach ($uris as $builtUri) {
                 try {
-                    $streamContext = \stream_context_create($context->withoutTlsContext()->toStreamContextArray());
+                    $streamContext = \stream_context_create($context->toStreamContextArray());
 
                     if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $streamContext)) {
                         throw new ConnectException(\sprintf(

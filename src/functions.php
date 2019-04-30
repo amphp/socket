@@ -142,7 +142,7 @@ function cryptoConnect(
         }
 
         /** @var ClientSocket $socket */
-        $socket = yield connect($uri, $context->withTlsContext($tlsContext), $token);
+        $socket = yield connect($uri, $context->withoutTlsContext(), $token);
 
         $promise = $socket->enableCrypto($tlsContext);
 
