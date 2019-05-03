@@ -138,7 +138,7 @@ class DatagramSocket
      *
      * @see Loop::reference()
      */
-    final public function reference()
+    final public function reference(): void
     {
         Loop::reference($this->watcher);
     }
@@ -148,7 +148,7 @@ class DatagramSocket
      *
      * @see Loop::unreference()
      */
-    final public function unreference()
+    final public function unreference(): void
     {
         Loop::unreference($this->watcher);
     }
@@ -156,7 +156,7 @@ class DatagramSocket
     /**
      * Closes the datagram socket and stops receiving data. Any pending read is resolved with null.
      */
-    public function close()
+    public function close(): void
     {
         if ($this->socket) {
             \fclose($this->socket);
@@ -168,12 +168,12 @@ class DatagramSocket
     /**
      * @return string|null
      */
-    public function getAddress()
+    public function getAddress(): ?string
     {
         return $this->address;
     }
 
-    private function free()
+    private function free(): void
     {
         Loop::cancel($this->watcher);
 

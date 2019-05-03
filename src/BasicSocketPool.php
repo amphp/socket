@@ -169,7 +169,7 @@ final class BasicSocketPool implements SocketPool
     }
 
     /** @inheritdoc */
-    public function clear(ClientSocket $socket)
+    public function clear(ClientSocket $socket): void
     {
         $this->clearFromId((int) $socket->getResource());
     }
@@ -177,7 +177,7 @@ final class BasicSocketPool implements SocketPool
     /**
      * @param int $socketId
      */
-    private function clearFromId(int $socketId)
+    private function clearFromId(int $socketId): void
     {
         if (!isset($this->socketIdUriMap[$socketId])) {
             throw new \Error(
@@ -203,7 +203,7 @@ final class BasicSocketPool implements SocketPool
     }
 
     /** @inheritdoc */
-    public function checkin(ClientSocket $socket)
+    public function checkin(ClientSocket $socket): void
     {
         $socketId = (int) $socket->getResource();
 

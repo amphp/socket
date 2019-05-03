@@ -31,7 +31,7 @@ interface SocketPool
      *
      * @throws \Error If the provided resource is unknown to the pool.
      */
-    public function checkin(ClientSocket $socket);
+    public function checkin(ClientSocket $socket): void;
 
     /**
      * Remove the specified socket from the pool.
@@ -40,5 +40,5 @@ interface SocketPool
      *
      * @throws \Error If the provided resource is unknown to the pool.
      */
-    public function clear(ClientSocket $socket);
+    public function clear(ClientSocket $socket): void;
 }
