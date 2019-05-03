@@ -24,6 +24,12 @@ class DatagramSocket
     /** @var Deferred|null */
     private $reader;
 
+    /**
+     * @param resource $socket A bound udp socket resource
+     * @param int      $chunkSize Maximum chunk size for the
+     *
+     * @throws \Error If a stream resource is not given for $socket.
+     */
     public function __construct($socket, int $chunkSize = self::DEFAULT_CHUNK_SIZE)
     {
         if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
@@ -48,7 +54,7 @@ class DatagramSocket
                 return;
             }
 
-            $deferred->resolve([$data, Internal\cleanupSocketName($address)]);
+            $deferred->resolve([Internal\cleanupSocketName($address), $data]);
 
             if (!$reader) {
                 Loop::disable($watcher);
@@ -70,6 +76,11 @@ class DatagramSocket
         $this->free();
     }
 
+    /**
+     * @return Promise<[string $address, string $data]|null> Resolves with null if the socket is closed.
+     *
+     * @throws PendingReceiveError If a receive request is already pending.
+     */
     public function receive(): Promise
     {
         if ($this->reader) {
@@ -86,7 +97,15 @@ class DatagramSocket
         return $this->reader->promise();
     }
 
-    public function send(string $data, string $address): Promise
+    /**
+     * @param string $address
+     * @param string $data
+     *
+     * @return Promise<int> Resolves with the number of bytes written to the socket.
+     *
+     * @throws SocketException If the UDP socket closes before the data can be sent.
+     */
+    public function send(string $address, string $data): Promise
     {
         \assert($this->isAddressValid($address), "Invalid packet address");
 
@@ -104,23 +123,38 @@ class DatagramSocket
         return new Success($result);
     }
 
+    /**
+     * Raw stream socket resource.
+     *
+     * @return resource|null
+     */
     final public function getResource()
     {
         return $this->socket;
     }
 
+    /**
+     * References the receive watcher.
+     *
+     * @see Loop::reference()
+     */
     final public function reference()
     {
         Loop::reference($this->watcher);
     }
 
+    /**
+     * Unreferences the receive watcher.
+     *
+     * @see Loop::unreference()
+     */
     final public function unreference()
     {
         Loop::unreference($this->watcher);
     }
 
     /**
-     * Closes the endpoint and stops receiving data. Any pending read is resolved with null.
+     * Closes the datagram socket and stops receiving data. Any pending read is resolved with null.
      */
     public function close()
     {

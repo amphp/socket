@@ -23,7 +23,7 @@ class DatagramSocketTest extends TestCase
             yield $socket->write('Hello!');
 
             asyncCall(function () use ($endpoint, $remote) {
-                while (list($data, $address) = yield $endpoint->receive()) {
+                while ([$address, $data] = yield $endpoint->receive()) {
                     $this->assertSame('Hello!', $data);
                     $this->assertSame($remote, $address);
                 }
@@ -45,10 +45,10 @@ class DatagramSocketTest extends TestCase
             yield $socket->write('a');
 
             asyncCall(function () use ($endpoint, $remote) {
-                while (list($data, $address) = yield $endpoint->receive()) {
+                while ([$address, $data] = yield $endpoint->receive()) {
                     $this->assertSame('a', $data);
                     $this->assertSame($remote, $address);
-                    yield $endpoint->send('b', $address);
+                    yield $endpoint->send($address, 'b');
                 }
             });
 
@@ -71,8 +71,8 @@ class DatagramSocketTest extends TestCase
 
             yield $socket->write('Hello!');
 
-            while (list($data, $address) = yield $endpoint->receive()) {
-                yield $endpoint->send(\str_repeat('-', 2 ** 20), $address);
+            while ([$address, $data] = yield $endpoint->receive()) {
+                yield $endpoint->send($address, \str_repeat('-', 2 ** 20));
             }
         });
     }
