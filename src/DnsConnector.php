@@ -15,6 +15,8 @@ class DnsConnector implements Connector
 {
     public function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise
     {
+        $context = $context ?? new ClientConnectContext;
+
         return call(static function () use ($uri, $context, $token) {
             if ($context->getTlsContext() !== null) {
                 throw new \Error('TLS context can\'t be provided to Connector::connect()');

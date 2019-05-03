@@ -108,14 +108,14 @@ function connector(Connector $connector = null): Connector
  * Asynchronously establish a socket connection to the specified URI.
  *
  * @param string                 $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
- * @param ClientConnectContext   $socketContext Socket connect context to use when connecting.
+ * @param ClientConnectContext   $context Socket connect context to use when connecting.
  * @param CancellationToken|null $token
  *
  * @return Promise<ClientSocket>
  */
-function connect(string $uri, ClientConnectContext $socketContext = null, CancellationToken $token = null): Promise
+function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise
 {
-    return connector()->connect($uri, $socketContext, $token);
+    return connector()->connect($uri, $context, $token);
 }
 
 /**
@@ -135,6 +135,7 @@ function cryptoConnect(
     CancellationToken $token = null
 ): Promise {
     return call(static function () use ($uri, $context, $token) {
+        $context = $context ?? new ClientConnectContext;
         $tlsContext = $context->getTlsContext() ?? new ClientTlsContext;
 
         if ($tlsContext->getPeerName() === null) {

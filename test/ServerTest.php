@@ -32,7 +32,7 @@ class ServerTest extends TestCase
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
                 ->withDefaultCertificate(new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem"));
-            $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
+            $server = Socket\listen("127.0.0.1:0", (new Socket\ServerBindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\ServerSocket $socket */
@@ -46,12 +46,14 @@ class ServerTest extends TestCase
                 }
             });
 
-            $context = (new Socket\ClientTlsContext)
-                ->withPeerName("amphp.org")
-                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+            $context = (new Socket\ClientConnectContext)->withTlsContext(
+                (new Socket\ClientTlsContext)
+                    ->withPeerName("amphp.org")
+                    ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
+            );
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
             $this->assertSame("test", yield $client->read());
@@ -67,7 +69,7 @@ class ServerTest extends TestCase
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
                 ->withCertificates(["amphp.org" => new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem")]);
-            $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
+            $server = Socket\listen("127.0.0.1:0", (new Socket\ServerBindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\ServerSocket $socket */
@@ -81,12 +83,14 @@ class ServerTest extends TestCase
                 }
             });
 
-            $context = (new Socket\ClientTlsContext)
-                ->withPeerName("amphp.org")
-                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+            $context = (new Socket\ClientConnectContext)->withTlsContext(
+                (new Socket\ClientTlsContext)
+                    ->withPeerName("amphp.org")
+                    ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
+            );
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
             $this->assertSame("test", yield $client->read());
@@ -105,7 +109,7 @@ class ServerTest extends TestCase
                 "www.amphp.org" => new Socket\Certificate(__DIR__ . "/tls/www.amphp.org.pem"),
             ]);
 
-            $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
+            $server = Socket\listen("127.0.0.1:0", (new Socket\ServerBindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\ServerSocket $socket */
@@ -119,12 +123,14 @@ class ServerTest extends TestCase
                 }
             });
 
-            $context = (new Socket\ClientTlsContext)
-                ->withPeerName("amphp.org")
-                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+            $context = (new Socket\ClientConnectContext)->withTlsContext(
+                (new Socket\ClientTlsContext)
+                    ->withPeerName("amphp.org")
+                    ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
+            );
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
             $context = (new Socket\ClientTlsContext)
@@ -132,7 +138,7 @@ class ServerTest extends TestCase
                 ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
             yield new Delayed(1);
@@ -153,7 +159,7 @@ class ServerTest extends TestCase
                 "www.amphp.org" => new Socket\Certificate(__DIR__ . "/tls/www.amphp.org.crt", __DIR__ . "/tls/www.amphp.org.key"),
             ]);
 
-            $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
+            $server = Socket\listen("127.0.0.1:0", (new Socket\ServerBindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\ServerSocket $socket */
@@ -167,20 +173,24 @@ class ServerTest extends TestCase
                 }
             });
 
-            $context = (new Socket\ClientTlsContext)
-                ->withPeerName("amphp.org")
-                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+            $context = (new Socket\ClientConnectContext)->withTlsContext(
+                (new Socket\ClientTlsContext)
+                    ->withPeerName("amphp.org")
+                    ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
+                );
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
-            $context = (new Socket\ClientTlsContext)
-                ->withPeerName("www.amphp.org")
-                ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt");
+            $context = (new Socket\ClientConnectContext)->withTlsContext(
+                (new Socket\ClientTlsContext)
+                    ->withPeerName("www.amphp.org")
+                    ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt")
+            );
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($server->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
             yield new Delayed(1);

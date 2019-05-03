@@ -18,7 +18,7 @@ class TlsFragmentationTest extends TestCase
 
             $tlsContext = (new Socket\ServerTlsContext)
                 ->withDefaultCertificate(new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem"));
-            $server = Socket\listen("127.0.0.1:0", null, $tlsContext);
+            $server = Socket\listen("127.0.0.1:0", (new Socket\ServerBindContext)->withTlsContext($tlsContext));
 
             // Proxy to apply chunking of single bytes
             asyncCall(function () use ($proxyServer, $server) {
@@ -50,7 +50,10 @@ class TlsFragmentationTest extends TestCase
                 ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
 
             /** @var Socket\ClientSocket $client */
-            $client = yield Socket\cryptoConnect($proxyServer->getAddress(), null, $context);
+            $client = yield Socket\cryptoConnect(
+                $proxyServer->getAddress(),
+                (new Socket\ClientConnectContext)->withTlsContext($context)
+            );
             yield $client->write("Hello World");
 
             $this->assertSame("test", yield from $this->read($client, 4));
