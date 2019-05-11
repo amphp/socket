@@ -17,10 +17,14 @@ interface SocketPool
      * finished with the stream (even if the socket has been closed). Failure to checkin sockets will result in memory
      * leaks and socket queue blockage. Instead of checking the socket in again, it can also be cleared.
      *
-     * @param string            $uri A string of the form tcp://example.com:80 or tcp://192.168.1.1:443.
+     * @param string            $uri A string of the form tcp://example.com:80 or tcp://192.168.1.1:443. An optional
+     *     fragment component can be used to differentiate different socket groups connected to the same URI, e.g.
+     *     while connecting to an IP but with different SNI hostnames or TLS configurations.
      * @param CancellationToken $token Optional cancellation token to cancel the checkout request.
      *
      * @return Promise<ClientSocket> Resolves to a ClientSocket instance once a connection is available.
+     *
+     * @throws SocketException
      */
     public function checkout(string $uri, CancellationToken $token = null): Promise;
 

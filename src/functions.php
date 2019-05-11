@@ -112,6 +112,8 @@ function connector(Connector $connector = null): Connector
  * @param CancellationToken|null $token
  *
  * @return Promise<ClientSocket>
+ *
+ * @throws SocketException
  */
 function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise
 {
@@ -128,6 +130,8 @@ function connect(string $uri, ClientConnectContext $context = null, Cancellation
  * @param CancellationToken    $token
  *
  * @return Promise<ClientSocket>
+ *
+ * @throws SocketException
  */
 function cryptoConnect(
     string $uri,
