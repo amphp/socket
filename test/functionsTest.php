@@ -11,7 +11,7 @@ class functionsTest extends TestCase
      * @expectedException \Error
      * @expectedExceptionMessage Only tcp and unix schemes allowed for server creation
      */
-    public function testListenInvalidScheme()
+    public function testListenInvalidScheme(): void
     {
         Socket\listen("invalid://127.0.0.1:0");
     }
@@ -20,7 +20,7 @@ class functionsTest extends TestCase
      * @expectedException \Error
      * @expectedExceptionMessage Only udp scheme allowed for datagram creation
      */
-    public function testEndpointInvalidScheme()
+    public function testEndpointInvalidScheme(): void
     {
         Socket\bindDatagramSocket("invalid://127.0.0.1:0");
     }
@@ -29,7 +29,7 @@ class functionsTest extends TestCase
      * @expectedException \Amp\Socket\SocketException
      * @expectedExceptionMessageRegExp /Could not create server .*: \[Error: #.*\] .*$/
      */
-    public function testListenStreamSocketServerError()
+    public function testListenStreamSocketServerError(): void
     {
         Socket\listen('error');
     }
@@ -38,12 +38,12 @@ class functionsTest extends TestCase
      * @expectedException \Amp\Socket\SocketException
      * @expectedExceptionMessageRegExp /Could not create datagram .*: \[Error: #.*\] .*$/
      */
-    public function testEndpointError()
+    public function testEndpointError(): void
     {
         Socket\bindDatagramSocket('error');
     }
 
-    public function testListenIPv6()
+    public function testListenIPv6(): void
     {
         try {
             $socket = Socket\listen('[::1]:0');

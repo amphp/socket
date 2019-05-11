@@ -188,8 +188,7 @@ final class BasicSocketPool implements SocketPool
 
             $socketId = (int) $rawSocket->getResource();
 
-            $socket = new class
-            {
+            $socket = new class {
                 use Struct;
 
                 public $id;

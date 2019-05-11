@@ -15,14 +15,14 @@ class IntegrationTest extends TestCase
     /**
      * @dataProvider provideConnectArgs
      */
-    public function testConnect($uri)
+    public function testConnect($uri): void
     {
         $promise = \Amp\Socket\connect($uri);
         $sock = \Amp\Promise\wait($promise);
         $this->assertInstanceOf(ClientSocket::class, $sock);
     }
 
-    public function provideConnectArgs()
+    public function provideConnectArgs(): array
     {
         return [
             ['www.google.com:80'],
@@ -30,17 +30,17 @@ class IntegrationTest extends TestCase
         ];
     }
 
-    public function testConnectFailure()
+    public function testConnectFailure(): void
     {
         $this->expectException(ConnectException::class);
         $promise = \Amp\Socket\connect('8.8.8.8:80', (new ClientConnectContext)->withConnectTimeout(1000));
-        $sock = \Amp\Promise\wait($promise);
+        \Amp\Promise\wait($promise);
     }
 
     /**
      * @depends testConnectFailure
      */
-    public function testConnectCancellation()
+    public function testConnectCancellation(): void
     {
         $this->expectException(CancelledException::class);
         $token = new TimeoutCancellationToken(1000);
@@ -51,14 +51,14 @@ class IntegrationTest extends TestCase
     /**
      * @dataProvider provideCryptoConnectArgs
      */
-    public function testCryptoConnect($uri)
+    public function testCryptoConnect($uri): void
     {
         $promise = \Amp\Socket\cryptoConnect($uri);
         $sock = \Amp\Promise\wait($promise);
         $this->assertInstanceOf(ClientSocket::class, $sock);
     }
 
-    public function provideCryptoConnectArgs()
+    public function provideCryptoConnectArgs(): array
     {
         return [
             ['stackoverflow.com:443'],
@@ -67,7 +67,7 @@ class IntegrationTest extends TestCase
         ];
     }
 
-    public function testNoRenegotiationForEqualOptions()
+    public function testNoRenegotiationForEqualOptions(): void
     {
         $promise = \Amp\socket\cryptoConnect('www.google.com:443');
         /** @var ClientSocket $sock */
@@ -77,7 +77,7 @@ class IntegrationTest extends TestCase
         $this->assertNull(\Amp\Promise\wait($promise));
     }
 
-    public function testRenegotiation()
+    public function testRenegotiation(): void
     {
         $this->markTestSkipped("Expected failure: proper renegotiation does not work yet");
 
