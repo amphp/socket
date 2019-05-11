@@ -49,7 +49,7 @@ class functionsTest extends TestCase
             $socket = Socket\listen('[::1]:0');
             $this->assertRegExp('(\[::1\]:\d+)', $socket->getAddress());
         } catch (Socket\SocketException $e) {
-            if ($e->getMessage() === 'Could not create server [::1]:0: [Error: #0] Cannot assign requested address') {
+            if ($e->getMessage() === 'Could not create server tcp://[::1]:0: [Error: #0] Cannot assign requested address') {
                 $this->markTestSkipped('Missing IPv6 support');
             }
 

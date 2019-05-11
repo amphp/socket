@@ -133,9 +133,11 @@ class ServerTest extends TestCase
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
-            $context = (new Socket\ClientTlsContext)
-                ->withPeerName("www.amphp.org")
-                ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt");
+            $context = (new Socket\ClientConnectContext)->withTlsContext(
+                (new Socket\ClientTlsContext)
+                    ->withPeerName("www.amphp.org")
+                    ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt")
+            );
 
             /** @var Socket\ClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
@@ -177,7 +179,7 @@ class ServerTest extends TestCase
                 (new Socket\ClientTlsContext)
                     ->withPeerName("amphp.org")
                     ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
-                );
+            );
 
             /** @var Socket\ClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
