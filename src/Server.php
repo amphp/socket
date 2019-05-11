@@ -55,7 +55,8 @@ class Server
             $deferred = $acceptor;
             $acceptor = null;
 
-            /** @noinspection NullPointerExceptionInspection */
+            \assert($deferred !== null);
+
             $deferred->resolve(new ServerSocket($client, $chunkSize));
 
             if (!$acceptor) {

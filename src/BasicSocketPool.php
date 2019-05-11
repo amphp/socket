@@ -14,7 +14,7 @@ use function Amp\call;
 
 final class BasicSocketPool implements SocketPool
 {
-    const ALLOWED_SCHEMES = [
+    private const ALLOWED_SCHEMES = [
         'tcp'  => null,
         'udp'  => null,
         'unix' => null,

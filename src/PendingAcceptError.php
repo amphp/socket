@@ -8,7 +8,7 @@ namespace Amp\Socket;
 final class PendingAcceptError extends \Error
 {
     public function __construct(
-        string $message = "The previous accept operation must complete before accept can be called again",
+        string $message = 'The previous accept operation must complete before accept can be called again',
         int $code = 0,
         \Throwable $previous = null
     ) {

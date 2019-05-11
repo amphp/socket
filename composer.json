@@ -58,7 +58,7 @@
     },
     "config": {
         "platform": {
-            "php": "7.0.13"
+            "php": "7.1.0"
         }
     },
     "scripts": {

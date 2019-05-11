@@ -10,7 +10,7 @@ use Amp\Success;
 
 class DatagramSocket
 {
-    const DEFAULT_CHUNK_SIZE = 8192;
+    public const DEFAULT_CHUNK_SIZE = 8192;
 
     /** @var resource UDP socket resource. */
     private $socket;
@@ -45,6 +45,8 @@ class DatagramSocket
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (&$reader, $chunkSize) {
             $deferred = $reader;
             $reader = null;
+
+            \assert($deferred !== null);
 
             $data = @\stream_socket_recvfrom($socket, $chunkSize, 0, $address);
 
@@ -107,7 +109,7 @@ class DatagramSocket
      */
     public function send(string $address, string $data): Promise
     {
-        \assert($this->isAddressValid($address), "Invalid packet address");
+        \assert($this->isAddressValid($address), 'Invalid packet address');
 
         if (!$this->socket) {
             return new Failure(new SocketException('The endpoint is not writable'));

@@ -70,10 +70,23 @@ final class ClientTlsContext
      *
      * @return self Cloned, modified instance.
      */
-    public function withPeerName(string $peerName = null): self
+    public function withPeerName(string $peerName): self
     {
         $clone = clone $this;
         $clone->peerName = $peerName;
+
+        return $clone;
+    }
+
+    /**
+     * Use no explicit name of the peer.
+     *
+     * @return self Cloned, modified instance.
+     */
+    public function withoutPeerName(): self
+    {
+        $clone = clone $this;
+        $clone->peerName = null;
 
         return $clone;
     }

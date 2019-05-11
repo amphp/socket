@@ -8,7 +8,7 @@ namespace Amp\Socket;
 final class PendingReceiveError extends \Error
 {
     public function __construct(
-        string $message = "The previous receive operation must complete before receive can be called again",
+        string $message = 'The previous receive operation must complete before receive can be called again',
         int $code = 0,
         \Throwable $previous = null
     ) {
