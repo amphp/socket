@@ -11,8 +11,16 @@ use function Amp\asyncCall;
 
 class TlsFragmentationTest extends TestCase
 {
-    public function testTls()
+    public function testTls(): void
     {
+        if (\PHP_VERSION_ID < 70215) {
+            $this->markTestSkipped('Your PHP version is affected by PHP bug 77390');
+        }
+
+        if (\PHP_VERSION_ID >= 70300 && \PHP_VERSION_ID < 70303) {
+            $this->markTestSkipped('Your PHP version is affected by PHP bug 77390');
+        }
+
         Loop::run(function () {
             $proxyServer = Socket\listen("127.0.0.1:0");
 
