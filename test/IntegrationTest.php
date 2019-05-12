@@ -33,7 +33,7 @@ class IntegrationTest extends TestCase
     public function testConnectFailure(): void
     {
         $this->expectException(ConnectException::class);
-        $promise = \Amp\Socket\connect('8.8.8.8:80', (new ClientConnectContext)->withConnectTimeout(1000));
+        $promise = \Amp\Socket\connect('8.8.8.8:1', (new ClientConnectContext)->withConnectTimeout(1000));
         \Amp\Promise\wait($promise);
     }
 
@@ -44,7 +44,7 @@ class IntegrationTest extends TestCase
     {
         $this->expectException(CancelledException::class);
         $token = new TimeoutCancellationToken(1000);
-        $promise = \Amp\Socket\connect('8.8.8.8:80', (new ClientConnectContext)->withConnectTimeout(2000), $token);
+        $promise = \Amp\Socket\connect('8.8.8.8:1', (new ClientConnectContext)->withConnectTimeout(2000), $token);
         $sock = \Amp\Promise\wait($promise);
     }
 
