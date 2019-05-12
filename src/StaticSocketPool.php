@@ -23,13 +23,13 @@ final class StaticSocketPool implements SocketPool
     }
 
     /** @inheritdoc */
-    public function checkin(ClientSocket $socket): void
+    public function checkin(EncryptableSocket $socket): void
     {
         $this->socketPool->checkin($socket);
     }
 
     /** @inheritdoc */
-    public function clear(ClientSocket $socket): void
+    public function clear(EncryptableSocket $socket): void
     {
         $this->socketPool->clear($socket);
     }

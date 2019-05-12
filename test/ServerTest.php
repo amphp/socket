@@ -5,12 +5,13 @@ namespace Amp\Socket\Test;
 use Amp\Delayed;
 use Amp\Loop;
 use Amp\Socket;
+use Amp\Socket\EncryptableSocket;
 use PHPUnit\Framework\TestCase;
 use function Amp\asyncCall;
 
 class ServerTest extends TestCase
 {
-    public function testAccept()
+    public function testAccept(): void
     {
         Loop::run(function () {
             $server = Socket\listen("127.0.0.1:0");
@@ -27,7 +28,7 @@ class ServerTest extends TestCase
         });
     }
 
-    public function testTls()
+    public function testTls(): void
     {
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
@@ -52,7 +53,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
             );
 
-            /** @var Socket\ClientSocket $client */
+            /** @var Socket\EncryptableSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
@@ -64,7 +65,7 @@ class ServerTest extends TestCase
         });
     }
 
-    public function testSniWorksWithCorrectHostName()
+    public function testSniWorksWithCorrectHostName(): void
     {
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
@@ -89,7 +90,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
             );
 
-            /** @var Socket\ClientSocket $client */
+            /** @var Socket\EncryptableSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
@@ -101,7 +102,7 @@ class ServerTest extends TestCase
         });
     }
 
-    public function testSniWorksWithMultipleCertificates()
+    public function testSniWorksWithMultipleCertificates(): void
     {
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)->withCertificates([
@@ -129,7 +130,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
             );
 
-            /** @var Socket\ClientSocket $client */
+            /** @var Socket\EncryptableSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
@@ -139,7 +140,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt")
             );
 
-            /** @var Socket\ClientSocket $client */
+            /** @var Socket\EncryptableSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
@@ -149,7 +150,7 @@ class ServerTest extends TestCase
         });
     }
 
-    public function testSniWorksWithMultipleCertificatesAndDifferentFilesForCertAndKey()
+    public function testSniWorksWithMultipleCertificatesAndDifferentFilesForCertAndKey(): void
     {
         if (\PHP_VERSION_ID < 70200) {
             $this->markTestSkipped("This test requires PHP 7.2 or higher.");
@@ -181,7 +182,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
             );
 
-            /** @var Socket\ClientSocket $client */
+            /** @var Socket\EncryptableSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
@@ -191,7 +192,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt")
             );
 
-            /** @var Socket\ClientSocket $client */
+            /** @var Socket\EncryptableSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 

@@ -111,7 +111,7 @@ function connector(Connector $connector = null): Connector
  * @param ClientConnectContext   $context Socket connect context to use when connecting.
  * @param CancellationToken|null $token
  *
- * @return Promise<ClientSocket>
+ * @return Promise<EncryptableSocket>
  *
  * @throws SocketException
  */
@@ -129,7 +129,7 @@ function connect(string $uri, ClientConnectContext $context = null, Cancellation
  * @param ClientConnectContext $context
  * @param CancellationToken    $token
  *
- * @return Promise<ClientSocket>
+ * @return Promise<EncryptableSocket>
  *
  * @throws SocketException
  */
@@ -146,7 +146,7 @@ function cryptoConnect(
             $tlsContext = $tlsContext->withPeerName(\parse_url($uri, PHP_URL_HOST));
         }
 
-        /** @var ClientSocket $socket */
+        /** @var EncryptableSocket $socket */
         $socket = yield connect($uri, $context->withoutTlsContext(), $token);
 
         $promise = $socket->enableCrypto($tlsContext);

@@ -8,6 +8,7 @@ use Amp\Loop;
 use Amp\PHPUnit\TestCase;
 use Amp\Socket;
 use function Amp\asyncCall;
+use Amp\Socket\EncryptableSocket;
 
 class TlsFragmentationTest extends TestCase
 {
@@ -57,7 +58,7 @@ class TlsFragmentationTest extends TestCase
                 ->withPeerName("amphp.org")
                 ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
 
-            /** @var Socket\ClientSocket $client */
+            /** @var Socket\EncryptableSocket $client */
             $client = yield Socket\cryptoConnect(
                 $proxyServer->getAddress(),
                 (new Socket\ClientConnectContext)->withTlsContext($context)

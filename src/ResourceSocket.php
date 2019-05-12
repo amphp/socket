@@ -8,7 +8,7 @@ use Amp\ByteStream\ResourceOutputStream;
 use Amp\Failure;
 use Amp\Promise;
 
-abstract class ResourceSocket implements Socket
+abstract class ResourceSocket implements EncryptableSocket
 {
     public const DEFAULT_CHUNK_SIZE = ResourceInputStream::DEFAULT_CHUNK_SIZE;
 

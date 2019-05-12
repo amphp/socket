@@ -78,13 +78,13 @@ final class BasicSocketPool implements SocketPool
     }
 
     /** @inheritdoc */
-    public function clear(ClientSocket $socket): void
+    public function clear(EncryptableSocket $socket): void
     {
         $this->clearFromId((int) $socket->getResource());
     }
 
     /** @inheritdoc */
-    public function checkin(ClientSocket $socket): void
+    public function checkin(EncryptableSocket $socket): void
     {
         $socketId = (int) $socket->getResource();
 
@@ -178,7 +178,7 @@ final class BasicSocketPool implements SocketPool
             $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
             try {
-                /** @var ClientSocket $rawSocket */
+                /** @var EncryptableSocket $rawSocket */
                 $rawSocket = yield connect($uri, $this->connectContext, $token);
             } finally {
                 if (--$this->pendingCount[$uri] === 0) {
