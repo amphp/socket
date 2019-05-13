@@ -18,10 +18,6 @@ class DnsConnector implements Connector
         $context = $context ?? new ClientConnectContext;
 
         return call(static function () use ($uri, $context, $token) {
-            if ($context->getTlsContext() !== null) {
-                throw new \Error('TLS context can\'t be provided to Connector::connect()');
-            }
-
             $context = $context ?? new ClientConnectContext;
             $token = $token ?? new NullCancellationToken;
             $attempt = 0;
@@ -123,7 +119,7 @@ class DnsConnector implements Connector
                     continue; // Could not connect to host, try next host in the list.
                 }
 
-                return new ClientSocket($socket);
+                return new ClientSocket($socket, ClientSocket::DEFAULT_CHUNK_SIZE, $context->getTlsContext());
             }
 
             // This is reached if either all URIs failed or the maximum number of attempts is reached.

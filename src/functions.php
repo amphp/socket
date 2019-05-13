@@ -143,13 +143,13 @@ function cryptoConnect(
         $tlsContext = $context->getTlsContext() ?? new ClientTlsContext;
 
         if ($tlsContext->getPeerName() === null) {
-            $tlsContext = $tlsContext->withPeerName(\parse_url($uri, PHP_URL_HOST));
+            $context = $context->withTlsContext($tlsContext->withPeerName(\parse_url($uri, PHP_URL_HOST)));
         }
 
         /** @var EncryptableSocket $socket */
-        $socket = yield connect($uri, $context->withoutTlsContext(), $token);
+        $socket = yield connect($uri, $context, $token);
 
-        $promise = $socket->enableCrypto($tlsContext);
+        $promise = $socket->enableCrypto();
 
         if ($token) {
             $deferred = new Deferred;
