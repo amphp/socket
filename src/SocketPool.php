@@ -22,7 +22,7 @@ interface SocketPool
      *     while connecting to an IP but with different SNI hostnames or TLS configurations.
      * @param CancellationToken $token Optional cancellation token to cancel the checkout request.
      *
-     * @return Promise<EncryptableSocket> Resolves to a EncryptableSocket instance once a connection is available.
+     * @return Promise<EncryptableClientSocket> Resolves to a EncryptableSocket instance once a connection is available.
      *
      * @throws SocketException
      */
@@ -31,18 +31,18 @@ interface SocketPool
     /**
      * Return a previously checked-out socket to the pool so it can be reused.
      *
-     * @param EncryptableSocket $socket Socket instance.
+     * @param EncryptableClientSocket $socket Socket instance.
      *
      * @throws \Error If the provided resource is unknown to the pool.
      */
-    public function checkin(EncryptableSocket $socket): void;
+    public function checkin(EncryptableClientSocket $socket): void;
 
     /**
      * Remove the specified socket from the pool.
      *
-     * @param EncryptableSocket $socket Socket instance.
+     * @param EncryptableClientSocket $socket Socket instance.
      *
      * @throws \Error If the provided resource is unknown to the pool.
      */
-    public function clear(EncryptableSocket $socket): void;
+    public function clear(EncryptableClientSocket $socket): void;
 }

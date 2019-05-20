@@ -35,12 +35,4 @@ interface Socket extends InputStream, OutputStream
      * @return string|null
      */
     public function getRemoteAddress(): ?string;
-
-    /**
-     * Returns the raw stream socket resource or null if the socket is closed or the is no resource to return
-     * for the implementation.
-     *
-     * @return resource|null
-     */
-    public function getResource();
 }

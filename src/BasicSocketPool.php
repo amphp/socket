@@ -22,7 +22,7 @@ final class BasicSocketPool implements SocketPool
     ];
 
     private $sockets = [];
-    private $socketIdCacheKeyMap = [];
+    private $objectIdCacheKeyMap = [];
     private $pendingCount = [];
 
     private $idleTimeout;
@@ -71,30 +71,30 @@ final class BasicSocketPool implements SocketPool
                 Loop::disable($socket->idleWatcher);
             }
 
-            return new Success(new ClientSocket($socket->resource));
+            return new Success(new ResourceClientSocket($socket->resource));
         }
 
         return $this->checkoutNewSocket($uri, $cacheKey, $token);
     }
 
     /** @inheritdoc */
-    public function clear(EncryptableSocket $socket): void
+    public function clear(EncryptableClientSocket $socket): void
     {
         $this->clearFromId((int) $socket->getResource());
     }
 
     /** @inheritdoc */
-    public function checkin(EncryptableSocket $socket): void
+    public function checkin(EncryptableClientSocket $socket): void
     {
         $socketId = (int) $socket->getResource();
 
-        if (!isset($this->socketIdCacheKeyMap[$socketId])) {
+        if (!isset($this->objectIdCacheKeyMap[$socketId])) {
             throw new \Error(
                 \sprintf('Unknown socket: %d', $socketId)
             );
         }
 
-        $cacheKey = $this->socketIdCacheKeyMap[$socketId];
+        $cacheKey = $this->objectIdCacheKeyMap[$socketId];
 
         $resource = $socket->getResource();
 
@@ -178,59 +178,57 @@ final class BasicSocketPool implements SocketPool
             $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
             try {
-                /** @var EncryptableSocket $rawSocket */
-                $rawSocket = yield connect($uri, $this->connectContext, $token);
+                /** @var EncryptableClientSocket $socket */
+                $socket = yield connect($uri, $this->connectContext, $token);
             } finally {
                 if (--$this->pendingCount[$uri] === 0) {
                     unset($this->pendingCount[$uri]);
                 }
             }
 
-            $socketId = (int) $rawSocket->getResource();
+            $objectId = \spl_object_hash($socket);
 
-            $socket = new class {
+            $socketEntry = new class {
                 use Struct;
 
                 public $id;
                 public $uri;
-                public $resource;
                 public $isAvailable;
                 public $idleWatcher;
             };
 
-            $socket->id = $socketId;
-            $socket->uri = $uri;
-            $socket->resource = $rawSocket->getResource();
-            $socket->isAvailable = false;
+            $socketEntry->id = $objectId;
+            $socketEntry->uri = $uri;
+            $socketEntry->isAvailable = false;
 
-            $this->sockets[$cacheKey][$socketId] = $socket;
-            $this->socketIdCacheKeyMap[$socketId] = $cacheKey;
+            $this->sockets[$cacheKey][$objectId] = $socketEntry;
+            $this->objectIdCacheKeyMap[$objectId] = $cacheKey;
 
-            return $rawSocket;
+            return $socket;
         });
     }
 
     /**
-     * @param int $socketId
+     * @param int $objectId
      */
-    private function clearFromId(int $socketId): void
+    private function clearFromId(int $objectId): void
     {
-        if (!isset($this->socketIdCacheKeyMap[$socketId])) {
+        if (!isset($this->objectIdCacheKeyMap[$objectId])) {
             throw new \Error(
-                \sprintf('Unknown socket: %d', $socketId)
+                \sprintf('Unknown socket: %d', $objectId)
             );
         }
 
-        $cacheKey = $this->socketIdCacheKeyMap[$socketId];
-        $socket = $this->sockets[$cacheKey][$socketId];
+        $cacheKey = $this->objectIdCacheKeyMap[$objectId];
+        $socket = $this->sockets[$cacheKey][$objectId];
 
         if ($socket->idleWatcher) {
             Loop::cancel($socket->idleWatcher);
         }
 
         unset(
-            $this->sockets[$cacheKey][$socketId],
-            $this->socketIdCacheKeyMap[$socketId]
+            $this->sockets[$cacheKey][$objectId],
+            $this->objectIdCacheKeyMap[$objectId]
         );
 
         if (empty($this->sockets[$cacheKey])) {

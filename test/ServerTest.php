@@ -5,7 +5,7 @@ namespace Amp\Socket\Test;
 use Amp\Delayed;
 use Amp\Loop;
 use Amp\Socket;
-use Amp\Socket\EncryptableSocket;
+use Amp\Socket\EncryptableClientSocket;
 use PHPUnit\Framework\TestCase;
 use function Amp\asyncCall;
 
@@ -39,7 +39,7 @@ class ServerTest extends TestCase
                 /** @var Socket\ServerSocket $socket */
                 while ($socket = yield $server->accept()) {
                     asyncCall(function () use ($socket) {
-                        yield $socket->enableCrypto();
+                        yield $socket->setupTls();
                         $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
                         $this->assertSame("Hello World", yield $socket->read());
                         $socket->write("test");
@@ -53,7 +53,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
             );
 
-            /** @var Socket\EncryptableSocket $client */
+            /** @var Socket\EncryptableClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
@@ -76,7 +76,7 @@ class ServerTest extends TestCase
                 /** @var Socket\ServerSocket $socket */
                 while ($socket = yield $server->accept()) {
                     asyncCall(function () use ($socket) {
-                        yield $socket->enableCrypto();
+                        yield $socket->setupTls();
                         $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
                         $this->assertSame("Hello World", yield $socket->read());
                         $socket->write("test");
@@ -90,7 +90,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
             );
 
-            /** @var Socket\EncryptableSocket $client */
+            /** @var Socket\EncryptableClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
@@ -116,7 +116,7 @@ class ServerTest extends TestCase
                 /** @var Socket\ServerSocket $socket */
                 while ($socket = yield $server->accept()) {
                     asyncCall(function () use ($socket) {
-                        yield $socket->enableCrypto();
+                        yield $socket->setupTls();
                         $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
                         $this->assertSame("Hello World", yield $socket->read());
                         $socket->write("test");
@@ -130,7 +130,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
             );
 
-            /** @var Socket\EncryptableSocket $client */
+            /** @var Socket\EncryptableClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
@@ -140,7 +140,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt")
             );
 
-            /** @var Socket\EncryptableSocket $client */
+            /** @var Socket\EncryptableClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
@@ -168,7 +168,7 @@ class ServerTest extends TestCase
                 /** @var Socket\ServerSocket $socket */
                 while ($socket = yield $server->accept()) {
                     asyncCall(function () use ($socket) {
-                        yield $socket->enableCrypto();
+                        yield $socket->setupTls();
                         $this->assertInstanceOf(Socket\ServerSocket::class, $socket);
                         $this->assertSame("Hello World", yield $socket->read());
                         $socket->write("test");
@@ -182,7 +182,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/amphp.org.crt")
             );
 
-            /** @var Socket\EncryptableSocket $client */
+            /** @var Socket\EncryptableClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
@@ -192,7 +192,7 @@ class ServerTest extends TestCase
                     ->withCaFile(__DIR__ . "/tls/www.amphp.org.crt")
             );
 
-            /** @var Socket\EncryptableSocket $client */
+            /** @var Socket\EncryptableClientSocket $client */
             $client = yield Socket\cryptoConnect($server->getAddress(), $context);
             yield $client->write("Hello World");
 
