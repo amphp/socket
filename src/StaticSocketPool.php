@@ -10,26 +10,26 @@ final class StaticSocketPool implements SocketPool
     private $uri;
     private $socketPool;
 
-    public function __construct(string $uri, SocketPool $socketPool = null)
+    public function __construct(string $uri, SocketPool $socketPool)
     {
         $this->uri = $uri;
-        $this->socketPool = $socketPool ?? new BasicSocketPool;
+        $this->socketPool = $socketPool;
     }
 
-    /** @inheritdoc */
+    /** @inheritDoc */
     public function checkout(string $uri, CancellationToken $token = null): Promise
     {
         return $this->socketPool->checkout($this->uri, $token);
     }
 
-    /** @inheritdoc */
-    public function checkin(EncryptableSocket $socket): void
+    /** @inheritDoc */
+    public function checkin(EncryptableClientSocket $socket): void
     {
         $this->socketPool->checkin($socket);
     }
 
-    /** @inheritdoc */
-    public function clear(EncryptableSocket $socket): void
+    /** @inheritDoc */
+    public function clear(EncryptableClientSocket $socket): void
     {
         $this->socketPool->clear($socket);
     }

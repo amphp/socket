@@ -58,9 +58,9 @@ class SocketTest extends TestCase
         /** @var Socket\ServerSocket $client */
         $client = wait($server->accept());
 
-        $this->expectException(Socket\CryptoException::class);
+        $this->expectException(Socket\TlsException::class);
         $this->expectExceptionMessage("Can't enable TLS without configuration.");
 
-        wait($client->enableCrypto());
+        wait($client->setupTls());
     }
 }

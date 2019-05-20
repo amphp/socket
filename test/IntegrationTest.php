@@ -7,7 +7,7 @@ use Amp\Socket\ClientConnectContext;
 use Amp\Socket\ClientSocket;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectException;
-use Amp\Socket\EncryptableSocket;
+use Amp\Socket\EncryptableClientSocket;
 use Amp\TimeoutCancellationToken;
 use PHPUnit\Framework\TestCase;
 
@@ -20,7 +20,7 @@ class IntegrationTest extends TestCase
     {
         $promise = \Amp\Socket\connect($uri);
         $sock = \Amp\Promise\wait($promise);
-        $this->assertInstanceOf(EncryptableSocket::class, $sock);
+        $this->assertInstanceOf(EncryptableClientSocket::class, $sock);
     }
 
     public function provideConnectArgs(): array
@@ -56,7 +56,7 @@ class IntegrationTest extends TestCase
     {
         $promise = \Amp\Socket\cryptoConnect($uri);
         $sock = \Amp\Promise\wait($promise);
-        $this->assertInstanceOf(EncryptableSocket::class, $sock);
+        $this->assertInstanceOf(EncryptableClientSocket::class, $sock);
     }
 
     public function provideCryptoConnectArgs(): array
@@ -71,7 +71,7 @@ class IntegrationTest extends TestCase
     public function testNoRenegotiationForEqualOptions(): void
     {
         $promise = \Amp\socket\cryptoConnect('www.google.com:443');
-        /** @var EncryptableSocket $sock */
+        /** @var EncryptableClientSocket $sock */
         $socket = \Amp\Promise\wait($promise);
         // For this case renegotiation not needed because options is equals
         $promise = $socket->enableCrypto((new ClientTlsContext)->withPeerName("www.google.com"));
@@ -89,6 +89,6 @@ class IntegrationTest extends TestCase
         $promise = $sock->enableCrypto((new ClientTlsContext)->withoutPeerVerification());
         \Amp\Promise\wait($promise);
 
-        $this->assertInstanceOf(EncryptableSocket::class, $sock);
+        $this->assertInstanceOf(EncryptableClientSocket::class, $sock);
     }
 }

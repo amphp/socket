@@ -6,7 +6,7 @@ use Amp\Deferred;
 use Amp\Failure;
 use Amp\Loop;
 use Amp\Promise;
-use Amp\Socket\CryptoException;
+use Amp\Socket\TlsException;
 use Amp\Success;
 use League\Uri;
 use function Amp\call;
@@ -24,14 +24,14 @@ use function Amp\call;
  */
 function parseUri(string $uri): array
 {
-    if (\stripos($uri, "unix://") === 0 || \stripos($uri, "udg://") === 0) {
-        list($scheme, $path) = \explode("://", $uri, 2);
-        return [$scheme, \ltrim($path, "/"), 0];
+    if (\stripos($uri, 'unix://') === 0 || \stripos($uri, 'udg://') === 0) {
+        [$scheme, $path] = \explode('://', $uri, 2);
+        return [$scheme, \ltrim($path, '/'), 0];
     }
 
-    if (\strpos($uri, "://") === false) {
+    if (\strpos($uri, '://') === false) {
         // Set a default scheme of tcp if none was given.
-        $uri = "tcp://" . $uri;
+        $uri = 'tcp://' . $uri;
     }
 
     try {
@@ -40,24 +40,24 @@ function parseUri(string $uri): array
         throw new \Error("Invalid URI: {$uri}", 0, $exception);
     }
 
-    $scheme = $uriParts["scheme"];
-    $host = $uriParts["host"] ?? "";
-    $port = $uriParts["port"] ?? 0;
+    $scheme = $uriParts['scheme'];
+    $host = $uriParts['host'] ?? '';
+    $port = $uriParts['port'] ?? 0;
 
-    if (!($scheme === "tcp" || $scheme === "udp")) {
+    if (!\in_array($scheme, ['tcp', 'udp', 'unix', 'udg'], true)) {
         throw new \Error(
             "Invalid URI scheme ({$scheme}); tcp, udp, unix or udg scheme expected"
         );
     }
 
-    if ($host === "" || $port === 0) {
+    if ($host === '' || $port === 0) {
         throw new \Error(
             "Invalid URI: {$uri}; host and port components required"
         );
     }
 
-    if (\strpos($host, ":") !== false) { // IPv6 address
-        $host = \sprintf("[%s]", \trim($host, "[]"));
+    if (\strpos($host, ':') !== false) { // IPv6 address
+        $host = \sprintf('[%s]', \trim($host, '[]'));
     }
 
     return [$scheme, $host, $port];
@@ -76,29 +76,17 @@ function parseUri(string $uri): array
  *
  * @internal
  */
-function enableCrypto($socket, array $options = [], bool $force = false): Promise
+function setupTls($socket, array $options = [], bool $force = false): Promise
 {
     $ctx = \stream_context_get_options($socket);
 
-    if (!$force && !empty($ctx['ssl']) && !empty($ctx["ssl"]["_enabled"])) {
-        $cmp = \array_merge($ctx["ssl"], $options["ssl"] ?? []);
-        $ctx = $ctx['ssl'];
-
-        // Use weak comparison so the order of the items doesn't matter
-        if ($ctx == $cmp) {
-            return new Success;
-        }
-
-        return call(function () use ($socket, $options) {
-            yield disableCrypto($socket);
-            return enableCrypto($socket, $options);
-        });
+    if (!$force && isset($ctx['ssl']['_enabled'])) {
+        return new Failure(new TlsException("Can't setup TLS, because it has already been set up"));
     }
 
-    $options["ssl"]["_enabled"] = true; // avoid recursion
+    $options['ssl']['_enabled'] = true; // avoid recursion
 
     \error_clear_last();
-
     \stream_context_set_option($socket, $options);
     $result = @\stream_socket_enable_crypto($socket, $enable = true);
 
@@ -108,24 +96,24 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
     }
 
     if ($result === false) {
-        return new Failure(new CryptoException(
-            "Crypto negotiation failed: " . (\error_get_last()["message"] ?? "Unknown error")
+        return new Failure(new TlsException(
+            'TLS negotiation failed: ' . (\error_get_last()['message'] ?? 'Unknown error')
         ));
     }
 
-    return call(function () use ($socket) {
+    return call(static function () use ($socket) {
         $deferred = new Deferred;
 
-        $watcher = Loop::onReadable($socket, function (string $watcher, $socket, Deferred $deferred) {
+        $watcher = Loop::onReadable($socket, static function (string $watcher, $socket, Deferred $deferred) {
             $result = @\stream_socket_enable_crypto($socket, $enable = true);
 
             // If $result is 0, just wait for the next invocation
             if ($result === true) {
                 $deferred->resolve();
             } elseif ($result === false) {
-                $deferred->fail(new CryptoException("Crypto negotiation failed: " . (\feof($socket)
-                        ? "Connection reset by peer"
-                        : \error_get_last()["message"])));
+                $deferred->fail(new TlsException('TLS negotiation failed: ' . (\feof($socket)
+                        ? 'Connection reset by peer'
+                        : \error_get_last()['message'])));
             }
         }, $deferred);
 
@@ -148,10 +136,10 @@ function enableCrypto($socket, array $options = [], bool $force = false): Promis
  *
  * @internal
  */
-function disableCrypto($socket): Promise
+function shutdownTls($socket): Promise
 {
     // note that disabling crypto *ALWAYS* returns false, immediately
-    \stream_context_set_option($socket, ["ssl" => ["_enabled" => false]]);
+    // don't set _enabled to false, TLS can be setup only once
     @\stream_socket_enable_crypto($socket, false);
 
     return new Success;
@@ -169,9 +157,10 @@ function disableCrypto($socket): Promise
 function normalizeBindToOption(string $bindTo = null)
 {
     if ($bindTo === null) {
-        // all fine
         return null;
-    } elseif (\preg_match("/\\[(?P<ip>[0-9a-f:]+)\\](:(?P<port>\\d+))?$/", $bindTo ?? "", $match)) {
+    }
+
+    if (\preg_match("/\\[(?P<ip>[0-9a-f:]+)\\](:(?P<port>\\d+))?$/", $bindTo ?? '', $match)) {
         $ip = $match['ip'];
         $port = $match['port'] ?? 0;
 
@@ -186,7 +175,7 @@ function normalizeBindToOption(string $bindTo = null)
         return "[{$ip}]:{$port}";
     }
 
-    if (\preg_match("/(?P<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)(:(?P<port>\\d+))?$/", $bindTo ?? "", $match)) {
+    if (\preg_match("/(?P<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)(:(?P<port>\\d+))?$/", $bindTo ?? '', $match)) {
         $ip = $match['ip'];
         $port = $match['port'] ?? 0;
 
