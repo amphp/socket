@@ -9,13 +9,15 @@ permalink: /
 ```php
 $uri = new Uri($argv[1]);
 $host = $uri->getHost();
+$port = $uri->getPort()
+
+$connectContext = (new ClientConnectContext)
+    ->withTlsContext(new ClientTlsContext($host));
+
+$socket = yield connect("tcp://" . $host . ":" . $port, $connectContext);
 
 if ($uri->getScheme() === "https") {
-    /** @var Socket $socket */
-    $socket = yield cryptoConnect("tcp://" . $host . ":" . $uri->getPort());
-} else {
-    /** @var Socket $socket */
-    $socket = yield connect("tcp://" . $host . ":" . $uri->getPort());
+    $socket->setupTls();
 }
 
 yield $socket->write("GET {$uri} HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n");
@@ -29,22 +31,22 @@ while (null !== $chunk = yield $socket->read()) {
 
 ```php
 Loop::run(function () {
-    $clientHandler = function (ServerSocket $socket) {
-        list($ip, $port) = explode(":", $socket->getRemoteAddress());
-        
+    $clientHandler = function (ResourceSocket $socket) {
+        [$ip, $port] = explode(":", $socket->getRemoteAddress());
+
         echo "Accepted connection from {$ip}:{$port}." . PHP_EOL;
-        
+
         $body = "Hey, your IP is {$ip} and your local port used is {$port}.";
         $bodyLength = \strlen($body);
-        
+
         yield $socket->end("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}");
     };
-    
+
     $server = Amp\Socket\listen("127.0.0.1:0");
-    
+
     echo "Listening for new connections on " . $server->getAddress() . " ..." . PHP_EOL;
     echo "Open your browser and visit http://" . $server->getAddress() . "/" . PHP_EOL;
-    
+
     while ($socket = yield $server->accept()) {
         Amp\asyncCall($clientHandler, $socket);
     }

@@ -51,7 +51,7 @@ It's best to handle clients in their own coroutine, while letting the server acc
 ```php
 Loop::run(function () {
     $clientHandler = function (ServerSocket $socket) {
-        list($ip, $port) = explode(":", $socket->getRemoteAddress());
+        [$ip, $port] = explode(":", $socket->getRemoteAddress());
 
         echo "Accepted connection from {$ip}:{$port}." . PHP_EOL;
 
@@ -82,11 +82,11 @@ Sometimes you don't know the address the server is listening on, e.g. because yo
 
 ## Sending Data
 
-`ServerSocket` implements `OutputStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#outputstream) applies.
+`ResourceSocket` implements `OutputStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#outputstream) applies.
 
 ## Receiving Data
 
-`ServerSocket` implements `InputStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#inputstream) applies.
+`ResourceSocket` implements `InputStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#inputstream) applies.
 
 ## Server Shutdown
 
@@ -94,6 +94,6 @@ Once you're done with the server socket, you should close the socket. That means
 
 ## TLS
 
-As already mentioned in the documentation for `Amp\Socket\listen()`, you need to enable TLS manually after accepting connections. For a TLS server socket, you listen on the `tcp://` protocol on a specified address. After accepting clients you call `$socket->enableCrypto()` where `$socket` is the socket returned from `Server::accept()`.
+As already mentioned in the documentation for `Amp\Socket\listen()`, you need to enable TLS manually after accepting connections. For a TLS server socket, you listen on the `tcp://` protocol on a specified address. After accepting clients you call `$socket->setupTls()` where `$socket` is the socket returned from `Server::accept()`.
 
-Any data transmitted before `Socket::enableCrypto()` resolves successfully will be transmitted in clear text. Don't attempt to read from the socket or write to it manually. Doing so will read the raw TLS handshake data that's supposed to be read by OpenSSL.
+Any data transmitted before `Socket::setupTls()` resolves successfully will be transmitted in clear text. Don't attempt to read from the socket or write to it manually. Doing so will read the raw TLS handshake data that's supposed to be read by OpenSSL.
