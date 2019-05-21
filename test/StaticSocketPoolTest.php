@@ -15,7 +15,7 @@ class StaticSocketPoolTest extends TestCase
         $staticSocketPool = new StaticSocketPool('override-uri', $underlyingSocketPool->reveal());
 
         $expected = new \Amp\LazyPromise(function () {});
-        $underlyingSocketPool->checkout('override-uri', null)->shouldBeCalled()->willReturn($expected);
+        $underlyingSocketPool->checkout('override-uri', null, null)->shouldBeCalled()->willReturn($expected);
 
         $returned = $staticSocketPool->checkout('test-url');
 
