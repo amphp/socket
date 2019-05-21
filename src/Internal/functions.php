@@ -80,13 +80,9 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
 {
     $cancellationToken = $cancellationToken ?? new NullCancellationToken;
 
-    $ctx = \stream_context_get_options($socket);
-
-    if (isset($ctx['ssl']['_enabled'])) {
+    if (isset(\stream_get_meta_data($socket)['crypto'])) {
         return new Failure(new TlsException("Can't setup TLS, because it has already been set up"));
     }
-
-    $options['ssl']['_enabled'] = true; // avoid recursion
 
     \error_clear_last();
     \stream_context_set_option($socket, $options);
