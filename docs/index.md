@@ -16,8 +16,8 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Amp\ByteStream\ResourceOutputStream;
 use Amp\Loop;
-use Amp\Socket\ConnectContext;
 use Amp\Socket\ClientTlsContext;
+use Amp\Socket\ConnectContext;
 use Amp\Socket\EncryptableSocket;
 use League\Uri;
 use function Amp\Socket\connect;
@@ -71,7 +71,6 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Amp\Loop;
 use Amp\Socket\ResourceSocket;
-use Amp\Socket\ServerSocket;
 use function Amp\asyncCoroutine;
 
 Loop::run(static function () {
