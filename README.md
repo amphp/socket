@@ -70,7 +70,7 @@ Loop::run(static function () use ($argv) {
     }
 
     // If the promise returned from `read()` resolves to `null`, the socket closed and we're done.
-    // In this case you can also use `yield Amp\ByteStream\pipe($socket, $stdout)` instead of the while loop,
+    // In this case you can also use `yield Amp\ByteStream\pipe($socket, $stdout)` instead,
     // but we want to demonstrate the `read()` method here.
 });
 ```
@@ -85,7 +85,8 @@ require __DIR__ . '/../vendor/autoload.php';
 // This is a very simple HTTP server that just prints a message to each client that connects.
 // It doesn't check whether the client sent an HTTP request.
 
-// You might notice that your browser opens several connections instead of just one, even when only making one request.
+// You might notice that your browser opens several connections instead of just one,
+// even when only making one request.
 
 use Amp\Loop;
 use Amp\Socket\ResourceSocket;
@@ -100,7 +101,8 @@ Loop::run(static function () {
         $body = "Hey, your IP is {$ip} and your local port used is {$port}.";
         $bodyLength = \strlen($body);
 
-        yield $socket->end("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}");
+        $req = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}";
+        yield $socket->end($req);
     });
 
     $server = Amp\Socket\listen('127.0.0.1:0');
