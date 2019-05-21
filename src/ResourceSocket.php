@@ -43,6 +43,9 @@ final class ResourceSocket implements EncryptableSocket
     /** @var ClientTlsContext|null */
     private $tlsContext;
 
+    /** @var int */
+    private $tlsState;
+
     /** @var ResourceInputStream */
     private $reader;
 
@@ -70,6 +73,7 @@ final class ResourceSocket implements EncryptableSocket
         $this->writer = new ResourceOutputStream($resource, $chunkSize);
         $this->remoteAddress = $this->getAddress(true);
         $this->localAddress = $this->getAddress(false);
+        $this->tlsState = self::TLS_STATE_DISABLED;
     }
 
     /** @inheritDoc */
@@ -80,6 +84,8 @@ final class ResourceSocket implements EncryptableSocket
         if ($resource === null) {
             return new Failure(new ClosedException("Can't setup TLS, because the socket has already been closed"));
         }
+
+        $this->tlsState = self::TLS_STATE_SETUP_PENDING;
 
         if ($this->tlsContext) {
             $promise = Internal\setupTls($resource, $this->tlsContext->toStreamContextArray(), $cancellationToken);
@@ -100,6 +106,8 @@ final class ResourceSocket implements EncryptableSocket
         return call(function () use ($promise) {
             try {
                 yield $promise;
+
+                $this->tlsState = self::TLS_STATE_ENABLED;
             } catch (\Throwable $exception) {
                 $this->close();
 
@@ -115,24 +123,37 @@ final class ResourceSocket implements EncryptableSocket
             return new Failure(new ClosedException("Can't shutdown TLS, because the socket has already been closed"));
         }
 
-        return Internal\shutdownTls($resource);
+        $this->tlsState = self::TLS_STATE_SHUTDOWN_PENDING;
+
+        return call(function () use ($resource) {
+            try {
+                return Internal\shutdownTls($resource);
+            } finally {
+                $this->tlsState = self::TLS_STATE_DISABLED;
+            }
+        });
     }
 
     /** @inheritDoc */
-    public function read(): Promise
+    public
+    function read(): Promise
     {
         return $this->reader->read();
     }
 
     /** @inheritDoc */
-    public function write(string $data): Promise
-    {
+    public
+    function write(
+        string $data
+    ): Promise {
         return $this->writer->write($data);
     }
 
     /** @inheritDoc */
-    public function end(string $data = ''): Promise
-    {
+    public
+    function end(
+        string $data = ''
+    ): Promise {
         $promise = $this->writer->end($data);
         $promise->onResolve(function () {
             $this->close();
@@ -142,44 +163,58 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function close(): void
+    public
+    function close(): void
     {
         $this->reader->close();
         $this->writer->close();
     }
 
     /** @inheritDoc */
-    public function reference(): void
+    public
+    function reference(): void
     {
         $this->reader->reference();
     }
 
     /** @inheritDoc */
-    public function unreference(): void
+    public
+    function unreference(): void
     {
         $this->reader->unreference();
     }
 
     /** @inheritDoc */
-    public function getLocalAddress(): ?string
+    public
+    function getLocalAddress(): ?string
     {
         return $this->localAddress;
     }
 
     /** @inheritDoc */
-    public function getResource()
+    public
+    function getResource()
     {
         return $this->reader->getResource();
     }
 
     /** @inheritDoc */
-    public function getRemoteAddress(): ?string
+    public
+    function getRemoteAddress(): ?string
     {
         return $this->remoteAddress;
     }
 
-    private function getAddress(bool $wantPeer): ?string
+    public
+    function getTlsState(): int
     {
+        return $this->tlsState;
+    }
+
+    private
+    function getAddress(
+        bool $wantPeer
+    ): ?string {
         $resource = $this->getResource();
 
         if ($resource === null) {
