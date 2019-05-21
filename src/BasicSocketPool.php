@@ -204,8 +204,7 @@ final class BasicSocketPool implements SocketPool
                 }
             }
 
-            $socketEntry = new class
-            {
+            $socketEntry = new class {
                 use Struct;
 
                 public $id;
