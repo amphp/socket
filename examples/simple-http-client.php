@@ -8,8 +8,8 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Amp\ByteStream\ResourceOutputStream;
 use Amp\Loop;
-use Amp\Socket\ConnectContext;
 use Amp\Socket\ClientTlsContext;
+use Amp\Socket\ConnectContext;
 use Amp\Socket\EncryptableSocket;
 use League\Uri;
 use function Amp\Socket\connect;

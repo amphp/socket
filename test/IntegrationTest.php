@@ -3,8 +3,8 @@
 namespace Amp\Socket\Test;
 
 use Amp\CancelledException;
-use Amp\Socket\ConnectContext;
 use Amp\Socket\ClientTlsContext;
+use Amp\Socket\ConnectContext;
 use Amp\Socket\ConnectException;
 use Amp\Socket\EncryptableSocket;
 use Amp\TimeoutCancellationToken;

@@ -10,7 +10,6 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Amp\Loop;
 use Amp\Socket\ResourceSocket;
-use Amp\Socket\ServerSocket;
 use function Amp\asyncCoroutine;
 
 Loop::run(static function () {
