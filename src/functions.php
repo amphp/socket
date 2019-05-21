@@ -121,11 +121,11 @@ function connect(string $uri, ClientConnectContext $context = null, Cancellation
 /**
  * Returns a pair of connected stream socket resources.
  *
- * @return resource[] Pair of socket resources.
+ * @return ResourceSocket[] Pair of socket resources.
  *
  * @throws SocketException If creating the sockets fails.
  */
-function pair(): array
+function createPair(): array
 {
     if (($sockets = @\stream_socket_pair(\stripos(PHP_OS, 'win') === 0 ? STREAM_PF_INET : STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP)) === false) {
         $message = 'Failed to create socket pair.';
@@ -135,5 +135,5 @@ function pair(): array
         throw new SocketException($message);
     }
 
-    return $sockets;
+    return [ResourceSocket::fromClientSocket($sockets[0]), ResourceSocket::fromClientSocket($sockets[1])];
 }

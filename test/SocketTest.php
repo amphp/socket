@@ -6,29 +6,25 @@ use Amp\Loop;
 use Amp\Socket;
 use PHPUnit\Framework\TestCase;
 use function Amp\asyncCall;
+use function Amp\ByteStream\buffer;
 use function Amp\Promise\wait;
 
 class SocketTest extends TestCase
 {
-    public function testReadAndClose()
+    public function testReadAndClose(): void
     {
         Loop::run(function () {
             $data = "Testing\n";
 
-            list($serverSock, $clientSock) = Socket\pair();
+            [$serverSock, $clientSock] = Socket\createPair();
 
-            \fwrite($serverSock, $data);
-            \fclose($serverSock);
+            yield $serverSock->end($data);
 
-            $client = Socket\ResourceSocket::fromClientSocket($clientSock);
-
-            while (($chunk = yield $client->read()) !== null) {
-                $this->assertSame($data, $chunk);
-            }
+            $this->assertSame($data, yield buffer($clientSock));
         });
     }
 
-    public function testSocketAddress()
+    public function testSocketAddress(): void
     {
         try {
             $s = \stream_socket_server('unix://' . __DIR__ . '/socket.sock');
@@ -47,7 +43,7 @@ class SocketTest extends TestCase
         }
     }
 
-    public function testEnableCryptoWithoutTlsContext()
+    public function testEnableCryptoWithoutTlsContext(): void
     {
         $server = Socket\listen('127.0.0.1:0');
 
