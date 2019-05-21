@@ -7,7 +7,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
 
-class Server
+final class Server
 {
     /** @var resource Stream socket server resource. */
     private $socket;

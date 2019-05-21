@@ -6,7 +6,7 @@ namespace Amp\Socket;
  * @see ServerTlsContext::withDefaultCertificate()
  * @see ServerTlsContext::withCertificates()
  */
-class Certificate
+final class Certificate
 {
     private $certFile;
     private $keyFile;

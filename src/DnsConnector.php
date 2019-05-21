@@ -11,7 +11,7 @@ use Amp\Promise;
 use Amp\TimeoutException;
 use function Amp\call;
 
-class DnsConnector implements Connector
+final class DnsConnector implements Connector
 {
     public function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise
     {

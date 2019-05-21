@@ -8,7 +8,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
 
-class DatagramSocket
+final class DatagramSocket
 {
     public const DEFAULT_CHUNK_SIZE = 8192;
 
