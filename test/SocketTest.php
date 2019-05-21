@@ -20,7 +20,7 @@ class SocketTest extends TestCase
             \fwrite($serverSock, $data);
             \fclose($serverSock);
 
-            $client = new Socket\ClientSocket($clientSock);
+            $client = Socket\ResourceSocket::fromClientSocket($clientSock);
 
             while (($chunk = yield $client->read()) !== null) {
                 $this->assertSame($data, $chunk);
@@ -34,8 +34,8 @@ class SocketTest extends TestCase
             $s = \stream_socket_server('unix://' . __DIR__ . '/socket.sock');
             $c = \stream_socket_client('unix://' . __DIR__ . '/socket.sock');
 
-            $clientSocket = new Socket\ClientSocket($c);
-            $serverSocket = new Socket\ServerSocket($s);
+            $clientSocket = Socket\ResourceSocket::fromClientSocket($c);
+            $serverSocket = Socket\ResourceSocket::fromServerSocket($s);
 
             $this->assertNotNull($clientSocket->getRemoteAddress());
             $this->assertSame(__DIR__ . '/socket.sock', $clientSocket->getLocalAddress());
@@ -55,7 +55,7 @@ class SocketTest extends TestCase
             yield Socket\connect($server->getAddress());
         });
 
-        /** @var Socket\ServerSocket $client */
+        /** @var Socket\ResourceSocket $client */
         $client = wait($server->accept());
 
         $this->expectException(Socket\TlsException::class);

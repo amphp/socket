@@ -14,7 +14,7 @@ interface Connector
      * @param ClientConnectContext   $context Socket connect context to use when connecting.
      * @param CancellationToken|null $token
      *
-     * @return Promise<EncryptableClientSocket>
+     * @return Promise<EncryptableSocket>
      *
      * @throws SocketException
      */

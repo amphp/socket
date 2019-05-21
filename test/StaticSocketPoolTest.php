@@ -4,6 +4,7 @@ namespace Amp\Socket\Test;
 
 use Amp\PHPUnit\TestCase;
 use Amp\Socket\ClientSocket;
+use Amp\Socket\ResourceSocket;
 use Amp\Socket\SocketPool;
 use Amp\Socket\StaticSocketPool;
 
@@ -27,7 +28,7 @@ class StaticSocketPoolTest extends TestCase
         $underlyingSocketPool = $this->prophesize(SocketPool::class);
         $staticSocketPool = new StaticSocketPool('override-uri', $underlyingSocketPool->reveal());
 
-        $clientSocket = new ClientSocket(\fopen('php://memory', 'rw+'));
+        $clientSocket = ResourceSocket::fromClientSocket(\fopen('php://memory', 'rw+'));
         $underlyingSocketPool->checkin($clientSocket)->shouldBeCalled();
 
         $staticSocketPool->checkin($clientSocket);
@@ -38,7 +39,7 @@ class StaticSocketPoolTest extends TestCase
         $underlyingSocketPool = $this->prophesize(SocketPool::class);
         $staticSocketPool = new StaticSocketPool('override-uri', $underlyingSocketPool->reveal());
 
-        $clientSocket = new ClientSocket(\fopen('php://memory', 'rw+'));
+        $clientSocket = ResourceSocket::fromClientSocket(\fopen('php://memory', 'rw+'));
         $underlyingSocketPool->clear($clientSocket)->shouldBeCalled();
 
         $staticSocketPool->clear($clientSocket);

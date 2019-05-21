@@ -30,7 +30,7 @@ class TlsFragmentationTest extends TestCase
 
             // Proxy to apply chunking of single bytes
             asyncCall(function () use ($proxyServer, $server) {
-                /** @var Socket\EncryptableServerSocket $proxyClient */
+                /** @var Socket\ResourceSocket $proxyClient */
                 while ($proxyClient = yield $proxyServer->accept()) {
                     asyncCall(function () use ($proxyClient, $server) {
                         $proxyUpstream = yield Socket\connect($server->getAddress());
@@ -42,23 +42,25 @@ class TlsFragmentationTest extends TestCase
             });
 
             asyncCall(function () use ($server) {
-                /** @var Socket\EncryptableServerSocket $client */
+                /** @var Socket\ResourceSocket $client */
                 while ($client = yield $server->accept()) {
                     asyncCall(function () use ($client) {
                         yield $client->setupTls();
-                        $this->assertInstanceOf(Socket\EncryptableServerSocket::class, $client);
+                        $this->assertInstanceOf(Socket\ResourceSocket::class, $client);
                         $this->assertSame('Hello World', yield from $this->read($client, 11));
                         $client->write('test');
                     });
                 }
             });
 
-            $context = (new Socket\ClientTlsContext('amphp.org'))
-                ->withCaFile(__DIR__ . '/tls/amphp.org.crt');
+            $context = (new Socket\ClientConnectContext())->withTlsContext(
+                (new Socket\ClientTlsContext('amphp.org'))
+                ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
+            );
 
-            /** @var Socket\EncryptableClientSocket $client */
-            $client = yield Socket\connect($proxyServer->getAddress());
-            yield $client->setupTls($context);
+            /** @var Socket\ResourceSocket $client */
+            $client = yield Socket\connect($proxyServer->getAddress(), $context);
+            yield $client->setupTls();
             yield $client->write('Hello World');
 
             $this->assertSame('test', yield from $this->read($client, 4));

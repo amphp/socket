@@ -60,8 +60,10 @@ final class BasicSocketPool implements SocketPool
                 continue;
             }
 
-            if (!\is_resource($socket->resource) || \feof($socket->resource)) {
-                $this->clearFromId((int) $socket->resource);
+            $resource = $socket->object->getResource();
+
+            if (!\is_resource($resource) || \feof($resource)) {
+                $this->clearFromId($socket->id);
                 continue;
             }
 
@@ -71,20 +73,20 @@ final class BasicSocketPool implements SocketPool
                 Loop::disable($socket->idleWatcher);
             }
 
-            return new Success(new ResourceClientSocket($socket->resource));
+            return new Success($socket->object);
         }
 
         return $this->checkoutNewSocket($uri, $cacheKey, $token);
     }
 
     /** @inheritdoc */
-    public function clear(EncryptableClientSocket $socket): void
+    public function clear(ResourceSocket $socket): void
     {
-        $this->clearFromId((int) $socket->getResource());
+        $this->clearFromId(\spl_object_hash($socket));
     }
 
     /** @inheritdoc */
-    public function checkin(EncryptableClientSocket $socket): void
+    public function checkin(ResourceSocket $socket): void
     {
         $socketId = (int) $socket->getResource();
 
@@ -99,7 +101,7 @@ final class BasicSocketPool implements SocketPool
         $resource = $socket->getResource();
 
         if (!\is_resource($resource) || \feof($resource)) {
-            $this->clearFromId((int) $resource);
+            $this->clearFromId(\spl_object_hash($socket));
             return;
         }
 
@@ -110,7 +112,7 @@ final class BasicSocketPool implements SocketPool
             Loop::enable($socket->idleWatcher);
         } else {
             $socket->idleWatcher = Loop::delay($this->idleTimeout, function () use ($socket) {
-                $this->clearFromId((int) $socket->resource);
+                $this->clearFromId($socket->id);
             });
 
             Loop::unreference($socket->idleWatcher);
@@ -178,7 +180,7 @@ final class BasicSocketPool implements SocketPool
             $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
             try {
-                /** @var EncryptableClientSocket $socket */
+                /** @var ResourceSocket $socket */
                 $socket = yield connect($uri, $this->connectContext, $token);
             } finally {
                 if (--$this->pendingCount[$uri] === 0) {
@@ -193,6 +195,7 @@ final class BasicSocketPool implements SocketPool
 
                 public $id;
                 public $uri;
+                public $object;
                 public $isAvailable;
                 public $idleWatcher;
             };
@@ -200,6 +203,7 @@ final class BasicSocketPool implements SocketPool
             $socketEntry->id = $objectId;
             $socketEntry->uri = $uri;
             $socketEntry->isAvailable = false;
+            $socketEntry->object = $socket;
 
             $this->sockets[$cacheKey][$objectId] = $socketEntry;
             $this->objectIdCacheKeyMap[$objectId] = $cacheKey;
@@ -209,9 +213,9 @@ final class BasicSocketPool implements SocketPool
     }
 
     /**
-     * @param int $objectId
+     * @param string $objectId
      */
-    private function clearFromId(int $objectId): void
+    private function clearFromId(string $objectId): void
     {
         if (!isset($this->objectIdCacheKeyMap[$objectId])) {
             throw new \Error(

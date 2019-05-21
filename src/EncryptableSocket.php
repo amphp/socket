@@ -4,7 +4,7 @@ namespace Amp\Socket;
 
 use Amp\Promise;
 
-interface EncryptableServerSocket extends Socket
+interface EncryptableSocket extends Socket
 {
     public function setupTls(): Promise;
 

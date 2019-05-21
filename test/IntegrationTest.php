@@ -4,10 +4,9 @@ namespace Amp\Socket\Test;
 
 use Amp\CancelledException;
 use Amp\Socket\ClientConnectContext;
-use Amp\Socket\ClientSocket;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectException;
-use Amp\Socket\EncryptableClientSocket;
+use Amp\Socket\EncryptableSocket;
 use Amp\TimeoutCancellationToken;
 use PHPUnit\Framework\TestCase;
 
@@ -20,7 +19,7 @@ class IntegrationTest extends TestCase
     {
         $promise = \Amp\Socket\connect($uri);
         $sock = \Amp\Promise\wait($promise);
-        $this->assertInstanceOf(EncryptableClientSocket::class, $sock);
+        $this->assertInstanceOf(EncryptableSocket::class, $sock);
     }
 
     public function provideConnectArgs(): array
@@ -54,9 +53,9 @@ class IntegrationTest extends TestCase
      */
     public function testCryptoConnect($uri): void
     {
-        $promise = \Amp\Socket\cryptoConnect($uri);
+        $promise = \Amp\Socket\connect($uri);
         $sock = \Amp\Promise\wait($promise);
-        $this->assertInstanceOf(EncryptableClientSocket::class, $sock);
+        $this->assertInstanceOf(EncryptableSocket::class, $sock);
     }
 
     public function provideCryptoConnectArgs(): array
@@ -70,25 +69,14 @@ class IntegrationTest extends TestCase
 
     public function testNoRenegotiationForEqualOptions(): void
     {
-        $promise = \Amp\socket\cryptoConnect('www.google.com:443');
-        /** @var EncryptableClientSocket $sock */
+        $context = (new ClientConnectContext)
+            ->withTlsContext(new ClientTlsContext('www.google.com'));
+
+        $promise = \Amp\socket\connect('www.google.com:443', $context);
+        /** @var EncryptableSocket $sock */
         $socket = \Amp\Promise\wait($promise);
         // For this case renegotiation not needed because options is equals
-        $promise = $socket->enableCrypto((new ClientTlsContext)->withPeerName("www.google.com"));
+        $promise = $socket->setupTls();
         $this->assertNull(\Amp\Promise\wait($promise));
-    }
-
-    public function testRenegotiation(): void
-    {
-        $this->markTestSkipped("Expected failure: proper renegotiation does not work yet");
-
-        $promise = \Amp\Socket\cryptoConnect('www.google.com:443', null, (new ClientTlsContext)->withPeerName("www.google.com"));
-        $sock = \Amp\Promise\wait($promise);
-
-        // force renegotiation by different option...
-        $promise = $sock->enableCrypto((new ClientTlsContext)->withoutPeerVerification());
-        \Amp\Promise\wait($promise);
-
-        $this->assertInstanceOf(EncryptableClientSocket::class, $sock);
     }
 }

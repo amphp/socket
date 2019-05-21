@@ -58,7 +58,7 @@ class DnsConnector implements Connector
 
             foreach ($uris as $builtUri) {
                 try {
-                    $streamContext = \stream_context_create($context->toStreamContextArray());
+                    $streamContext = \stream_context_create($context->withoutTlsContext()->toStreamContextArray());
 
                     if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $streamContext)) {
                         throw new ConnectException(\sprintf(
@@ -119,7 +119,7 @@ class DnsConnector implements Connector
                     continue; // Could not connect to host, try next host in the list.
                 }
 
-                return new ResourceClientSocket($socket, ResourceClientSocket::DEFAULT_CHUNK_SIZE);
+                return ResourceSocket::fromClientSocket($socket, ResourceSocket::DEFAULT_CHUNK_SIZE, $context->getTlsContext());
             }
 
             // This is reached if either all URIs failed or the maximum number of attempts is reached.

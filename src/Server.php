@@ -30,7 +30,7 @@ class Server
      *
      * @throws \Error If a stream resource is not given for $socket.
      */
-    public function __construct($socket, int $chunkSize = ServerSocket::DEFAULT_CHUNK_SIZE)
+    public function __construct($socket, int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE)
     {
         if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
@@ -57,7 +57,7 @@ class Server
 
             \assert($deferred !== null);
 
-            $deferred->resolve(new ServerSocket($client, $chunkSize));
+            $deferred->resolve(ResourceSocket::fromServerSocket($client, $chunkSize));
 
             if (!$acceptor) {
                 Loop::disable($watcher);
@@ -92,7 +92,7 @@ class Server
     }
 
     /**
-     * @return Promise<ServerSocket|null>
+     * @return Promise<ResourceSocket|null>
      *
      * @throws PendingAcceptError If another accept request is pending.
      */
@@ -108,7 +108,7 @@ class Server
 
         // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
         if ($client = @\stream_socket_accept($this->socket, 0)) { // Timeout of 0 to be non-blocking.
-            return new Success(new ServerSocket($client, $this->chunkSize));
+            return new Success(ResourceSocket::fromServerSocket($client, $this->chunkSize));
         }
 
         $this->acceptor = new Deferred;
