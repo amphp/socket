@@ -19,7 +19,7 @@ final class StaticSocketPool implements SocketPool
     /** @inheritDoc */
     public function checkout(
         string $uri,
-        ClientConnectContext $context = null,
+        ConnectContext $context = null,
         CancellationToken $token = null
     ): Promise {
         return $this->socketPool->checkout($this->uri, $context, $token);

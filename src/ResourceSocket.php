@@ -95,7 +95,7 @@ final class ResourceSocket implements EncryptableSocket
             if (empty($context['ssl'])) {
                 return new Failure(new TlsException(
                     "Can't enable TLS without configuration. " .
-                    "If you used Amp\\Socket\\listen(), be sure to pass a ServerTlsContext within the ServerBindContext " .
+                    "If you used Amp\\Socket\\listen(), be sure to pass a ServerTlsContext within the BindContext " .
                     "in the second argument, otherwise set the 'ssl' context option to the PHP stream resource."
                 ));
             }

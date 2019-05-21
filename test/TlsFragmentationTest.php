@@ -26,7 +26,7 @@ class TlsFragmentationTest extends TestCase
 
             $tlsContext = (new Socket\ServerTlsContext)
                 ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
-            $server = Socket\listen('127.0.0.1:0', (new Socket\ServerBindContext)->withTlsContext($tlsContext));
+            $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
             // Proxy to apply chunking of single bytes
             asyncCall(function () use ($proxyServer, $server) {
@@ -53,7 +53,7 @@ class TlsFragmentationTest extends TestCase
                 }
             });
 
-            $context = (new Socket\ClientConnectContext())->withTlsContext(
+            $context = (new Socket\ConnectContext())->withTlsContext(
                 (new Socket\ClientTlsContext('amphp.org'))
                 ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
             );

@@ -5,7 +5,7 @@ namespace Amp\Socket;
 use Amp\Dns\Record;
 use function Amp\Socket\Internal\normalizeBindToOption;
 
-final class ClientConnectContext
+final class ConnectContext
 {
     /** @var string|null */
     private $bindTo;

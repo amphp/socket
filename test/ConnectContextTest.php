@@ -3,10 +3,10 @@
 namespace Amp\Socket\Test;
 
 use Amp\Dns\Record;
-use Amp\Socket\ClientConnectContext;
+use Amp\Socket\ConnectContext;
 use PHPUnit\Framework\TestCase;
 
-class ClientConnectContextTest extends TestCase
+class ConnectContextTest extends TestCase
 {
     public function bindToDataProvider()
     {
@@ -21,7 +21,7 @@ class ClientConnectContextTest extends TestCase
      */
     public function testWithBindTo($bindTo)
     {
-        $context = new ClientConnectContext();
+        $context = new ConnectContext();
         $clonedContext = $context->withBindTo($bindTo);
 
         $this->assertNull($context->getBindTo());
@@ -30,7 +30,7 @@ class ClientConnectContextTest extends TestCase
 
     public function testWithTcpNoDelay()
     {
-        $context = new ClientConnectContext();
+        $context = new ConnectContext();
         $clonedContext = $context->withTcpNoDelay();
 
         $this->assertFalse($context->hasTcpNoDelay());
@@ -50,7 +50,7 @@ class ClientConnectContextTest extends TestCase
      */
     public function testWithConnectTimeout($timeout)
     {
-        $context = new ClientConnectContext();
+        $context = new ConnectContext();
         $clonedContext = $context->withConnectTimeout($timeout);
 
         $this->assertSame(10000, $context->getConnectTimeout());
@@ -73,7 +73,7 @@ class ClientConnectContextTest extends TestCase
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage("Invalid connect timeout ({$timeout}), must be greater than 0");
-        $context = new ClientConnectContext();
+        $context = new ConnectContext();
         $context->withConnectTimeout($timeout);
     }
 
@@ -90,7 +90,7 @@ class ClientConnectContextTest extends TestCase
      */
     public function testWithMaxAttempts($maxAttempts)
     {
-        $context = new ClientConnectContext();
+        $context = new ConnectContext();
         $clonedContext = $context->withMaxAttempts($maxAttempts);
 
         $this->assertSame(2, $context->getMaxAttempts());
@@ -113,7 +113,7 @@ class ClientConnectContextTest extends TestCase
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage("Invalid max attempts ({$maxAttempts}), must be greater than 0");
-        $context = new ClientConnectContext();
+        $context = new ConnectContext();
         $context->withMaxAttempts($maxAttempts);
     }
 
@@ -131,7 +131,7 @@ class ClientConnectContextTest extends TestCase
      */
     public function testWithDnsTypeRestriction($type)
     {
-        $context = new ClientConnectContext();
+        $context = new ConnectContext();
         $clonedContext = $context->withDnsTypeRestriction($type);
 
         $this->assertNull($context->getDnsTypeRestriction());
@@ -153,13 +153,13 @@ class ClientConnectContextTest extends TestCase
      */
     public function testWithDnsTypeRestrictionInvalidType($type)
     {
-        $context = new ClientConnectContext();
+        $context = new ConnectContext();
         $context->withDnsTypeRestriction($type);
     }
 
     public function testToStreamContextArray()
     {
-        $context = new ClientConnectContext();
+        $context = new ConnectContext();
         $clonedContext = $context->withBindTo('127.0.0.1:12345');
 
         $this->assertSame(['socket' => ['tcp_nodelay' => false]], $context->toStreamContextArray());

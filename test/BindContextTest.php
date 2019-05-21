@@ -2,10 +2,10 @@
 
 namespace Amp\Socket\Test;
 
-use Amp\Socket\ServerBindContext;
+use Amp\Socket\BindContext;
 use PHPUnit\Framework\TestCase;
 
-class ServerListenContextTest extends TestCase
+class BindContextTest extends TestCase
 {
     public function bindToDataProvider()
     {
@@ -20,7 +20,7 @@ class ServerListenContextTest extends TestCase
      */
     public function testWithBindTo($bindTo)
     {
-        $origContext = new ServerBindContext();
+        $origContext = new BindContext();
         $clonedContext = $origContext->withBindTo($bindTo);
         $this->assertNull($origContext->getBindTo());
         $this->assertSame($bindTo, $clonedContext->getBindTo());
@@ -28,7 +28,7 @@ class ServerListenContextTest extends TestCase
 
     public function testWithTcpNoDelay()
     {
-        $context = new ServerBindContext();
+        $context = new BindContext();
         $clonedContext = $context->withTcpNoDelay();
 
         $this->assertFalse($context->hasTcpNoDelay());
@@ -48,7 +48,7 @@ class ServerListenContextTest extends TestCase
      */
     public function testWithBacklog($backlog)
     {
-        $origContext = new ServerBindContext();
+        $origContext = new BindContext();
         $clonedContext = $origContext->withBacklog($backlog);
         $this->assertSame(128, $origContext->getBacklog());
         $this->assertSame($backlog, $clonedContext->getBacklog());
@@ -56,7 +56,7 @@ class ServerListenContextTest extends TestCase
 
     public function testWithReusePort()
     {
-        $origContext = new ServerBindContext();
+        $origContext = new BindContext();
         $clonedContext = $origContext->withReusePort();
         $this->assertFalse($origContext->hasReusePort());
         $this->assertTrue($clonedContext->hasReusePort());
@@ -64,7 +64,7 @@ class ServerListenContextTest extends TestCase
 
     public function testWithoutReusePort()
     {
-        $origContext = new ServerBindContext();
+        $origContext = new BindContext();
         $clonedContext = $origContext->withoutReusePort();
         $this->assertFalse($origContext->hasReusePort());
         $this->assertFalse($clonedContext->hasReusePort());
@@ -72,7 +72,7 @@ class ServerListenContextTest extends TestCase
 
     public function testWithBroadcast()
     {
-        $origContext = new ServerBindContext();
+        $origContext = new BindContext();
         $clonedContext = $origContext->withBroadcast();
         $this->assertFalse($origContext->hasBroadcast());
         $this->assertTrue($clonedContext->hasBroadcast());
@@ -80,7 +80,7 @@ class ServerListenContextTest extends TestCase
 
     public function testWithoutBroadcast()
     {
-        $origContext = new ServerBindContext();
+        $origContext = new BindContext();
         $clonedContext = $origContext->withoutBroadcast();
         $this->assertFalse($origContext->hasBroadcast());
         $this->assertFalse($clonedContext->hasBroadcast());

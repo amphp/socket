@@ -13,14 +13,14 @@ You can establish a socket connection to a specified URI by using `Amp\Socket\co
  * Asynchronously establish a socket connection to the specified URI.
  *
  * @param string                 $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
- * @param ClientConnectContext   $socketContext Socket connect context to use when connecting.
+ * @param ConnectContext         $socketContext Socket connect context to use when connecting.
  * @param CancellationToken|null $token
  *
  * @return Promise<\Amp\Socket\ClientSocket>
  */
 function connect(
     string $uri,
-    ClientConnectContext $socketContext = null,
+    ConnectContext $socketContext = null,
     CancellationToken $token = null
 ): Promise {
     /* ... */

@@ -32,7 +32,7 @@ class ServerTest extends TestCase
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
                 ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
-            $server = Socket\listen('127.0.0.1:0', (new Socket\ServerBindContext)->withTlsContext($tlsContext));
+            $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\ResourceSocket $socket */
@@ -46,7 +46,7 @@ class ServerTest extends TestCase
                 }
             });
 
-            $context = (new Socket\ClientConnectContext)->withTlsContext(
+            $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('amphp.org'))
                     ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
             );
@@ -69,7 +69,7 @@ class ServerTest extends TestCase
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
                 ->withCertificates(['amphp.org' => new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem')]);
-            $server = Socket\listen('127.0.0.1:0', (new Socket\ServerBindContext)->withTlsContext($tlsContext));
+            $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\EncryptableSocket $socket */
@@ -83,7 +83,7 @@ class ServerTest extends TestCase
                 }
             });
 
-            $context = (new Socket\ClientConnectContext)->withTlsContext(
+            $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('amphp.org'))
                     ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
             );
@@ -109,7 +109,7 @@ class ServerTest extends TestCase
                 'www.amphp.org' => new Socket\Certificate(__DIR__ . '/tls/www.amphp.org.pem'),
             ]);
 
-            $server = Socket\listen('127.0.0.1:0', (new Socket\ServerBindContext)->withTlsContext($tlsContext));
+            $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\ResourceSocket $socket */
@@ -123,7 +123,7 @@ class ServerTest extends TestCase
                 }
             });
 
-            $context = (new Socket\ClientConnectContext)->withTlsContext(
+            $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('amphp.org'))
                     ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
             );
@@ -133,7 +133,7 @@ class ServerTest extends TestCase
             yield $client->setupTls();
             yield $client->write('Hello World');
 
-            $context = (new Socket\ClientConnectContext)->withTlsContext(
+            $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
                     ->withCaFile(__DIR__ . '/tls/www.amphp.org.crt')
             );
@@ -161,7 +161,7 @@ class ServerTest extends TestCase
                 'www.amphp.org' => new Socket\Certificate(__DIR__ . '/tls/www.amphp.org.crt', __DIR__ . '/tls/www.amphp.org.key'),
             ]);
 
-            $server = Socket\listen('127.0.0.1:0', (new Socket\ServerBindContext)->withTlsContext($tlsContext));
+            $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\ResourceSocket $socket */
@@ -175,7 +175,7 @@ class ServerTest extends TestCase
                 }
             });
 
-            $context = (new Socket\ClientConnectContext)->withTlsContext(
+            $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('amphp.org'))
                     ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
             );
@@ -185,7 +185,7 @@ class ServerTest extends TestCase
             yield $client->setupTls();
             yield $client->write('Hello World');
 
-            $context = (new Socket\ClientConnectContext)->withTlsContext(
+            $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
                     ->withCaFile(__DIR__ . '/tls/www.amphp.org.crt')
             );

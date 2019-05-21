@@ -20,9 +20,9 @@ interface SocketPool
      *
      * @param string                 $uri URI in scheme://host:port format. TCP is assumed if no scheme is present. An
      *     optional fragment component can be used to differentiate different socket groups connected to the same URI.
-     *     Connections to the same host with a different ClientConnectContext must use separate socket groups
-     *     internally to prevent TLS negotiation with the wrong peer name or other TLS settings.
-     * @param ClientConnectContext   $context Socket connect context to use when connecting.
+     *     Connections to the same host with a different ConnectContext must use separate socket groups internally to
+     *     prevent TLS negotiation with the wrong peer name or other TLS settings.
+     * @param ConnectContext         $context Socket connect context to use when connecting.
      * @param CancellationToken|null $token Optional cancellation token to cancel the checkout request.
      *
      * @return Promise<EncryptableSocket> Resolves to an EncryptableSocket instance once a connection is available.
@@ -31,7 +31,7 @@ interface SocketPool
      */
     public function checkout(
         string $uri,
-        ClientConnectContext $context = null,
+        ConnectContext $context = null,
         CancellationToken $token = null
     ): Promise;
 

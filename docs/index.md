@@ -16,7 +16,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Amp\ByteStream\ResourceOutputStream;
 use Amp\Loop;
-use Amp\Socket\ClientConnectContext;
+use Amp\Socket\ConnectContext;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\EncryptableSocket;
 use League\Uri;
@@ -35,7 +35,7 @@ Loop::run(static function () use ($argv) {
     $port = $uri->getPort() ?? ($uri->getScheme() === 'https' ? 443 : 80);
     $path = $uri->getPath() ?: '/';
 
-    $connectContext = (new ClientConnectContext)
+    $connectContext = (new ConnectContext)
         ->withTlsContext(new ClientTlsContext($host));
 
     /** @var EncryptableSocket $socket */

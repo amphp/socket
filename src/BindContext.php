@@ -4,7 +4,7 @@ namespace Amp\Socket;
 
 use function Amp\Socket\Internal\normalizeBindToOption;
 
-final class ServerBindContext
+final class BindContext
 {
     /** @var string|null */
     private $bindTo;

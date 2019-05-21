@@ -13,12 +13,12 @@ use function Amp\call;
 
 final class DnsConnector implements Connector
 {
-    public function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise
+    public function connect(string $uri, ConnectContext $context = null, CancellationToken $token = null): Promise
     {
-        $context = $context ?? new ClientConnectContext;
+        $context = $context ?? new ConnectContext;
 
         return call(static function () use ($uri, $context, $token) {
-            $context = $context ?? new ClientConnectContext;
+            $context = $context ?? new ConnectContext;
             $token = $token ?? new NullCancellationToken;
             $attempt = 0;
             $uris = [];

@@ -13,17 +13,17 @@ const LOOP_CONNECTOR_IDENTIFIER = Connector::class;
  *
  * If you want to accept TLS connections, you have to use `yield $socket->setupTls()` after accepting new clients.
  *
- * @param string            $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
- * @param ServerBindContext $context Context options for listening.
+ * @param string      $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param BindContext $context Context options for listening.
  *
  * @return Server
  *
  * @throws SocketException If binding to the specified URI failed.
  * @throws \Error If an invalid scheme is given.
  */
-function listen(string $uri, ServerBindContext $context = null): Server
+function listen(string $uri, BindContext $context = null): Server
 {
-    $context = $context ?? new ServerBindContext;
+    $context = $context ?? new BindContext;
 
     $scheme = \strstr($uri, '://', true);
 
@@ -48,17 +48,17 @@ function listen(string $uri, ServerBindContext $context = null): Server
 /**
  * Create a new Datagram (UDP server) on the specified server address.
  *
- * @param string            $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
- * @param ServerBindContext $context Context options for listening.
+ * @param string      $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
+ * @param BindContext $context Context options for listening.
  *
  * @return DatagramSocket
  *
  * @throws SocketException If binding to the specified URI failed.
  * @throws \Error If an invalid scheme is given.
  */
-function bindDatagramSocket(string $uri, ServerBindContext $context = null): DatagramSocket
+function bindDatagramSocket(string $uri, BindContext $context = null): DatagramSocket
 {
-    $context = $context ?? new ServerBindContext;
+    $context = $context ?? new BindContext;
 
     $scheme = \strstr($uri, '://', true);
 
@@ -106,14 +106,14 @@ function connector(Connector $connector = null): Connector
  * Asynchronously establish a socket connection to the specified URI.
  *
  * @param string                 $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
- * @param ClientConnectContext   $context Socket connect context to use when connecting.
+ * @param ConnectContext         $context Socket connect context to use when connecting.
  * @param CancellationToken|null $token
  *
  * @return Promise<EncryptableSocket>
  *
  * @throws ConnectException
  */
-function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise
+function connect(string $uri, ConnectContext $context = null, CancellationToken $token = null): Promise
 {
     return connector()->connect($uri, $context, $token);
 }

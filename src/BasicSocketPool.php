@@ -34,7 +34,7 @@ final class BasicSocketPool implements SocketPool
     /** @inheritdoc */
     public function checkout(
         string $uri,
-        ClientConnectContext $context = null,
+        ConnectContext $context = null,
         CancellationToken $token = null
     ): Promise {
         // A request might already be cancelled before we reach the checkout, so do not even attempt to checkout in that
@@ -189,7 +189,7 @@ final class BasicSocketPool implements SocketPool
     private function checkoutNewSocket(
         string $uri,
         string $cacheKey,
-        ClientConnectContext $connectContext,
+        ConnectContext $connectContext,
         CancellationToken $token = null
     ): Promise {
         return call(function () use ($uri, $cacheKey, $connectContext, $token) {
