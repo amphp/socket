@@ -24,19 +24,19 @@ final class BasicSocketPool implements SocketPool
     private $sockets = [];
     private $objectIdCacheKeyMap = [];
     private $pendingCount = [];
-
     private $idleTimeout;
-    private $connectContext;
 
-    public function __construct(int $idleTimeout = 10000, ClientConnectContext $connectContext = null)
+    public function __construct(int $idleTimeout = 10000)
     {
         $this->idleTimeout = $idleTimeout;
-        $this->connectContext = $connectContext ?? new ClientConnectContext;
     }
 
     /** @inheritdoc */
-    public function checkout(string $uri, CancellationToken $token = null): Promise
-    {
+    public function checkout(
+        string $uri,
+        ClientConnectContext $context = null,
+        CancellationToken $token = null
+    ): Promise {
         // A request might already be cancelled before we reach the checkout, so do not even attempt to checkout in that
         // case. The weird logic is required to throw the token's exception instead of creating a new one.
         if ($token && $token->isRequested()) {
@@ -49,10 +49,18 @@ final class BasicSocketPool implements SocketPool
 
         [$uri, $fragment] = $this->normalizeUri($uri);
 
-        $cacheKey = $uri . ($fragment !== null ? '#' . $fragment : '');
+        $cacheKey = $uri;
+
+        if ($context && $context->getTlsContext()) {
+            $cacheKey .= ' + ' . \serialize($context->getTlsContext()->toStreamContextArray());
+        }
+
+        if ($fragment !== null) {
+            $cacheKey .= ' # ' . $fragment;
+        }
 
         if (empty($this->sockets[$cacheKey])) {
-            return $this->checkoutNewSocket($uri, $cacheKey, $token);
+            return $this->checkoutNewSocket($uri, $cacheKey, $context, $token);
         }
 
         foreach ($this->sockets[$cacheKey] as $socketId => $socket) {
@@ -60,11 +68,13 @@ final class BasicSocketPool implements SocketPool
                 continue;
             }
 
-            $resource = $socket->object->getResource();
+            if ($socket->object instanceof ResourceSocket) {
+                $resource = $socket->object->getResource();
 
-            if (!\is_resource($resource) || \feof($resource)) {
-                $this->clearFromId($socket->id);
-                continue;
+                if (!\is_resource($resource) || \feof($resource)) {
+                    $this->clearFromId(\spl_object_hash($socket->object));
+                    continue;
+                }
             }
 
             $socket->isAvailable = false;
@@ -76,43 +86,45 @@ final class BasicSocketPool implements SocketPool
             return new Success($socket->object);
         }
 
-        return $this->checkoutNewSocket($uri, $cacheKey, $token);
+        return $this->checkoutNewSocket($uri, $cacheKey, $context, $token);
     }
 
     /** @inheritdoc */
-    public function clear(ResourceSocket $socket): void
+    public function clear(EncryptableSocket $socket): void
     {
         $this->clearFromId(\spl_object_hash($socket));
     }
 
     /** @inheritdoc */
-    public function checkin(ResourceSocket $socket): void
+    public function checkin(EncryptableSocket $socket): void
     {
-        $socketId = (int) $socket->getResource();
+        $objectId = \spl_object_hash($socket);
 
-        if (!isset($this->objectIdCacheKeyMap[$socketId])) {
+        if (!isset($this->objectIdCacheKeyMap[$objectId])) {
             throw new \Error(
-                \sprintf('Unknown socket: %d', $socketId)
+                \sprintf('Unknown socket: %d', $objectId)
             );
         }
 
-        $cacheKey = $this->objectIdCacheKeyMap[$socketId];
+        $cacheKey = $this->objectIdCacheKeyMap[$objectId];
 
-        $resource = $socket->getResource();
+        if ($socket instanceof ResourceSocket) {
+            $resource = $socket->getResource();
 
-        if (!\is_resource($resource) || \feof($resource)) {
-            $this->clearFromId(\spl_object_hash($socket));
-            return;
+            if (!\is_resource($resource) || \feof($resource)) {
+                $this->clearFromId($objectId);
+                return;
+            }
         }
 
-        $socket = $this->sockets[$cacheKey][$socketId];
+        $socket = $this->sockets[$cacheKey][$objectId];
         $socket->isAvailable = true;
 
         if (isset($socket->idleWatcher)) {
             Loop::enable($socket->idleWatcher);
         } else {
             $socket->idleWatcher = Loop::delay($this->idleTimeout, function () use ($socket) {
-                $this->clearFromId($socket->id);
+                $this->clearFromId(\spl_object_hash($socket->object));
             });
 
             Loop::unreference($socket->idleWatcher);
@@ -174,23 +186,26 @@ final class BasicSocketPool implements SocketPool
         return [$scheme . '://' . $host . ':' . $port, $parts['fragment']];
     }
 
-    private function checkoutNewSocket(string $uri, string $cacheKey, CancellationToken $token = null): Promise
-    {
-        return call(function () use ($uri, $cacheKey, $token) {
+    private function checkoutNewSocket(
+        string $uri,
+        string $cacheKey,
+        ClientConnectContext $connectContext,
+        CancellationToken $token = null
+    ): Promise {
+        return call(function () use ($uri, $cacheKey, $connectContext, $token) {
             $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
             try {
-                /** @var ResourceSocket $socket */
-                $socket = yield connect($uri, $this->connectContext, $token);
+                /** @var EncryptableSocket $socket */
+                $socket = yield connect($uri, $connectContext, $token);
             } finally {
                 if (--$this->pendingCount[$uri] === 0) {
                     unset($this->pendingCount[$uri]);
                 }
             }
 
-            $objectId = \spl_object_hash($socket);
-
-            $socketEntry = new class {
+            $socketEntry = new class
+            {
                 use Struct;
 
                 public $id;
@@ -200,11 +215,11 @@ final class BasicSocketPool implements SocketPool
                 public $idleWatcher;
             };
 
-            $socketEntry->id = $objectId;
             $socketEntry->uri = $uri;
             $socketEntry->isAvailable = false;
             $socketEntry->object = $socket;
 
+            $objectId = \spl_object_hash($socket);
             $this->sockets[$cacheKey][$objectId] = $socketEntry;
             $this->objectIdCacheKeyMap[$objectId] = $cacheKey;
 

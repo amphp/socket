@@ -17,19 +17,22 @@ final class StaticSocketPool implements SocketPool
     }
 
     /** @inheritDoc */
-    public function checkout(string $uri, CancellationToken $token = null): Promise
-    {
-        return $this->socketPool->checkout($this->uri, $token);
+    public function checkout(
+        string $uri,
+        ClientConnectContext $context = null,
+        CancellationToken $token = null
+    ): Promise {
+        return $this->socketPool->checkout($this->uri, $context, $token);
     }
 
     /** @inheritDoc */
-    public function checkin(ResourceSocket $socket): void
+    public function checkin(EncryptableSocket $socket): void
     {
         $this->socketPool->checkin($socket);
     }
 
     /** @inheritDoc */
-    public function clear(ResourceSocket $socket): void
+    public function clear(EncryptableSocket $socket): void
     {
         $this->socketPool->clear($socket);
     }
