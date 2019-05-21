@@ -27,6 +27,13 @@ interface Socket extends InputStream, OutputStream
     public function close(): void;
 
     /**
+     * Returns whether the socket has been closed.
+     *
+     * @return bool {@code true} if closed, otherwise {@code false}
+     */
+    public function isClosed(): bool;
+
+    /**
      * @return string|null
      */
     public function getLocalAddress(): ?string;

@@ -71,10 +71,13 @@ final class BasicSocketPool implements SocketPool
             if ($socket->object instanceof ResourceSocket) {
                 $resource = $socket->object->getResource();
 
-                if (!\is_resource($resource) || \feof($resource)) {
+                if (!$resource || !\is_resource($resource) || \feof($resource)) {
                     $this->clearFromId(\spl_object_hash($socket->object));
                     continue;
                 }
+            } else if ($socket->object->isClosed()) {
+                $this->clearFromId(\spl_object_hash($socket->object));
+                continue;
             }
 
             $socket->isAvailable = false;
@@ -111,10 +114,13 @@ final class BasicSocketPool implements SocketPool
         if ($socket instanceof ResourceSocket) {
             $resource = $socket->getResource();
 
-            if (!\is_resource($resource) || \feof($resource)) {
-                $this->clearFromId($objectId);
+            if (!$resource || !\is_resource($resource) || \feof($resource)) {
+                $this->clearFromId(\spl_object_hash($socket));
                 return;
             }
+        } else if ($socket->isClosed()) {
+            $this->clearFromId(\spl_object_hash($socket));
+            return;
         }
 
         $socket = $this->sockets[$cacheKey][$objectId];

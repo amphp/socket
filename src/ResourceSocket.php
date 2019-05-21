@@ -194,9 +194,16 @@ final class ResourceSocket implements EncryptableSocket
         return $this->remoteAddress;
     }
 
+    /** @inheritDoc */
     public function getTlsState(): int
     {
         return $this->tlsState;
+    }
+
+    /** @inheritDoc */
+    public function isClosed(): bool
+    {
+        return $this->getResource() === null;
     }
 
     private function getAddress(bool $wantPeer): ?string
