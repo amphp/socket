@@ -19,10 +19,12 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider minimumVersionDataProvider
+     *
+     * @param int $version
      */
     public function testWithMinimumVersion($version): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withMinimumVersion($version);
 
         $this->assertSame(ClientTlsContext::TLSv1_0, $context->getMinimumVersion());
@@ -40,10 +42,12 @@ class ClientTlsContextTest extends TestCase
      * @dataProvider minimumVersionInvalidDataProvider
      * @expectedException \Error
      * @expectedExceptionMessage Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed
+     *
+     * @param int $version
      */
     public function testWithMinimumVersionInvalid($version): void
     {
-        (new ClientTlsContext)->withMinimumVersion($version);
+        (new ClientTlsContext(''))->withMinimumVersion($version);
     }
 
     public function peerNameDataProvider(): array
@@ -56,19 +60,21 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider peerNameDataProvider
+     *
+     * @param string $peerName
      */
     public function testWithPeerName($peerName): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withPeerName($peerName);
 
-        $this->assertNull($context->getPeerName());
+        $this->assertSame('', $context->getPeerName());
         $this->assertSame($peerName, $clonedContext->getPeerName());
     }
 
     public function testWithPeerVerification(): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withPeerVerification();
 
         $this->assertTrue($context->hasPeerVerification());
@@ -77,7 +83,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithoutPeerVerification(): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withoutPeerVerification();
 
         $this->assertTrue($context->hasPeerVerification());
@@ -94,10 +100,12 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider certificateDataProvider
+     *
+     * @param Certificate $certificate
      */
     public function testWithCertificate($certificate): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withCertificate($certificate);
 
         $this->assertNull($context->getCertificate());
@@ -114,10 +122,12 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider verifyDepthDataProvider
+     *
+     * @param int $verifyDepth
      */
     public function testWithVerificationDepth($verifyDepth): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withVerificationDepth($verifyDepth);
 
         $this->assertSame(10, $context->getVerificationDepth());
@@ -136,10 +146,12 @@ class ClientTlsContextTest extends TestCase
      * @dataProvider verifyDepthInvalidDataProvider
      * @expectedException \Error
      * @expectedExceptionMessageRegExp /Invalid verification depth (.*), must be greater than or equal to 0/
+     *
+     * @param int $verifyDepth
      */
     public function testWithVerificationDepthInvalid($verifyDepth): void
     {
-        (new ClientTlsContext)->withVerificationDepth($verifyDepth);
+        (new ClientTlsContext(''))->withVerificationDepth($verifyDepth);
     }
 
     public function ciphersDataProvider(): array
@@ -152,10 +164,12 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider ciphersDataProvider
+     *
+     * @param string $ciphers
      */
     public function testWithCiphers($ciphers): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withCiphers($ciphers);
 
         $this->assertSame(\OPENSSL_DEFAULT_STREAM_CIPHERS, $context->getCiphers());
@@ -172,10 +186,12 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider caFileDataProvider
+     *
+     * @param string $caFile
      */
     public function testWithCaFile($caFile): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withCaFile($caFile);
 
         $this->assertNull($context->getCaFile());
@@ -192,10 +208,12 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider caPathDataProvider
+     *
+     * @param string $caPath
      */
     public function testWithCaPath($caPath): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withCaPath($caPath);
 
         $this->assertNull($context->getCaPath());
@@ -204,7 +222,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithPeerCapturing(): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withPeerCapturing();
 
         $this->assertFalse($context->hasPeerCapturing());
@@ -213,7 +231,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithoutPeerCapturing(): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withoutPeerCapturing();
 
         $this->assertFalse($context->hasPeerCapturing());
@@ -222,7 +240,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithSni(): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withSni();
 
         $this->assertTrue($context->hasSni());
@@ -231,7 +249,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithoutSni(): void
     {
-        $context = new ClientTlsContext;
+        $context = new ClientTlsContext('');
         $clonedContext = $context->withoutSni();
 
         $this->assertTrue($context->hasSni());
@@ -248,13 +266,15 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider invalidSecurityLevelDataProvider
+     *
+     * @param int $level
      */
     public function testWithSecurityLevelInvalid($level): void
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage("Invalid security level ({$level}), must be between 0 and 5.");
 
-        (new ClientTlsContext)->withSecurityLevel($level);
+        (new ClientTlsContext(''))->withSecurityLevel($level);
     }
 
     public function validSecurityLevelDataProvider(): array
@@ -271,11 +291,13 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider validSecurityLevelDataProvider
+     *
+     * @param int $level Security level
      */
     public function testWithSecurityLevelValid($level): void
     {
         if (\OPENSSL_VERSION_NUMBER >= 0x10100000) {
-            $value = (new ClientTlsContext)
+            $value = (new ClientTlsContext(''))
                 ->withSecurityLevel($level)
                 ->getSecurityLevel();
 
@@ -284,38 +306,38 @@ class ClientTlsContextTest extends TestCase
             $this->expectException(\Error::class);
             $this->expectExceptionMessage("Can't set a security level, as PHP is compiled with OpenSSL < 1.1.0.");
 
-            (new ClientTlsContext)->withSecurityLevel($level);
+            (new ClientTlsContext(''))->withSecurityLevel($level);
         }
     }
 
     public function testWithSecurityLevelDefaultValue(): void
     {
         if (\OPENSSL_VERSION_NUMBER >= 0x10100000) {
-            $this->assertSame(2, (new ClientTlsContext)->getSecurityLevel());
+            $this->assertSame(2, (new ClientTlsContext(''))->getSecurityLevel());
         } else {
-            $this->assertSame(0, (new ClientTlsContext)->getSecurityLevel());
+            $this->assertSame(0, (new ClientTlsContext(''))->getSecurityLevel());
         }
     }
 
     public function testStreamContextArray(): void
     {
-        $context = (new ClientTlsContext)
-            ->withCaPath("/var/foobar");
+        $context = (new ClientTlsContext(''))
+            ->withCaPath('/var/foobar');
 
         $contextArray = $context->toStreamContextArray();
         unset($contextArray['ssl']['security_level']); // present depending on OpenSSL version
 
-        $this->assertSame(["ssl" => [
-            "crypto_method" => $context->toStreamCryptoMethod(),
-            "peer_name" => $context->getPeerName(),
-            "verify_peer" => $context->hasPeerVerification(),
-            "verify_peer_name" => $context->hasPeerVerification(),
-            "verify_depth" => $context->getVerificationDepth(),
-            "ciphers" => $context->getCiphers(),
-            "capture_peer_cert" => $context->hasPeerCapturing(),
-            "capture_peer_cert_chain" => $context->hasPeerCapturing(),
-            "SNI_enabled" => $context->hasSni(),
-            "capath" => $context->getCaPath(),
+        $this->assertSame(['ssl' => [
+            'crypto_method' => $context->toStreamCryptoMethod(),
+            'peer_name' => $context->getPeerName(),
+            'verify_peer' => $context->hasPeerVerification(),
+            'verify_peer_name' => $context->hasPeerVerification(),
+            'verify_depth' => $context->getVerificationDepth(),
+            'ciphers' => $context->getCiphers(),
+            'capture_peer_cert' => $context->hasPeerCapturing(),
+            'capture_peer_cert_chain' => $context->hasPeerCapturing(),
+            'SNI_enabled' => $context->hasSni(),
+            'capath' => $context->getCaPath(),
         ]], $contextArray);
     }
 }

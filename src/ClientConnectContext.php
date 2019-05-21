@@ -17,8 +17,6 @@ final class ClientConnectContext
     private $typeRestriction;
     /** @var bool */
     private $tcpNoDelay = false;
-    /** @var ClientTlsContext|null */
-    private $tlsContext;
 
     public function withoutBindTo(): self
     {
@@ -117,24 +115,6 @@ final class ClientConnectContext
         return $clone;
     }
 
-    public function withoutTlsContext(): self
-    {
-        return $this->withTlsContext(null);
-    }
-
-    public function withTlsContext(?ClientTlsContext $tlsContext): self
-    {
-        $clone = clone $this;
-        $clone->tlsContext = $tlsContext;
-
-        return $clone;
-    }
-
-    public function getTlsContext(): ?ClientTlsContext
-    {
-        return $this->tlsContext;
-    }
-
     public function toStreamContextArray(): array
     {
         $options = [
@@ -145,12 +125,6 @@ final class ClientConnectContext
             $options['bindto'] = $this->bindTo;
         }
 
-        $array = ['socket' => $options];
-
-        if ($this->tlsContext) {
-            $array = \array_merge($array, $this->tlsContext->toStreamContextArray());
-        }
-
-        return $array;
+        return ['socket' => $options];
     }
 }

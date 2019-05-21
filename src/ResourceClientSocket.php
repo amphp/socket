@@ -5,9 +5,12 @@ namespace Amp\Socket;
 use Amp\ByteStream\ClosedException;
 use Amp\ByteStream\ResourceInputStream;
 use Amp\ByteStream\ResourceOutputStream;
+use Amp\CancellationToken;
+use Amp\Deferred;
 use Amp\Failure;
 use Amp\Promise;
 use Amp\Socket\Internal;
+use function Amp\call;
 
 final class ResourceClientSocket implements EncryptableClientSocket, ResourceSocket
 {
@@ -44,13 +47,45 @@ final class ResourceClientSocket implements EncryptableClientSocket, ResourceSoc
     }
 
     /** @inheritDoc */
-    public function setupTls(ClientTlsContext $tlsContext): Promise
+    public function setupTls(ClientTlsContext $tlsContext, ?CancellationToken $cancellationToken = null): Promise
     {
         if ($this->resource === null) {
             return new Failure(new ClosedException("Can't setup TLS, because the socket has already been closed"));
         }
 
-        return Internal\setupTls($this->resource, ($this->tlsContext ?? new ClientTlsContext)->toStreamContextArray());
+        $promise = Internal\setupTls($this->resource, $tlsContext->toStreamContextArray());
+
+        if ($cancellationToken) {
+            $deferred = new Deferred;
+            $id = $cancellationToken->subscribe([$deferred, 'fail']);
+
+            $promise->onResolve(static function ($exception) use ($id, $cancellationToken, $deferred) {
+                if ($cancellationToken->isRequested()) {
+                    return;
+                }
+
+                $cancellationToken->unsubscribe($id);
+
+                if ($exception) {
+                    $deferred->fail($exception);
+                    return;
+                }
+
+                $deferred->resolve();
+            });
+
+            $promise = $deferred->promise();
+        }
+
+        return call(function () use ($promise) {
+            try {
+                yield $promise;
+            } catch (\Throwable $exception) {
+                $this->close();
+
+                throw $exception;
+            }
+        });
     }
 
     /** @inheritDoc */

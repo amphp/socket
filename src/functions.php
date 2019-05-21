@@ -3,10 +3,8 @@
 namespace Amp\Socket;
 
 use Amp\CancellationToken;
-use Amp\Deferred;
 use Amp\Loop;
 use Amp\Promise;
-use function Amp\call;
 
 const LOOP_CONNECTOR_IDENTIFIER = Connector::class;
 
@@ -118,70 +116,6 @@ function connector(Connector $connector = null): Connector
 function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise
 {
     return connector()->connect($uri, $context, $token);
-}
-
-/**
- * Asynchronously establish an encrypted TCP connection (non-blocking).
- *
- * Note: Once resolved the socket stream will already be set to non-blocking mode.
- *
- * @param string               $uri
- * @param ClientConnectContext $context
- * @param CancellationToken    $token
- *
- * @return Promise<EncryptableClientSocket>
- *
- * @throws SocketException
- */
-function cryptoConnect(
-    string $uri,
-    ClientConnectContext $context = null,
-    CancellationToken $token = null
-): Promise {
-    return call(static function () use ($uri, $context, $token) {
-        $context = $context ?? new ClientConnectContext;
-        $tlsContext = $context->getTlsContext() ?? new ClientTlsContext;
-
-        if ($tlsContext->getPeerName() === null) {
-            $tlsContext = $tlsContext->withPeerName(\parse_url($uri, PHP_URL_HOST));
-        }
-
-        /** @var EncryptableClientSocket $socket */
-        $socket = yield connect($uri, $context->withoutTlsContext(), $token);
-
-        $promise = $socket->setupTls($tlsContext);
-
-        if ($token) {
-            $deferred = new Deferred;
-            $id = $token->subscribe([$deferred, 'fail']);
-
-            $promise->onResolve(static function ($exception) use ($id, $token, $deferred) {
-                if ($token->isRequested()) {
-                    return;
-                }
-
-                $token->unsubscribe($id);
-
-                if ($exception) {
-                    $deferred->fail($exception);
-                    return;
-                }
-
-                $deferred->resolve();
-            });
-
-            $promise = $deferred->promise();
-        }
-
-        try {
-            yield $promise;
-        } catch (\Throwable $exception) {
-            $socket->close();
-            throw $exception;
-        }
-
-        return $socket;
-    });
 }
 
 /**

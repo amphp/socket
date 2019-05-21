@@ -31,6 +31,11 @@ final class ClientTlsContext
     /** @var Certificate|null */
     private $certificate;
 
+    public function __construct(string $peerName)
+    {
+        $this->peerName = $peerName;
+    }
+
     /**
      * Minimum TLS version to negotiate.
      *
@@ -66,7 +71,7 @@ final class ClientTlsContext
     /**
      * Expected name of the peer.
      *
-     * @param string|null $peerName
+     * @param string $peerName
      *
      * @return self Cloned, modified instance.
      */
@@ -74,19 +79,6 @@ final class ClientTlsContext
     {
         $clone = clone $this;
         $clone->peerName = $peerName;
-
-        return $clone;
-    }
-
-    /**
-     * Use no explicit name of the peer.
-     *
-     * @return self Cloned, modified instance.
-     */
-    public function withoutPeerName(): self
-    {
-        $clone = clone $this;
-        $clone->peerName = null;
 
         return $clone;
     }
@@ -114,6 +106,9 @@ final class ClientTlsContext
 
     /**
      * Disable peer verification, this is the default for servers.
+     *
+     * Warning: You usually shouldn't disable this setting for clients, because it allows active MitM attackers to
+     * intercept the communication and change it without anyone noticing.
      *
      * @return self Cloned, modified instance.
      */

@@ -8,7 +8,6 @@ use Amp\Loop;
 use Amp\PHPUnit\TestCase;
 use Amp\Socket;
 use function Amp\asyncCall;
-use Amp\Socket\EncryptableClientSocket;
 
 class TlsFragmentationTest extends TestCase
 {
@@ -23,15 +22,15 @@ class TlsFragmentationTest extends TestCase
         }
 
         Loop::run(function () {
-            $proxyServer = Socket\listen("127.0.0.1:0");
+            $proxyServer = Socket\listen('127.0.0.1:0');
 
             $tlsContext = (new Socket\ServerTlsContext)
-                ->withDefaultCertificate(new Socket\Certificate(__DIR__ . "/tls/amphp.org.pem"));
-            $server = Socket\listen("127.0.0.1:0", (new Socket\ServerBindContext)->withTlsContext($tlsContext));
+                ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
+            $server = Socket\listen('127.0.0.1:0', (new Socket\ServerBindContext)->withTlsContext($tlsContext));
 
             // Proxy to apply chunking of single bytes
             asyncCall(function () use ($proxyServer, $server) {
-                /** @var Socket\ServerSocket $proxyClient */
+                /** @var Socket\EncryptableServerSocket $proxyClient */
                 while ($proxyClient = yield $proxyServer->accept()) {
                     asyncCall(function () use ($proxyClient, $server) {
                         $proxyUpstream = yield Socket\connect($server->getAddress());
@@ -43,29 +42,26 @@ class TlsFragmentationTest extends TestCase
             });
 
             asyncCall(function () use ($server) {
-                /** @var Socket\ServerSocket $client */
+                /** @var Socket\EncryptableServerSocket $client */
                 while ($client = yield $server->accept()) {
                     asyncCall(function () use ($client) {
                         yield $client->setupTls();
-                        $this->assertInstanceOf(Socket\ServerSocket::class, $client);
-                        $this->assertSame("Hello World", yield from $this->read($client, 11));
-                        $client->write("test");
+                        $this->assertInstanceOf(Socket\EncryptableServerSocket::class, $client);
+                        $this->assertSame('Hello World', yield from $this->read($client, 11));
+                        $client->write('test');
                     });
                 }
             });
 
-            $context = (new Socket\ClientTlsContext)
-                ->withPeerName("amphp.org")
-                ->withCaFile(__DIR__ . "/tls/amphp.org.crt");
+            $context = (new Socket\ClientTlsContext('amphp.org'))
+                ->withCaFile(__DIR__ . '/tls/amphp.org.crt');
 
             /** @var Socket\EncryptableClientSocket $client */
-            $client = yield Socket\cryptoConnect(
-                $proxyServer->getAddress(),
-                (new Socket\ClientConnectContext)->withTlsContext($context)
-            );
-            yield $client->write("Hello World");
+            $client = yield Socket\connect($proxyServer->getAddress());
+            yield $client->setupTls($context);
+            yield $client->write('Hello World');
 
-            $this->assertSame("test", yield from $this->read($client, 4));
+            $this->assertSame('test', yield from $this->read($client, 4));
 
             $server->close();
 
@@ -73,11 +69,11 @@ class TlsFragmentationTest extends TestCase
         });
     }
 
-    private function pipe(ByteStream\InputStream $source, ByteStream\OutputStream $destination)
+    private function pipe(ByteStream\InputStream $source, ByteStream\OutputStream $destination): void
     {
-        asyncCall(function () use ($source, $destination): \Generator {
+        asyncCall(static function () use ($source, $destination): \Generator {
             while (($chunk = yield $source->read()) !== null) {
-                foreach (\str_split($chunk, 1) as $byte) {
+                foreach (\str_split($chunk) as $byte) {
                     yield $destination->write($byte);
                     yield new Delayed(1);
                 }
@@ -87,7 +83,7 @@ class TlsFragmentationTest extends TestCase
 
     private function read(ByteStream\InputStream $source, int $minLength)
     {
-        $buffer = "";
+        $buffer = '';
 
         while (null !== $chunk = yield $source->read()) {
             $buffer .= $chunk;
