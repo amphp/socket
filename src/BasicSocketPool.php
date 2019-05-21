@@ -75,7 +75,7 @@ final class BasicSocketPool implements SocketPool
                     $this->clearFromId(\spl_object_hash($socket->object));
                     continue;
                 }
-            } else if ($socket->object->isClosed()) {
+            } elseif ($socket->object->isClosed()) {
                 $this->clearFromId(\spl_object_hash($socket->object));
                 continue;
             }
@@ -118,7 +118,7 @@ final class BasicSocketPool implements SocketPool
                 $this->clearFromId(\spl_object_hash($socket));
                 return;
             }
-        } else if ($socket->isClosed()) {
+        } elseif ($socket->isClosed()) {
             $this->clearFromId(\spl_object_hash($socket));
             return;
         }
