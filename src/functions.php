@@ -111,7 +111,7 @@ function connector(Connector $connector = null): Connector
  *
  * @return Promise<EncryptableSocket>
  *
- * @throws SocketException
+ * @throws ConnectException
  */
 function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise
 {

@@ -42,7 +42,10 @@ class DatagramSocket
         \stream_set_blocking($this->socket, false);
 
         $reader = &$this->reader;
-        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (&$reader, $chunkSize) {
+        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
+            &$reader,
+            $chunkSize
+        ) {
             $deferred = $reader;
             $reader = null;
 

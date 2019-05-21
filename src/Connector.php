@@ -16,7 +16,11 @@ interface Connector
      *
      * @return Promise<EncryptableSocket>
      *
-     * @throws SocketException
+     * @throws ConnectException
      */
-    public function connect(string $uri, ClientConnectContext $context = null, CancellationToken $token = null): Promise;
+    public function connect(
+        string $uri,
+        ClientConnectContext $context = null,
+        CancellationToken $token = null
+    ): Promise;
 }
