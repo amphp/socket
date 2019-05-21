@@ -3,7 +3,6 @@
 namespace Amp\Socket\Test;
 
 use Amp\PHPUnit\TestCase;
-use Amp\Socket\ClientSocket;
 use Amp\Socket\ResourceSocket;
 use Amp\Socket\SocketPool;
 use Amp\Socket\StaticSocketPool;

@@ -53,6 +53,7 @@ class ServerTest extends TestCase
 
             /** @var Socket\EncryptableSocket $client */
             $client = yield Socket\connect($server->getAddress(), $context);
+            yield $client->setupTls();
             yield $client->write('Hello World');
 
             $this->assertSame('test', yield $client->read());
@@ -89,6 +90,7 @@ class ServerTest extends TestCase
 
             /** @var Socket\EncryptableSocket $client */
             $client = yield Socket\connect($server->getAddress(), $context);
+            yield $client->setupTls();
             yield $client->write('Hello World');
 
             $this->assertSame('test', yield $client->read());
