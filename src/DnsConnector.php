@@ -119,7 +119,7 @@ class DnsConnector implements Connector
                     continue; // Could not connect to host, try next host in the list.
                 }
 
-                return ResourceSocket::fromClientSocket($socket, ResourceSocket::DEFAULT_CHUNK_SIZE, $context->getTlsContext());
+                return ResourceSocket::fromClientSocket($socket, $context->getTlsContext());
             }
 
             // This is reached if either all URIs failed or the maximum number of attempts is reached.

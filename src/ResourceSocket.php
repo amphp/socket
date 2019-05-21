@@ -34,20 +34,24 @@ final class ResourceSocket implements EncryptableSocket
      */
     public static function fromClientSocket(
         $resource,
-        int $chunkSize = self::DEFAULT_CHUNK_SIZE,
-        ?ClientTlsContext $tlsContext = null
+        ?ClientTlsContext $tlsContext = null,
+        int $chunkSize = self::DEFAULT_CHUNK_SIZE
     ): self {
         return new self($resource, $chunkSize, $tlsContext);
     }
 
     /** @var ClientTlsContext|null */
     private $tlsContext;
+
     /** @var ResourceInputStream */
     private $reader;
+
     /** @var ResourceOutputStream */
     private $writer;
+
     /** @var string|null */
     private $localAddress;
+
     /** @var string|null */
     private $remoteAddress;
 
