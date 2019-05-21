@@ -8,13 +8,13 @@ require __DIR__ . '/../vendor/autoload.php';
 use Amp\Loop;
 use Amp\Socket;
 
-Loop::run(function () use ($argv) {
-    $datagram = Socket\datagram('127.0.0.1:1337');
+Loop::run(static function () {
+    $datagram = Socket\bindDatagramSocket('127.0.0.1:1337');
 
-    echo "Datagram active on {$datagram->getLocalAddress()}\n";
+    echo "Datagram active on {$datagram->getAddress()}" . PHP_EOL;
 
-    while (list($data, $address) = yield $datagram->receive()) {
+    while ([$address, $data] = yield $datagram->receive()) {
         $message = \sprintf("Received '%s' from %s\n", \trim($data), $address);
-        $datagram->send($message, $address);
+        $datagram->send($address, $message);
     }
 });

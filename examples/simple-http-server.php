@@ -9,12 +9,13 @@ require __DIR__ . '/../vendor/autoload.php';
 // You might notice that your browser opens several connections instead of just one, even when only making one request.
 
 use Amp\Loop;
+use Amp\Socket\ResourceSocket;
 use Amp\Socket\ServerSocket;
 use function Amp\asyncCoroutine;
 
-Loop::run(function () {
-    $clientHandler = asyncCoroutine(function (ServerSocket $socket) {
-        list($ip, $port) = \explode(":", $socket->getRemoteAddress());
+Loop::run(static function () {
+    $clientHandler = asyncCoroutine(static function (ResourceSocket $socket) {
+        [$ip, $port] = \explode(':', $socket->getRemoteAddress());
 
         echo "Accepted connection from {$ip}:{$port}." . PHP_EOL;
 
@@ -24,10 +25,10 @@ Loop::run(function () {
         yield $socket->end("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}");
     });
 
-    $server = Amp\Socket\listen("127.0.0.1:0");
+    $server = Amp\Socket\listen('127.0.0.1:0');
 
-    echo "Listening for new connections on " . $server->getLocalAddress() . " ..." . PHP_EOL;
-    echo "Open your browser and visit http://" . $server->getLocalAddress() . "/" . PHP_EOL;
+    echo 'Listening for new connections on ' . $server->getAddress() . ' ...' . PHP_EOL;
+    echo 'Open your browser and visit http://' . $server->getAddress() . '/' . PHP_EOL;
 
     while ($socket = yield $server->accept()) {
         $clientHandler($socket);
