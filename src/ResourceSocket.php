@@ -135,25 +135,20 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public
-    function read(): Promise
+    public function read(): Promise
     {
         return $this->reader->read();
     }
 
     /** @inheritDoc */
-    public
-    function write(
-        string $data
-    ): Promise {
+    public function write(string $data): Promise
+    {
         return $this->writer->write($data);
     }
 
     /** @inheritDoc */
-    public
-    function end(
-        string $data = ''
-    ): Promise {
+    public function end(string $data = ''): Promise
+    {
         $promise = $this->writer->end($data);
         $promise->onResolve(function () {
             $this->close();
@@ -163,58 +158,49 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public
-    function close(): void
+    public function close(): void
     {
         $this->reader->close();
         $this->writer->close();
     }
 
     /** @inheritDoc */
-    public
-    function reference(): void
+    public function reference(): void
     {
         $this->reader->reference();
     }
 
     /** @inheritDoc */
-    public
-    function unreference(): void
+    public function unreference(): void
     {
         $this->reader->unreference();
     }
 
     /** @inheritDoc */
-    public
-    function getLocalAddress(): ?string
+    public function getLocalAddress(): ?string
     {
         return $this->localAddress;
     }
 
     /** @inheritDoc */
-    public
-    function getResource()
+    public function getResource()
     {
         return $this->reader->getResource();
     }
 
     /** @inheritDoc */
-    public
-    function getRemoteAddress(): ?string
+    public function getRemoteAddress(): ?string
     {
         return $this->remoteAddress;
     }
 
-    public
-    function getTlsState(): int
+    public function getTlsState(): int
     {
         return $this->tlsState;
     }
 
-    private
-    function getAddress(
-        bool $wantPeer
-    ): ?string {
+    private function getAddress(bool $wantPeer): ?string
+    {
         $resource = $this->getResource();
 
         if ($resource === null) {
