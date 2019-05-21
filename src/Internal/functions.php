@@ -2,9 +2,11 @@
 
 namespace Amp\Socket\Internal;
 
+use Amp\CancellationToken;
 use Amp\Deferred;
 use Amp\Failure;
 use Amp\Loop;
+use Amp\NullCancellationToken;
 use Amp\Promise;
 use Amp\Socket\TlsException;
 use Amp\Success;
@@ -66,21 +68,21 @@ function parseUri(string $uri): array
 /**
  * Enable encryption on an existing socket stream.
  *
- * @param resource $socket
- * @param array    $options
- * @param bool     $force Forces enabling without prior disabling if already enabled.
+ * @param resource          $socket
+ * @param array             $options
+ * @param CancellationToken $cancellationToken
  *
  * @return Promise
  *
- * @throws \Error If an invalid options array has been passed.
- *
  * @internal
  */
-function setupTls($socket, array $options = [], bool $force = false): Promise
+function setupTls($socket, array $options, ?CancellationToken $cancellationToken): Promise
 {
+    $cancellationToken = $cancellationToken ?? new NullCancellationToken;
+
     $ctx = \stream_context_get_options($socket);
 
-    if (!$force && isset($ctx['ssl']['_enabled'])) {
+    if (isset($ctx['ssl']['_enabled'])) {
         return new Failure(new TlsException("Can't setup TLS, because it has already been set up"));
     }
 
@@ -101,29 +103,39 @@ function setupTls($socket, array $options = [], bool $force = false): Promise
         ));
     }
 
-    return call(static function () use ($socket) {
+    return call(static function () use ($socket, $cancellationToken) {
+        $cancellationToken->throwIfRequested();
+
         $deferred = new Deferred;
 
-        $watcher = Loop::onReadable($socket, static function (string $watcher, $socket, Deferred $deferred) {
-            $result = @\stream_socket_enable_crypto($socket, $enable = true);
+        // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
+        $id = $cancellationToken->subscribe(static function ($e) use ($deferred, &$watcher) {
+            Loop::cancel($watcher);
+
+            $deferred->fail($e);
+        });
+
+        $watcher = Loop::onReadable($socket, static function (string $watcher, $socket, Deferred $deferred) use (
+            $cancellationToken,
+            $id
+        ) {
+            $result = @\stream_socket_enable_crypto($socket, true);
 
             // If $result is 0, just wait for the next invocation
             if ($result === true) {
+                Loop::cancel($watcher);
+                $cancellationToken->unsubscribe($id);
                 $deferred->resolve();
             } elseif ($result === false) {
+                Loop::cancel($watcher);
+                $cancellationToken->unsubscribe($id);
                 $deferred->fail(new TlsException('TLS negotiation failed: ' . (\feof($socket)
                         ? 'Connection reset by peer'
                         : \error_get_last()['message'])));
             }
         }, $deferred);
 
-        try {
-            yield $deferred->promise();
-        } finally {
-            Loop::cancel($watcher);
-        }
-
-        return $socket;
+        return $deferred->promise();
     });
 }
 

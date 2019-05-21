@@ -6,7 +6,6 @@ use Amp\ByteStream\ClosedException;
 use Amp\ByteStream\ResourceInputStream;
 use Amp\ByteStream\ResourceOutputStream;
 use Amp\CancellationToken;
-use Amp\Deferred;
 use Amp\Failure;
 use Amp\Promise;
 use function Amp\call;
@@ -15,24 +14,9 @@ final class ResourceSocket implements EncryptableSocket
 {
     public const DEFAULT_CHUNK_SIZE = ResourceInputStream::DEFAULT_CHUNK_SIZE;
 
-    /** @var ClientTlsContext|null */
-    private $tlsContext;
-
-    /** @var ResourceInputStream */
-    private $reader;
-
-    /** @var ResourceOutputStream */
-    private $writer;
-
-    /** @var string|null */
-    private $localAddress;
-
-    /** @var string|null */
-    private $remoteAddress;
-
     /**
-     * @param resource              $resource  Stream resource.
-     * @param int                   $chunkSize Read and write chunk size.
+     * @param resource $resource Stream resource.
+     * @param int      $chunkSize Read and write chunk size.
      *
      * @return self
      */
@@ -42,24 +26,41 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /**
-     * @param resource              $resource  Stream resource.
+     * @param resource              $resource Stream resource.
      * @param int                   $chunkSize Read and write chunk size.
      * @param ClientTlsContext|null $tlsContext
      *
      * @return self
      */
-    public static function fromClientSocket($resource, int $chunkSize = self::DEFAULT_CHUNK_SIZE, ?ClientTlsContext $tlsContext = null): self
-    {
+    public static function fromClientSocket(
+        $resource,
+        int $chunkSize = self::DEFAULT_CHUNK_SIZE,
+        ?ClientTlsContext $tlsContext = null
+    ): self {
         return new self($resource, $chunkSize, $tlsContext);
     }
 
+    /** @var ClientTlsContext|null */
+    private $tlsContext;
+    /** @var ResourceInputStream */
+    private $reader;
+    /** @var ResourceOutputStream */
+    private $writer;
+    /** @var string|null */
+    private $localAddress;
+    /** @var string|null */
+    private $remoteAddress;
+
     /**
-     * @param resource              $resource  Stream resource.
+     * @param resource              $resource Stream resource.
      * @param int                   $chunkSize Read and write chunk size.
      * @param ClientTlsContext|null $tlsContext
      */
-    private function __construct($resource, int $chunkSize = self::DEFAULT_CHUNK_SIZE, ?ClientTlsContext $tlsContext = null)
-    {
+    private function __construct(
+        $resource,
+        int $chunkSize = self::DEFAULT_CHUNK_SIZE,
+        ?ClientTlsContext $tlsContext = null
+    ) {
         $this->tlsContext = $tlsContext;
         $this->reader = new ResourceInputStream($resource, $chunkSize);
         $this->writer = new ResourceOutputStream($resource, $chunkSize);
@@ -77,7 +78,7 @@ final class ResourceSocket implements EncryptableSocket
         }
 
         if ($this->tlsContext) {
-            $promise = Internal\setupTls($resource, $this->tlsContext->toStreamContextArray());
+            $promise = Internal\setupTls($resource, $this->tlsContext->toStreamContextArray(), $cancellationToken);
         } else {
             $context = @\stream_context_get_options($resource);
 
@@ -89,29 +90,7 @@ final class ResourceSocket implements EncryptableSocket
                 ));
             }
 
-            $promise = Internal\setupTls($resource, $context);
-        }
-
-        if ($cancellationToken) {
-            $deferred = new Deferred();
-            $id = $cancellationToken->subscribe([$deferred, 'fail']);
-
-            $promise->onResolve(static function ($exception) use ($id, $cancellationToken, $deferred) {
-                if ($cancellationToken->isRequested()) {
-                    return;
-                }
-
-                $cancellationToken->unsubscribe($id);
-
-                if ($exception) {
-                    $deferred->fail($exception);
-                    return;
-                }
-
-                $deferred->resolve();
-            });
-
-            $promise = $deferred->promise();
+            $promise = Internal\setupTls($resource, $context, $cancellationToken);
         }
 
         return call(function () use ($promise) {
