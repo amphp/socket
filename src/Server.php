@@ -38,7 +38,7 @@ final class Server
 
         $this->socket = $socket;
         $this->chunkSize = $chunkSize;
-        $this->address = Internal\cleanupSocketName(@\stream_socket_get_name($this->socket, false));
+        $this->address = SocketAddress::fromLocalResource($socket);
 
         \stream_set_blocking($this->socket, false);
 
@@ -150,9 +150,9 @@ final class Server
     }
 
     /**
-     * @return string|null
+     * @return SocketAddress
      */
-    public function getAddress(): ?string
+    public function getAddress(): SocketAddress
     {
         return $this->address;
     }

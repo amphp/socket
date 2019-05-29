@@ -25,7 +25,8 @@ class DatagramSocketTest extends TestCase
             asyncCall(function () use ($endpoint, $remote) {
                 while ([$address, $data] = yield $endpoint->receive()) {
                     $this->assertSame('Hello!', $data);
-                    $this->assertSame($remote, $address);
+                    $this->assertSame($remote->getHost(), $address->getHost());
+                    $this->assertSame($remote->getPort(), $address->getPort());
                 }
             });
         });
@@ -47,7 +48,8 @@ class DatagramSocketTest extends TestCase
             asyncCall(function () use ($endpoint, $remote) {
                 while ([$address, $data] = yield $endpoint->receive()) {
                     $this->assertSame('a', $data);
-                    $this->assertSame($remote, $address);
+                    $this->assertSame($remote->getHost(), $address->getHost());
+                    $this->assertSame($remote->getPort(), $address->getPort());
                     yield $endpoint->send($address, 'b');
                 }
             });

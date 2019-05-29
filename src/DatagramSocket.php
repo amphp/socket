@@ -18,14 +18,14 @@ final class DatagramSocket
     /** @var string Watcher ID. */
     private $watcher;
 
-    /** @var string|null Stream socket name */
+    /** @var SocketAddress */
     private $address;
 
     /** @var Deferred|null */
     private $reader;
 
     /**
-     * @param resource $socket A bound udp socket resource
+     * @param resource $socket    A bound udp socket resource
      * @param int      $chunkSize Maximum chunk size for the
      *
      * @throws \Error If a stream resource is not given for $socket.
@@ -37,7 +37,7 @@ final class DatagramSocket
         }
 
         $this->socket = $socket;
-        $this->address = Internal\cleanupSocketName(@\stream_socket_get_name($this->socket, false));
+        $this->address = SocketAddress::fromLocalResource($socket);
 
         \stream_set_blocking($this->socket, false);
 
@@ -59,7 +59,7 @@ final class DatagramSocket
                 return;
             }
 
-            $deferred->resolve([Internal\cleanupSocketName($address), $data]);
+            $deferred->resolve([SocketAddress::fromSocketName($address), $data]);
 
             if (!$reader) {
                 Loop::disable($watcher);
@@ -82,7 +82,7 @@ final class DatagramSocket
     }
 
     /**
-     * @return Promise<[string $address, string $data]|null> Resolves with null if the socket is closed.
+     * @return Promise<[SocketAddress $address, string $data]|null> Resolves with null if the socket is closed.
      *
      * @throws PendingReceiveError If a receive request is already pending.
      */
@@ -112,8 +112,6 @@ final class DatagramSocket
      */
     public function send(string $address, string $data): Promise
     {
-        \assert($this->isAddressValid($address), 'Invalid packet address');
-
         if (!$this->socket) {
             return new Failure(new SocketException('The endpoint is not writable'));
         }
@@ -171,9 +169,9 @@ final class DatagramSocket
     }
 
     /**
-     * @return string|null
+     * @return SocketAddress
      */
-    public function getAddress(): ?string
+    public function getAddress(): SocketAddress
     {
         return $this->address;
     }
@@ -188,25 +186,5 @@ final class DatagramSocket
             $this->reader->resolve();
             $this->reader = null;
         }
-    }
-
-    /**
-     * Rough address validation to catch programming mistakes.
-     *
-     * @param string $address
-     *
-     * @return bool
-     */
-    private function isAddressValid(string $address): bool
-    {
-        $position = \strrpos($address, ':');
-        if ($position === false) {
-            return ($address[0] ?? '') === "\0"; // udg socket address.
-        }
-
-        $ip = \trim(\substr($address, 0, $position), '[]');
-        $port = (int) \substr($address, $position + 1);
-
-        return \inet_pton($ip) !== false && $port > 0 && $port < 65536;
     }
 }

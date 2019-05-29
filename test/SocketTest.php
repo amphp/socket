@@ -34,10 +34,10 @@ class SocketTest extends TestCase
             $serverSocket = Socket\ResourceSocket::fromServerSocket($s);
 
             $this->assertNotNull($clientSocket->getRemoteAddress());
-            $this->assertSame(__DIR__ . '/socket.sock', $clientSocket->getLocalAddress());
-            $this->assertSame($clientSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
-            $this->assertSame($serverSocket->getRemoteAddress(), $serverSocket->getLocalAddress());
-            $this->assertSame($serverSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
+            $this->assertSame(__DIR__ . '/socket.sock', (string) $clientSocket->getLocalAddress());
+            $this->assertEquals($clientSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
+            $this->assertEquals($serverSocket->getRemoteAddress(), $serverSocket->getLocalAddress());
+            $this->assertEquals($serverSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
         } finally {
             @\unlink(__DIR__ . '/socket.sock');
         }

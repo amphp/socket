@@ -15,7 +15,7 @@ final class ResourceSocket implements EncryptableSocket
     public const DEFAULT_CHUNK_SIZE = ResourceInputStream::DEFAULT_CHUNK_SIZE;
 
     /**
-     * @param resource $resource Stream resource.
+     * @param resource $resource  Stream resource.
      * @param int      $chunkSize Read and write chunk size.
      *
      * @return self
@@ -26,7 +26,7 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /**
-     * @param resource              $resource Stream resource.
+     * @param resource              $resource  Stream resource.
      * @param int                   $chunkSize Read and write chunk size.
      * @param ClientTlsContext|null $tlsContext
      *
@@ -59,7 +59,7 @@ final class ResourceSocket implements EncryptableSocket
     private $remoteAddress;
 
     /**
-     * @param resource              $resource Stream resource.
+     * @param resource              $resource  Stream resource.
      * @param int                   $chunkSize Read and write chunk size.
      * @param ClientTlsContext|null $tlsContext
      */
@@ -71,8 +71,8 @@ final class ResourceSocket implements EncryptableSocket
         $this->tlsContext = $tlsContext;
         $this->reader = new ResourceInputStream($resource, $chunkSize);
         $this->writer = new ResourceOutputStream($resource, $chunkSize);
-        $this->remoteAddress = $this->getAddress(true);
-        $this->localAddress = $this->getAddress(false);
+        $this->remoteAddress = SocketAddress::fromPeerResource($resource);
+        $this->localAddress = SocketAddress::fromLocalResource($resource);
         $this->tlsState = self::TLS_STATE_DISABLED;
     }
 
@@ -177,7 +177,7 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function getLocalAddress(): ?string
+    public function getLocalAddress(): SocketAddress
     {
         return $this->localAddress;
     }
@@ -189,7 +189,7 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function getRemoteAddress(): ?string
+    public function getRemoteAddress(): SocketAddress
     {
         return $this->remoteAddress;
     }
@@ -204,28 +204,5 @@ final class ResourceSocket implements EncryptableSocket
     public function isClosed(): bool
     {
         return $this->getResource() === null;
-    }
-
-    private function getAddress(bool $wantPeer): ?string
-    {
-        $resource = $this->getResource();
-
-        if ($resource === null) {
-            return null;
-        }
-
-        $remoteCleaned = Internal\cleanupSocketName(@\stream_socket_get_name($resource, $wantPeer));
-
-        if ($remoteCleaned !== null) {
-            return $remoteCleaned;
-        }
-
-        $meta = @\stream_get_meta_data($resource) ?? [];
-
-        if (\array_key_exists('stream_type', $meta) && $meta['stream_type'] === 'unix_socket') {
-            return Internal\cleanupSocketName(@\stream_socket_get_name($resource, !$wantPeer));
-        }
-
-        return null;
     }
 }

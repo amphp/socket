@@ -34,12 +34,12 @@ interface Socket extends InputStream, OutputStream
     public function isClosed(): bool;
 
     /**
-     * @return string|null
+     * @return SocketAddress
      */
-    public function getLocalAddress(): ?string;
+    public function getLocalAddress(): SocketAddress;
 
     /**
-     * @return string|null
+     * @return SocketAddress
      */
-    public function getRemoteAddress(): ?string;
+    public function getRemoteAddress(): SocketAddress;
 }
