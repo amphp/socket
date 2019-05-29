@@ -8,6 +8,11 @@ final class ClientTlsContext
     public const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
     public const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
 
+    public static function hasSecurityLevelSupport(): bool
+    {
+        return \OPENSSL_VERSION_NUMBER >= 0x10100000;
+    }
+
     /** @var int */
     private $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
     /** @var string|null */
@@ -314,7 +319,7 @@ final class ClientTlsContext
             throw new \Error("Invalid security level ({$level}), must be between 0 and 5.");
         }
 
-        if (\OPENSSL_VERSION_NUMBER < 0x10100000) {
+        if (!self::hasSecurityLevelSupport()) {
             throw new \Error("Can't set a security level, as PHP is compiled with OpenSSL < 1.1.0.");
         }
 
@@ -330,7 +335,7 @@ final class ClientTlsContext
     public function getSecurityLevel(): int
     {
         // 0 is equivalent to previous versions of OpenSSL and just does nothing
-        if (\OPENSSL_VERSION_NUMBER < 0x10100000) {
+        if (!self::hasSecurityLevelSupport()) {
             return 0;
         }
 
@@ -392,7 +397,7 @@ final class ClientTlsContext
             $options['capath'] = $this->caPath;
         }
 
-        if (\OPENSSL_VERSION_NUMBER >= 0x10100000) {
+        if (self::hasSecurityLevelSupport()) {
             $options['security_level'] = $this->securityLevel;
         }
 

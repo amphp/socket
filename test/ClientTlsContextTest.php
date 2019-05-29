@@ -277,6 +277,19 @@ class ClientTlsContextTest extends TestCase
         (new ClientTlsContext(''))->withSecurityLevel($level);
     }
 
+    public function testWithSecurityLevel(): void
+    {
+        if (!ClientTlsContext::hasSecurityLevelSupport()) {
+            $this->markTestSkipped('OpenSSL 1.1.0 required');
+        }
+
+        $contextA = new ClientTlsContext('');
+        $contextB = $contextA->withSecurityLevel(4);
+
+        $this->assertSame(2, $contextA->getSecurityLevel());
+        $this->assertSame(4, $contextB->getSecurityLevel());
+    }
+
     public function validSecurityLevelDataProvider(): array
     {
         return [
@@ -296,7 +309,7 @@ class ClientTlsContextTest extends TestCase
      */
     public function testWithSecurityLevelValid($level): void
     {
-        if (\OPENSSL_VERSION_NUMBER >= 0x10100000) {
+        if (ClientTlsContext::hasSecurityLevelSupport()) {
             $value = (new ClientTlsContext(''))
                 ->withSecurityLevel($level)
                 ->getSecurityLevel();
