@@ -12,7 +12,10 @@ use Amp\Success;
 use League\Uri;
 use function Amp\call;
 
-final class BasicSocketPool implements SocketPool
+/**
+ * SocketPool implementation that doesn't impose any limits on concurrent open connections.
+ */
+final class UnlimitedSocketPool implements SocketPool
 {
     private const ALLOWED_SCHEMES = [
         'tcp' => null,
