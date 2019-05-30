@@ -16,19 +16,19 @@ final class BasicSocketPool implements SocketPool
 {
     private const ALLOWED_SCHEMES = [
         'tcp' => null,
-        'udp' => null,
         'unix' => null,
-        'udg' => null,
     ];
 
     private $sockets = [];
     private $objectIdCacheKeyMap = [];
     private $pendingCount = [];
     private $idleTimeout;
+    private $connector;
 
-    public function __construct(int $idleTimeout = 10000)
+    public function __construct(int $idleTimeout = 10000, ?Connector $connector = null)
     {
         $this->idleTimeout = $idleTimeout;
+        $this->connector = $connector ?? connector();
     }
 
     /** @inheritdoc */
@@ -203,7 +203,7 @@ final class BasicSocketPool implements SocketPool
 
             try {
                 /** @var EncryptableSocket $socket */
-                $socket = yield connect($uri, $connectContext, $token);
+                $socket = yield $this->connector->connect($uri, $connectContext, $token);
             } finally {
                 if (--$this->pendingCount[$uri] === 0) {
                     unset($this->pendingCount[$uri]);
