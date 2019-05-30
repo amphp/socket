@@ -96,7 +96,10 @@ final class SocketAddress
         return $this->port;
     }
 
-    public function __toString(): string
+    /**
+     * @return string host:port formatted string.
+     */
+    public function toString(): string
     {
         $host = $this->host;
 
@@ -109,5 +112,15 @@ final class SocketAddress
         }
 
         return $host . ':' . $this->port;
+    }
+
+    /**
+     * @see toString
+     *
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return $this->toString();
     }
 }
