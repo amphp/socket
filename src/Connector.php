@@ -3,6 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\CancellationToken;
+use Amp\CancelledException;
 use Amp\Promise;
 
 interface Connector
@@ -17,6 +18,7 @@ interface Connector
      * @return Promise<EncryptableSocket>
      *
      * @throws ConnectException
+     * @throws CancelledException
      */
     public function connect(
         string $uri,

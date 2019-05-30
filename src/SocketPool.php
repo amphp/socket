@@ -3,6 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\CancellationToken;
+use Amp\CancelledException;
 use Amp\Promise;
 
 /**
@@ -28,6 +29,7 @@ interface SocketPool
      * @return Promise<EncryptableSocket> Resolves to an EncryptableSocket instance once a connection is available.
      *
      * @throws SocketException
+     * @throws CancelledException
      */
     public function checkout(
         string $uri,

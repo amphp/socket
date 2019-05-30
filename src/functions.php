@@ -3,6 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\CancellationToken;
+use Amp\CancelledException;
 use Amp\Loop;
 use Amp\Promise;
 
@@ -112,6 +113,7 @@ function connector(Connector $connector = null): Connector
  * @return Promise<EncryptableSocket>
  *
  * @throws ConnectException
+ * @throws CancelledException
  */
 function connect(string $uri, ConnectContext $context = null, CancellationToken $token = null): Promise
 {
