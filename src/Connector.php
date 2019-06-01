@@ -22,7 +22,7 @@ interface Connector
      */
     public function connect(
         string $uri,
-        ConnectContext $context = null,
-        CancellationToken $token = null
+        ?ConnectContext $context = null,
+        ?CancellationToken $token = null
     ): Promise;
 }

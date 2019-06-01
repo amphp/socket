@@ -19,7 +19,7 @@ final class StaticConnector implements Connector
         $this->connector = $connector;
     }
 
-    public function connect(string $uri, ConnectContext $context = null, CancellationToken $token = null): Promise
+    public function connect(string $uri, ?ConnectContext $context = null, ?CancellationToken $token = null): Promise
     {
         return $this->connector->connect($this->uri, $context, $token);
     }
