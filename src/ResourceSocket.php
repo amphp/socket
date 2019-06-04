@@ -205,4 +205,13 @@ final class ResourceSocket implements EncryptableSocket
     {
         return $this->getResource() === null;
     }
+
+    /**
+     * @param int $chunkSize New chunk size for reading and writing.
+     */
+    public function setChunkSize(int $chunkSize): void
+    {
+        $this->reader->setChunkSize($chunkSize);
+        $this->writer->setChunkSize($chunkSize);
+    }
 }

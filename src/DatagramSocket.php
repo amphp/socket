@@ -24,6 +24,9 @@ final class DatagramSocket
     /** @var Deferred|null */
     private $reader;
 
+    /** @var int */
+    private $chunkSize;
+
     /**
      * @param resource $socket    A bound udp socket resource
      * @param int      $chunkSize Maximum chunk size for the
@@ -38,13 +41,14 @@ final class DatagramSocket
 
         $this->socket = $socket;
         $this->address = SocketAddress::fromLocalResource($socket);
+        $this->chunkSize = &$chunkSize;
 
         \stream_set_blocking($this->socket, false);
 
         $reader = &$this->reader;
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
             &$reader,
-            $chunkSize
+            &$chunkSize
         ) {
             $deferred = $reader;
             $reader = null;
@@ -174,6 +178,14 @@ final class DatagramSocket
     public function getAddress(): SocketAddress
     {
         return $this->address;
+    }
+
+    /**
+     * @param int $chunkSize The new maximum packet size to receive.
+     */
+    public function setChunkSize(int $chunkSize): void
+    {
+        $this->chunkSize = $chunkSize;
     }
 
     private function free(): void
