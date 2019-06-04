@@ -117,7 +117,7 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function shutdownTls(): Promise
+    public function shutdownTls(?CancellationToken $cancellationToken = null): Promise
     {
         if (($resource = $this->reader->getResource()) === null) {
             return new Failure(new ClosedException("Can't shutdown TLS, because the socket has already been closed"));
