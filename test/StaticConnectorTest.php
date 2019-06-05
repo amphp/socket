@@ -18,7 +18,7 @@ class StaticConnectorTest extends TestCase
             // nothing
         });
 
-        $underlyingConnector->connect('override-uri')->shouldBeCalled()->willReturn($expected);
+        $underlyingConnector->connect('override-uri', null, null)->shouldBeCalled()->willReturn($expected);
 
         $returned = $staticSocketPool->connect('test-url');
 
