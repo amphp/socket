@@ -18,12 +18,14 @@ class DatagramSocketTest extends TestCase
             $this->assertInternalType('resource', $endpoint->getResource());
 
             $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
+            \assert($socket instanceof Socket\ResourceSocket);
             $remote = $socket->getLocalAddress();
 
             yield $socket->write('Hello!');
 
             asyncCall(function () use ($endpoint, $remote) {
                 while ([$address, $data] = yield $endpoint->receive()) {
+                    \assert($address instanceof Socket\SocketAddress);
                     $this->assertSame('Hello!', $data);
                     $this->assertSame($remote->getHost(), $address->getHost());
                     $this->assertSame($remote->getPort(), $address->getPort());
@@ -41,12 +43,14 @@ class DatagramSocketTest extends TestCase
             $this->assertInternalType('resource', $endpoint->getResource());
 
             $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
+            \assert($socket instanceof Socket\ResourceSocket);
             $remote = $socket->getLocalAddress();
 
             yield $socket->write('a');
 
             asyncCall(function () use ($endpoint, $remote) {
                 while ([$address, $data] = yield $endpoint->receive()) {
+                    \assert($address instanceof Socket\SocketAddress);
                     $this->assertSame('a', $data);
                     $this->assertSame($remote->getHost(), $address->getHost());
                     $this->assertSame($remote->getPort(), $address->getPort());
@@ -70,7 +74,7 @@ class DatagramSocketTest extends TestCase
             Loop::delay(100, [$endpoint, 'close']);
 
             $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
-
+            \assert($socket instanceof Socket\ResourceSocket);
             yield $socket->write('Hello!');
 
             while ([$address, $data] = yield $endpoint->receive()) {
@@ -112,6 +116,31 @@ class DatagramSocketTest extends TestCase
             try {
                 $promise = $endpoint->receive();
                 $endpoint->receive();
+            } finally {
+                $endpoint->close();
+            }
+        });
+    }
+
+    public function testSetChunkSize()
+    {
+        Loop::run(function () {
+            $context = (new Socket\BindContext())->withChunkSize(1);
+
+            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0', $context);
+
+            try {
+                $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
+                \assert($socket instanceof Socket\ResourceSocket);
+
+                yield $socket->write('Hello!');
+                [$address, $data] = yield $endpoint->receive();
+                $this->assertSame('H', $data);
+
+                $endpoint->setChunkSize(5);
+                yield $socket->write('Hello!');
+                [$address, $data] = yield $endpoint->receive();
+                $this->assertSame('Hello', $data);
             } finally {
                 $endpoint->close();
             }
