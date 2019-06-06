@@ -5,15 +5,48 @@ namespace Amp\Socket\Test;
 use Amp\Delayed;
 use Amp\Loop;
 use Amp\Socket;
+use Amp\Socket\Server;
 use PHPUnit\Framework\TestCase;
 use function Amp\asyncCall;
 
 class ServerTest extends TestCase
 {
+    /**
+     * @expectedException \Error
+     * @expectedExceptionMessage Only tcp and unix schemes allowed for server creation
+     */
+    public function testListenInvalidScheme(): void
+    {
+        Server::listen("invalid://127.0.0.1:0");
+    }
+
+    /**
+     * @expectedException \Amp\Socket\SocketException
+     * @expectedExceptionMessageRegExp /Could not create server .*: \[Error: #.*\] .*$/
+     */
+    public function testListenStreamSocketServerError(): void
+    {
+        Server::listen('error');
+    }
+
+    public function testListenIPv6(): void
+    {
+        try {
+            $socket = Server::listen('[::1]:0');
+            $this->assertRegExp('(\[::1\]:\d+)', (string) $socket->getAddress());
+        } catch (Socket\SocketException $e) {
+            if ($e->getMessage() === 'Could not create server tcp://[::1]:0: [Error: #0] Cannot assign requested address') {
+                $this->markTestSkipped('Missing IPv6 support');
+            }
+
+            throw $e;
+        }
+    }
+
     public function testAccept(): void
     {
         Loop::run(function () {
-            $server = Socket\listen('127.0.0.1:0');
+            $server = Server::listen('127.0.0.1:0');
 
             asyncCall(function () use ($server) {
                 while ($socket = yield $server->accept()) {
@@ -32,7 +65,7 @@ class ServerTest extends TestCase
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
                 ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
-            $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+            $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\ResourceSocket $socket */
@@ -69,7 +102,7 @@ class ServerTest extends TestCase
         Loop::run(function () {
             $tlsContext = (new Socket\ServerTlsContext)
                 ->withCertificates(['amphp.org' => new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem')]);
-            $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+            $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\EncryptableSocket $socket */
@@ -109,7 +142,7 @@ class ServerTest extends TestCase
                 'www.amphp.org' => new Socket\Certificate(__DIR__ . '/tls/www.amphp.org.pem'),
             ]);
 
-            $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+            $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\ResourceSocket $socket */
@@ -161,7 +194,7 @@ class ServerTest extends TestCase
                 'www.amphp.org' => new Socket\Certificate(__DIR__ . '/tls/www.amphp.org.crt', __DIR__ . '/tls/www.amphp.org.key'),
             ]);
 
-            $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+            $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
             asyncCall(function () use ($server) {
                 /** @var Socket\ResourceSocket $socket */

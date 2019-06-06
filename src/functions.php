@@ -10,75 +10,25 @@ use Amp\Promise;
 const LOOP_CONNECTOR_IDENTIFIER = Connector::class;
 
 /**
+ * @deprecated Use Server::listen() instead.
+ *
  * Listen for client connections on the specified server address.
  *
  * If you want to accept TLS connections, you have to use `yield $socket->setupTls()` after accepting new clients.
  *
- * @param string      $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
- * @param BindContext $context Context options for listening.
+ * @see Server::listen()
+ *
+ * @param string           $uri     URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param BindContext|null $context Context options for listening.
  *
  * @return Server
  *
  * @throws SocketException If binding to the specified URI failed.
  * @throws \Error If an invalid scheme is given.
  */
-function listen(string $uri, BindContext $context = null): Server
+function listen(string $uri, ?BindContext $context = null): Server
 {
-    $context = $context ?? new BindContext;
-
-    $scheme = \strstr($uri, '://', true);
-
-    if ($scheme === false) {
-        $uri = 'tcp://' . $uri;
-    } elseif (!\in_array($scheme, ['tcp', 'unix'])) {
-        throw new \Error('Only tcp and unix schemes allowed for server creation');
-    }
-
-    $streamContext = \stream_context_create($context->toStreamContextArray());
-
-    // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
-    $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $streamContext);
-
-    if (!$server || $errno) {
-        throw new SocketException(\sprintf('Could not create server %s: [Error: #%d] %s', $uri, $errno, $errstr), $errno);
-    }
-
-    return new Server($server, $context->getChunkSize());
-}
-
-/**
- * Create a new Datagram (UDP server) on the specified server address.
- *
- * @param string      $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
- * @param BindContext $context Context options for listening.
- *
- * @return DatagramSocket
- *
- * @throws SocketException If binding to the specified URI failed.
- * @throws \Error If an invalid scheme is given.
- */
-function bindDatagramSocket(string $uri, BindContext $context = null): DatagramSocket
-{
-    $context = $context ?? new BindContext;
-
-    $scheme = \strstr($uri, '://', true);
-
-    if ($scheme === false) {
-        $uri = 'udp://' . $uri;
-    } elseif ($scheme !== 'udp') {
-        throw new \Error('Only udp scheme allowed for datagram creation');
-    }
-
-    $streamContext = \stream_context_create($context->toStreamContextArray());
-
-    // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
-    $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND, $streamContext);
-
-    if (!$server || $errno) {
-        throw new SocketException(\sprintf('Could not create datagram %s: [Error: #%d] %s', $uri, $errno, $errstr), $errno);
-    }
-
-    return new DatagramSocket($server, $context->getChunkSize());
+    return Server::listen($uri, $context);
 }
 
 /**
@@ -106,7 +56,7 @@ function connector(Connector $connector = null): Connector
 /**
  * Asynchronously establish a socket connection to the specified URI.
  *
- * @param string                 $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param string                 $uri     URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ConnectContext         $context Socket connect context to use when connecting.
  * @param CancellationToken|null $token
  *

@@ -7,6 +7,7 @@ use Amp\Delayed;
 use Amp\Loop;
 use Amp\PHPUnit\TestCase;
 use Amp\Socket;
+use Amp\Socket\Server;
 use function Amp\asyncCall;
 
 class TlsFragmentationTest extends TestCase
@@ -22,11 +23,11 @@ class TlsFragmentationTest extends TestCase
         }
 
         Loop::run(function () {
-            $proxyServer = Socket\listen('127.0.0.1:0');
+            $proxyServer = Server::listen('127.0.0.1:0');
 
             $tlsContext = (new Socket\ServerTlsContext)
                 ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
-            $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+            $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
             // Proxy to apply chunking of single bytes
             asyncCall(function () use ($proxyServer, $server) {

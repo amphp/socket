@@ -4,15 +4,34 @@ namespace Amp\Socket\Test;
 
 use Amp\Loop;
 use Amp\Socket;
+use Amp\Socket\DatagramSocket;
 use PHPUnit\Framework\TestCase;
 use function Amp\asyncCall;
 
 class DatagramSocketTest extends TestCase
 {
+    /**
+     * @expectedException \Error
+     * @expectedExceptionMessage Only udp scheme allowed for datagram creation
+     */
+    public function testBindEndpointInvalidScheme(): void
+    {
+        DatagramSocket::bind("invalid://127.0.0.1:0");
+    }
+
+    /**
+     * @expectedException \Amp\Socket\SocketException
+     * @expectedExceptionMessageRegExp /Could not create datagram .*: \[Error: #.*\] .*$/
+     */
+    public function testBindEndpointError(): void
+    {
+        DatagramSocket::bind('error');
+    }
+
     public function testReceive()
     {
         Loop::run(function () {
-            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
+            $endpoint = DatagramSocket::bind('127.0.0.1:0');
             Loop::delay(100, [$endpoint, 'close']);
 
             $this->assertInternalType('resource', $endpoint->getResource());
@@ -37,7 +56,7 @@ class DatagramSocketTest extends TestCase
     public function testSend()
     {
         Loop::run(function () {
-            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
+            $endpoint = DatagramSocket::bind('127.0.0.1:0');
             Loop::delay(100, [$endpoint, 'close']);
 
             $this->assertInternalType('resource', $endpoint->getResource());
@@ -70,7 +89,7 @@ class DatagramSocketTest extends TestCase
         $this->expectExceptionMessage('Could not send packet on endpoint: stream_socket_sendto(): Message too long');
 
         Loop::run(function () {
-            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
+            $endpoint = DatagramSocket::bind('127.0.0.1:0');
             Loop::delay(100, [$endpoint, 'close']);
 
             $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
@@ -86,7 +105,7 @@ class DatagramSocketTest extends TestCase
     public function testReceiveThenClose()
     {
         Loop::run(function () {
-            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
+            $endpoint = DatagramSocket::bind('127.0.0.1:0');
 
             $promise = $endpoint->receive();
 
@@ -99,7 +118,7 @@ class DatagramSocketTest extends TestCase
     public function testReceiveAfterClose()
     {
         Loop::run(function () {
-            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
+            $endpoint = DatagramSocket::bind('127.0.0.1:0');
 
             $endpoint->close();
 
@@ -112,7 +131,7 @@ class DatagramSocketTest extends TestCase
         $this->expectException(Socket\PendingReceiveError::class);
 
         Loop::run(function () {
-            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0');
+            $endpoint = DatagramSocket::bind('127.0.0.1:0');
             try {
                 $promise = $endpoint->receive();
                 $endpoint->receive();
@@ -127,7 +146,7 @@ class DatagramSocketTest extends TestCase
         Loop::run(function () {
             $context = (new Socket\BindContext())->withChunkSize(1);
 
-            $endpoint = Socket\bindDatagramSocket('127.0.0.1:0', $context);
+            $endpoint = DatagramSocket::bind('127.0.0.1:0', $context);
 
             try {
                 $socket = yield Socket\connect('udp://' . $endpoint->getAddress());

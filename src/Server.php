@@ -25,7 +25,44 @@ final class Server
     private $acceptor;
 
     /**
-     * @param resource $socket A bound socket server resource
+     * Listen for client connections on the specified server address.
+     *
+     * If you want to accept TLS connections, you have to use `yield $socket->setupTls()` after accepting new clients.
+     *
+     * @param string           $uri     URI in scheme://host:port format. TCP is assumed if no scheme is present.
+     * @param BindContext|null $context Context options for listening.
+     *
+     * @return Server
+     *
+     * @throws SocketException If binding to the specified URI failed.
+     * @throws \Error If an invalid scheme is given.
+     */
+    public static function listen(string $uri, ?BindContext $context = null): self
+    {
+        $context = $context ?? new BindContext;
+
+        $scheme = \strstr($uri, '://', true);
+
+        if ($scheme === false) {
+            $uri = 'tcp://' . $uri;
+        } elseif (!\in_array($scheme, ['tcp', 'unix'])) {
+            throw new \Error('Only tcp and unix schemes allowed for server creation');
+        }
+
+        $streamContext = \stream_context_create($context->toStreamContextArray());
+
+        // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
+        $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $streamContext);
+
+        if (!$server || $errno) {
+            throw new SocketException(\sprintf('Could not create server %s: [Error: #%d] %s', $uri, $errno, $errstr), $errno);
+        }
+
+        return new self($server, $context->getChunkSize());
+    }
+
+    /**
+     * @param resource $socket    A bound socket server resource
      * @param int      $chunkSize Chunk size for the input and output stream.
      *
      * @throws \Error If a stream resource is not given for $socket.

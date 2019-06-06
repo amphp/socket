@@ -6,10 +6,10 @@ require __DIR__ . '/../vendor/autoload.php';
 // Connect with 'nc -u 127.0.0.1 1337'
 
 use Amp\Loop;
-use Amp\Socket;
+use Amp\Socket\DatagramSocket;
 
 Loop::run(static function () {
-    $datagram = Socket\bindDatagramSocket('127.0.0.1:1337');
+    $datagram = DatagramSocket::bind('127.0.0.1:1337');
 
     echo "Datagram active on {$datagram->getAddress()}" . PHP_EOL;
 

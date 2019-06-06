@@ -28,6 +28,41 @@ final class DatagramSocket
     private $chunkSize;
 
     /**
+     * Create a new Datagram (UDP server) on the specified server address.
+     *
+     * @param string           $uri     URI in scheme://host:port format. UDP is assumed if no scheme is present.
+     * @param BindContext|null $context Context options for listening.
+     *
+     * @return DatagramSocket
+     *
+     * @throws SocketException If binding to the specified URI failed.
+     * @throws \Error If an invalid scheme is given.
+     */
+    public static function bind(string $uri, ?BindContext $context = null): self
+    {
+        $context = $context ?? new BindContext;
+
+        $scheme = \strstr($uri, '://', true);
+
+        if ($scheme === false) {
+            $uri = 'udp://' . $uri;
+        } elseif ($scheme !== 'udp') {
+            throw new \Error('Only udp scheme allowed for datagram creation');
+        }
+
+        $streamContext = \stream_context_create($context->toStreamContextArray());
+
+        // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
+        $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND, $streamContext);
+
+        if (!$server || $errno) {
+            throw new SocketException(\sprintf('Could not create datagram %s: [Error: #%d] %s', $uri, $errno, $errstr), $errno);
+        }
+
+        return new self($server, $context->getChunkSize());
+    }
+
+    /**
      * @param resource $socket    A bound udp socket resource
      * @param int      $chunkSize Maximum chunk size for the
      *

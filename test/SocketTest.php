@@ -4,6 +4,7 @@ namespace Amp\Socket\Test;
 
 use Amp\Loop;
 use Amp\Socket;
+use Amp\Socket\Server;
 use PHPUnit\Framework\TestCase;
 use function Amp\asyncCall;
 use function Amp\ByteStream\buffer;
@@ -45,7 +46,7 @@ class SocketTest extends TestCase
 
     public function testEnableCryptoWithoutTlsContext(): void
     {
-        $server = Socket\listen('127.0.0.1:0');
+        $server = Server::listen('127.0.0.1:0');
 
         asyncCall(function () use ($server) {
             yield Socket\connect($server->getAddress());
