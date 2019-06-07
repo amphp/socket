@@ -6,23 +6,22 @@ permalink: /server
 
 ## Listening
 
-To listen on a port or unix domain socket, you can use `Amp\Socket\listen`. It's a wrapper around `stream_socket_server` that gives useful error message on failures via exceptions.
+To listen on a port or unix domain socket, you can use `Amp\Socket\Server::listen`. It's a wrapper around `stream_socket_server` that gives useful error message on failures via exceptions.
 
 ```php
 /**
  * Listen for client connections on the specified server address.
  *
- * If you want to accept TLS connections, you have to use `yield $socket->enableCrypto()` after accepting new clients.
+ * If you want to accept TLS connections, you have to use `yield $socket->setupTls()` after accepting new clients.
  *
  * @param string              $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
- * @param ServerListenContext $socketContext Context options for listening.
- * @param ServerTlsContext    $tlsContext Context options for TLS connections.
+ * @param BindContext $socketContext Context options for listening.
  *
  * @return Server
  *
  * @throws SocketException If binding to the specified URI failed.
  */
-function listen(string $uri, ServerListenContext $socketContext = null, ServerTlsContext $tlsContext = null): Server {
+function listen(string $uri, BindContext $socketContext = null): Server {
     /* ... */
 }
 ```
@@ -34,7 +33,7 @@ function listen(string $uri, ServerListenContext $socketContext = null, ServerTl
 Once you're listening, you can accept clients using `Server::accept()`. It returns a `Promise` that returns once a new client has been accepted. It's usually called within a `while` loop:
 
 ```php
-$server = Amp\Socket\listen("tcp://127.0.0.1:1337");
+$server = Server::listen("tcp://127.0.0.1:1337");
 
 while ($client = yield $server->accept()) {
     // do something with $client, which is a ServerSocket instance
@@ -49,9 +48,15 @@ while ($client = yield $server->accept()) {
 It's best to handle clients in their own coroutine, while letting the server accept all clients as soon as there are new clients.
 
 ```php
+use Amp\Loop;
+use Amp\Socket\EncryptableSocket;
+use Amp\Socket\Server;
+
 Loop::run(function () {
-    $clientHandler = function (ServerSocket $socket) {
-        [$ip, $port] = explode(":", $socket->getRemoteAddress());
+    $clientHandler = function (EncryptableSocket $socket) {
+        $address = $socket->getRemoteAddress();
+        $ip = $address->getHost();
+        $port = $address->getPort();
 
         echo "Accepted connection from {$ip}:{$port}." . PHP_EOL;
 
@@ -61,7 +66,7 @@ Loop::run(function () {
         yield $socket->end("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}");
     };
     
-    $server = Amp\Socket\listen("127.0.0.1:0");
+    $server = Server::listen("127.0.0.1:0");
 
     echo "Listening for new connections on " . $server->getAddress() . " ..." . PHP_EOL;
     echo "Open your browser and visit http://" . $server->getAddress() . "/" . PHP_EOL;

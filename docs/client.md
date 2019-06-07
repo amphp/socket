@@ -16,7 +16,7 @@ You can establish a socket connection to a specified URI by using `Amp\Socket\co
  * @param ConnectContext         $socketContext Socket connect context to use when connecting.
  * @param CancellationToken|null $token
  *
- * @return Promise<\Amp\Socket\ClientSocket>
+ * @return Promise<\Amp\Socket\EncryptableSocket>
  */
 function connect(
     string $uri,

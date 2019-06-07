@@ -32,7 +32,7 @@ require __DIR__ . '/../vendor/autoload.php';
 // This is a very simple HTTP client that just prints the response without parsing.
 // league/uri-schemes required for this example.
 
-use Amp\ByteStream\ResourceOutputStream;
+use Amp\ByteStream;
 use Amp\Loop;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
@@ -41,7 +41,7 @@ use League\Uri;
 use function Amp\Socket\connect;
 
 Loop::run(static function () use ($argv) {
-    $stdout = new ResourceOutputStream(STDOUT);
+    $stdout = ByteStream\getStdout();
 
     if (\count($argv) !== 2) {
         yield $stdout->write('Usage: examples/simple-http-client.php <url>' . PHP_EOL);
@@ -90,11 +90,14 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Amp\Loop;
 use Amp\Socket\ResourceSocket;
+use Amp\Socket\Server;
 use function Amp\asyncCoroutine;
 
 Loop::run(static function () {
     $clientHandler = asyncCoroutine(static function (ResourceSocket $socket) {
-        [$ip, $port] = \explode(':', $socket->getRemoteAddress());
+        $address = $socket->getRemoteAddress();
+        $ip = $address->getHost();
+        $port = $address->getPort();
 
         echo "Accepted connection from {$ip}:{$port}." . PHP_EOL;
 
@@ -105,7 +108,7 @@ Loop::run(static function () {
         yield $socket->end($req);
     });
 
-    $server = Amp\Socket\listen('127.0.0.1:0');
+    $server = Server::listen('127.0.0.1:0');
 
     echo 'Listening for new connections on ' . $server->getAddress() . ' ...' . PHP_EOL;
     echo 'Open your browser and visit http://' . $server->getAddress() . '/' . PHP_EOL;
