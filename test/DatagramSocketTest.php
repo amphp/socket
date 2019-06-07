@@ -37,7 +37,7 @@ class DatagramSocketTest extends TestCase
             $this->assertInternalType('resource', $endpoint->getResource());
 
             $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
-            \assert($socket instanceof Socket\ResourceSocket);
+            \assert($socket instanceof Socket\EncryptableSocket);
             $remote = $socket->getLocalAddress();
 
             yield $socket->write('Hello!');
@@ -62,7 +62,7 @@ class DatagramSocketTest extends TestCase
             $this->assertInternalType('resource', $endpoint->getResource());
 
             $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
-            \assert($socket instanceof Socket\ResourceSocket);
+            \assert($socket instanceof Socket\EncryptableSocket);
             $remote = $socket->getLocalAddress();
 
             yield $socket->write('a');
@@ -93,7 +93,7 @@ class DatagramSocketTest extends TestCase
             Loop::delay(100, [$endpoint, 'close']);
 
             $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
-            \assert($socket instanceof Socket\ResourceSocket);
+            \assert($socket instanceof Socket\EncryptableSocket);
             yield $socket->write('Hello!');
 
             while ([$address, $data] = yield $endpoint->receive()) {
@@ -150,7 +150,7 @@ class DatagramSocketTest extends TestCase
 
             try {
                 $socket = yield Socket\connect('udp://' . $endpoint->getAddress());
-                \assert($socket instanceof Socket\ResourceSocket);
+                \assert($socket instanceof Socket\EncryptableSocket);
 
                 yield $socket->write('Hello!');
                 [$address, $data] = yield $endpoint->receive();
