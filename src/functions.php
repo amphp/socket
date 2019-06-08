@@ -89,3 +89,17 @@ function createPair(): array
 
     return [ResourceSocket::fromClientSocket($sockets[0]), ResourceSocket::fromClientSocket($sockets[1])];
 }
+
+/**
+ * @see https://wiki.openssl.org/index.php/Manual:OPENSSL_VERSION_NUMBER(3)
+ * @return bool
+ */
+function hasTlsAlpnSupport(): bool
+{
+    return \defined('OPENSSL_VERSION_NUMBER') && \OPENSSL_VERSION_NUMBER >= 0x10002000;
+}
+
+function hasTlsSecurityLevelSupport(): bool
+{
+    return \defined('OPENSSL_VERSION_NUMBER') && \OPENSSL_VERSION_NUMBER >= 0x10100000;
+}

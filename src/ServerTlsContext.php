@@ -8,11 +8,6 @@ final class ServerTlsContext
     public const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_SERVER;
     public const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_SERVER;
 
-    public static function hasSecurityLevelSupport(): bool
-    {
-        return \OPENSSL_VERSION_NUMBER >= 0x10100000;
-    }
-
     /** @var int */
     private $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
     /** @var null|string */
@@ -35,6 +30,8 @@ final class ServerTlsContext
     private $certificates = [];
     /** @var int */
     private $securityLevel = 2;
+    /** @var string[] */
+    private $alpnProtocols = [];
 
     /**
      * Minimum TLS version to negotiate.
@@ -340,7 +337,7 @@ final class ServerTlsContext
             throw new \Error("Invalid security level ({$level}), must be between 0 and 5.");
         }
 
-        if (!self::hasSecurityLevelSupport()) {
+        if (!hasTlsSecurityLevelSupport()) {
             throw new \Error("Can't set a security level, as PHP is compiled with OpenSSL < 1.1.0.");
         }
 
@@ -356,11 +353,42 @@ final class ServerTlsContext
     public function getSecurityLevel(): int
     {
         // 0 is equivalent to previous versions of OpenSSL and just does nothing
-        if (!self::hasSecurityLevelSupport()) {
+        if (!hasTlsSecurityLevelSupport()) {
             return 0;
         }
 
         return $this->securityLevel;
+    }
+
+    /**
+     * @param string[] $protocols
+     *
+     * @return self Cloned, modified instance.
+     */
+    public function withAlpnProtocols(array $protocols): self
+    {
+        if (!hasTlsAlpnSupport()) {
+            throw new \Error("Can't set a security level, as PHP is compiled with OpenSSL < 1.0.2.");
+        }
+
+        foreach ($protocols as $protocol) {
+            if (!\is_string($protocol)) {
+                throw new \Error("ALPN protocol names must be strings.");
+            }
+        }
+
+        $clone = clone $this;
+        $clone->alpnProtocols = $protocols;
+
+        return $clone;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getAlpnProtocols(): array
+    {
+        return $this->alpnProtocols;
     }
 
     /**
@@ -383,6 +411,10 @@ final class ServerTlsContext
             'capture_peer_cert' => $this->capturePeer,
             'capture_peer_chain' => $this->capturePeer,
         ];
+
+        if (!empty($this->alpnProtocols)) {
+            $options['alpn_protocols'] = \implode(', ', $this->alpnProtocols);
+        }
 
         if ($this->defaultCertificate !== null) {
             $options['local_cert'] = $this->defaultCertificate->getCertFile();

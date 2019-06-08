@@ -2,6 +2,7 @@
 
 namespace Amp\Socket\Test;
 
+use Amp\Socket;
 use Amp\Socket\Certificate;
 use Amp\Socket\ClientTlsContext;
 use PHPUnit\Framework\TestCase;
@@ -279,7 +280,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithSecurityLevel(): void
     {
-        if (!ClientTlsContext::hasSecurityLevelSupport()) {
+        if (!Socket\hasTlsSecurityLevelSupport()) {
             $this->markTestSkipped('OpenSSL 1.1.0 required');
         }
 
@@ -309,7 +310,7 @@ class ClientTlsContextTest extends TestCase
      */
     public function testWithSecurityLevelValid($level): void
     {
-        if (ClientTlsContext::hasSecurityLevelSupport()) {
+        if (Socket\hasTlsSecurityLevelSupport()) {
             $value = (new ClientTlsContext(''))
                 ->withSecurityLevel($level)
                 ->getSecurityLevel();
@@ -330,6 +331,32 @@ class ClientTlsContextTest extends TestCase
         } else {
             $this->assertSame(0, (new ClientTlsContext(''))->getSecurityLevel());
         }
+    }
+
+    public function testWithAlpnProtocols(): void
+    {
+        if (!Socket\hasTlsAlpnSupport()) {
+            $this->markTestSkipped('OpenSSL 1.0.2 required');
+        }
+
+        $contextA = new ClientTlsContext('');
+        $contextB = $contextA->withAlpnProtocols(['http1.1', 'h2']);
+
+        $this->assertSame([], $contextA->getAlpnProtocols());
+        $this->assertSame(['http1.1', 'h2'], $contextB->getAlpnProtocols());
+    }
+
+    public function testWithInvalidAlpnProtocols(): void
+    {
+        if (!Socket\hasTlsAlpnSupport()) {
+            $this->markTestSkipped('OpenSSL 1.0.2 required');
+        }
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('ALPN protocol names must be strings.');
+
+        $context = new ClientTlsContext('');
+        $context->withAlpnProtocols([1, 2]);
     }
 
     public function testStreamContextArray(): void

@@ -3,6 +3,7 @@
 namespace Amp\Socket\Test;
 
 use Amp\Dns\Record;
+use Amp\Socket;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use PHPUnit\Framework\TestCase;
@@ -186,7 +187,7 @@ class ConnectContextTest extends TestCase
             'SNI_enabled' => true,
         ]];
 
-        if (ClientTlsContext::hasSecurityLevelSupport()) {
+        if (Socket\hasTlsSecurityLevelSupport()) {
             $expected['ssl']['security_level'] = 2;
         }
 

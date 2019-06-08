@@ -2,6 +2,7 @@
 
 namespace Amp\Socket\Test;
 
+use Amp\Socket;
 use Amp\Socket\Certificate;
 use Amp\Socket\ServerTlsContext;
 use PHPUnit\Framework\TestCase;
@@ -305,5 +306,31 @@ class ServerTlsContextTest extends TestCase
         } else {
             $this->assertSame(0, (new ServerTlsContext)->getSecurityLevel());
         }
+    }
+
+    public function testWithAlpnProtocols(): void
+    {
+        if (!Socket\hasTlsAlpnSupport()) {
+            $this->markTestSkipped('OpenSSL 1.0.2 required');
+        }
+
+        $contextA = new ServerTlsContext;
+        $contextB = $contextA->withAlpnProtocols(['http1.1', 'h2']);
+
+        $this->assertSame([], $contextA->getAlpnProtocols());
+        $this->assertSame(['http1.1', 'h2'], $contextB->getAlpnProtocols());
+    }
+
+    public function testWithInvalidAlpnProtocols(): void
+    {
+        if (!Socket\hasTlsAlpnSupport()) {
+            $this->markTestSkipped('OpenSSL 1.0.2 required');
+        }
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('ALPN protocol names must be strings.');
+
+        $context = new ServerTlsContext;
+        $context->withAlpnProtocols([1, 2]);
     }
 }
