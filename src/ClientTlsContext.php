@@ -364,15 +364,15 @@ final class ClientTlsContext
      *
      * @return self Cloned, modified instance.
      */
-    public function withAlpnProtocols(array $protocols): self
+    public function withApplicationLayerProtocols(array $protocols): self
     {
         if (!hasTlsAlpnSupport()) {
-            throw new \Error("Can't set a security level, as PHP is compiled with OpenSSL < 1.0.2.");
+            throw new \Error("Can't set an application layer protocol list, as PHP is compiled with OpenSSL < 1.0.2.");
         }
 
         foreach ($protocols as $protocol) {
             if (!\is_string($protocol)) {
-                throw new \Error("ALPN protocol names must be strings.");
+                throw new \TypeError("Protocol names must be strings");
             }
         }
 
@@ -385,7 +385,7 @@ final class ClientTlsContext
     /**
      * @return string[]
      */
-    public function getAlpnProtocols(): array
+    public function getApplicationLayerProtocols(): array
     {
         return $this->alpnProtocols;
     }
@@ -430,7 +430,7 @@ final class ClientTlsContext
         }
 
         if (!empty($this->alpnProtocols)) {
-            $options['alpn_protocols'] = $this->alpnProtocols;
+            $options['alpn_protocols'] = \implode(', ', $this->alpnProtocols);
         }
 
         return ['ssl' => $options];

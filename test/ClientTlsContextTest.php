@@ -333,30 +333,30 @@ class ClientTlsContextTest extends TestCase
         }
     }
 
-    public function testWithAlpnProtocols(): void
+    public function testWithApplicationLayerProtocols(): void
     {
         if (!Socket\hasTlsAlpnSupport()) {
             $this->markTestSkipped('OpenSSL 1.0.2 required');
         }
 
         $contextA = new ClientTlsContext('');
-        $contextB = $contextA->withAlpnProtocols(['http1.1', 'h2']);
+        $contextB = $contextA->withApplicationLayerProtocols(['http/1.1', 'h2']);
 
-        $this->assertSame([], $contextA->getAlpnProtocols());
-        $this->assertSame(['http1.1', 'h2'], $contextB->getAlpnProtocols());
+        $this->assertSame([], $contextA->getApplicationLayerProtocols());
+        $this->assertSame(['http/1.1', 'h2'], $contextB->getApplicationLayerProtocols());
     }
 
-    public function testWithInvalidAlpnProtocols(): void
+    public function testWithInvalidApplicationLayerProtocols(): void
     {
         if (!Socket\hasTlsAlpnSupport()) {
             $this->markTestSkipped('OpenSSL 1.0.2 required');
         }
 
-        $this->expectException(\Error::class);
-        $this->expectExceptionMessage('ALPN protocol names must be strings.');
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Protocol names must be strings');
 
         $context = new ClientTlsContext('');
-        $context->withAlpnProtocols([1, 2]);
+        $context->withApplicationLayerProtocols([1, 2]);
     }
 
     public function testStreamContextArray(): void
