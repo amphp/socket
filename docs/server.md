@@ -6,7 +6,7 @@ permalink: /server
 
 ## Listening
 
-To listen on a port or unix domain socket, you can use `Amp\Socket\Server::listen`. It's a wrapper around `stream_socket_server` that gives useful error message on failures via exceptions.
+To listen on a port or unix domain socket, you can use `Amp\Socket\Server::listen()`. It's a wrapper around `stream_socket_server` that gives useful error message on failures via exceptions.
 
 ```php
 /**
@@ -36,7 +36,7 @@ Once you're listening, you can accept clients using `Server::accept()`. It retur
 $server = Server::listen("tcp://127.0.0.1:1337");
 
 while ($client = yield $server->accept()) {
-    // do something with $client, which is a ServerSocket instance
+    // do something with $client, which is a ResourceSocket instance
     
     // you shouldn't yield here, because that will wait for the yielded promise
     // before accepting another client, see below.
@@ -58,7 +58,7 @@ Loop::run(function () {
         $ip = $address->getHost();
         $port = $address->getPort();
 
-        echo "Accepted connection from {$ip}:{$port}." . PHP_EOL;
+        echo "Accepted connection from {$address}." . PHP_EOL;
 
         $body = "Hey, your IP is {$ip} and your local port used is {$port}.";
         $bodyLength = \strlen($body);
@@ -99,6 +99,6 @@ Once you're done with the server socket, you should close the socket. That means
 
 ## TLS
 
-As already mentioned in the documentation for `Amp\Socket\listen()`, you need to enable TLS manually after accepting connections. For a TLS server socket, you listen on the `tcp://` protocol on a specified address. After accepting clients you call `$socket->setupTls()` where `$socket` is the socket returned from `Server::accept()`.
+As already mentioned in the documentation for `Amp\Socket\Server::listen()`, you need to enable TLS manually after accepting connections. For a TLS server socket, you listen on the `tcp://` protocol on a specified address. After accepting clients you call `$socket->setupTls()` where `$socket` is the socket returned from `Server::accept()`.
 
 Any data transmitted before `Socket::setupTls()` resolves successfully will be transmitted in clear text. Don't attempt to read from the socket or write to it manually. Doing so will read the raw TLS handshake data that's supposed to be read by OpenSSL.

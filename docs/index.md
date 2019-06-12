@@ -80,7 +80,7 @@ Loop::run(static function () {
         $ip = $address->getHost();
         $port = $address->getPort();
 
-        echo "Accepted connection from {$ip}:{$port}." . PHP_EOL;
+        echo "Accepted connection from {$address}." . PHP_EOL;
 
         $body = "Hey, your IP is {$ip} and your local port used is {$port}.";
         $bodyLength = \strlen($body);
