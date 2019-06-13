@@ -53,9 +53,19 @@ class IntegrationTest extends TestCase
      */
     public function testCryptoConnect($uri): void
     {
-        $promise = \Amp\Socket\connect($uri);
-        $sock = \Amp\Promise\wait($promise);
-        $this->assertInstanceOf(EncryptableSocket::class, $sock);
+        $name = \explode(':', $uri)[0];
+
+        $promise = \Amp\Socket\connect($uri, (new ConnectContext)->withTlsContext(new ClientTlsContext($name)));
+        $socket = \Amp\Promise\wait($promise);
+        $this->assertInstanceOf(EncryptableSocket::class, $socket);
+
+        $this->assertEquals([], $socket->getTlsContext());
+
+        // For this case renegotiation not needed because options is equals
+        $promise = $socket->setupTls();
+        $this->assertNull(\Amp\Promise\wait($promise));
+
+        $this->assertArrayHasKey('protocol', $socket->getTlsContext());
     }
 
     public function provideCryptoConnectArgs(): array
@@ -75,8 +85,13 @@ class IntegrationTest extends TestCase
         $promise = \Amp\socket\connect('www.google.com:443', $context);
         /** @var EncryptableSocket $sock */
         $socket = \Amp\Promise\wait($promise);
+
+        $this->assertEquals([], $socket->getTlsContext());
+
         // For this case renegotiation not needed because options is equals
         $promise = $socket->setupTls();
         $this->assertNull(\Amp\Promise\wait($promise));
+
+        $this->assertArrayHasKey('protocol', $socket->getTlsContext());
     }
 }
