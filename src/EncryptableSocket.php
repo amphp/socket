@@ -38,5 +38,5 @@ interface EncryptableSocket extends Socket
     /**
      * @return TlsInfo|null The TLS (crypto) context info if TLS is enabled on the socket or null otherwise.
      */
-    public function getTlsContext(): ?TlsInfo;
+    public function getTlsInfo(): ?TlsInfo;
 }

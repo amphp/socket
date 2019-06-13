@@ -201,7 +201,7 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function getTlsContext(): ?TlsInfo
+    public function getTlsInfo(): ?TlsInfo
     {
         $resource = $this->getResource();
 
