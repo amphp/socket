@@ -7,12 +7,13 @@ use Kelunik\Certificate\Certificate;
 /**
  * Exposes a connection's negotiated TLS parameters.
  */
-final class TlsContext
+final class TlsInfo
 {
-    private $protocol;
+    private $version;
     private $cipherName;
     private $cipherBits;
     private $cipherVersion;
+    private $alpnProtocol;
     private $certificates;
     private $parsedCertificates;
 
@@ -33,22 +34,24 @@ final class TlsContext
             $cryptoInfo["cipher_name"],
             $cryptoInfo["cipher_bits"],
             $cryptoInfo["cipher_version"],
+            $cryptoInfo["alpn_protocol"] ?? null,
             \array_merge([$tlsContext["peer_certificate"]] ?: [], $tlsContext["peer_certificate_chain"] ?? [])
         );
     }
 
-    private function __construct(string $protocol, string $cipherName, int $cipherBits, string $cipherVersion, array $certificates)
+    private function __construct(string $version, string $cipherName, int $cipherBits, string $cipherVersion, ?string $alpnProtocol, array $certificates)
     {
-        $this->protocol = $protocol;
+        $this->version = $version;
         $this->cipherName = $cipherName;
         $this->cipherBits = $cipherBits;
         $this->cipherVersion = $cipherVersion;
+        $this->alpnProtocol = $alpnProtocol;
         $this->certificates = $certificates;
     }
 
-    public function getApplicationLayerProtocol(): string
+    public function getVersion(): string
     {
-        return $this->protocol;
+        return $this->version;
     }
 
     public function getCipherName(): string
@@ -64,6 +67,11 @@ final class TlsContext
     public function getCipherVersion(): string
     {
         return $this->cipherVersion;
+    }
+
+    public function getApplicationLayerProtocol(): ?string
+    {
+        return $this->alpnProtocol;
     }
 
     /** @return Certificate[] */
