@@ -7,6 +7,7 @@ use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use Amp\Socket\ConnectException;
 use Amp\Socket\EncryptableSocket;
+use Amp\Socket\TlsContext;
 use Amp\TimeoutCancellationToken;
 use PHPUnit\Framework\TestCase;
 
@@ -59,13 +60,13 @@ class IntegrationTest extends TestCase
         $socket = \Amp\Promise\wait($promise);
         $this->assertInstanceOf(EncryptableSocket::class, $socket);
 
-        $this->assertEquals([], $socket->getTlsContext());
+        $this->assertNull($socket->getTlsContext());
 
         // For this case renegotiation not needed because options is equals
         $promise = $socket->setupTls();
         $this->assertNull(\Amp\Promise\wait($promise));
 
-        $this->assertArrayHasKey('protocol', $socket->getTlsContext());
+        $this->assertInstanceOf(TlsContext::class, $socket->getTlsContext());
     }
 
     public function provideCryptoConnectArgs(): array
@@ -86,12 +87,12 @@ class IntegrationTest extends TestCase
         /** @var EncryptableSocket $sock */
         $socket = \Amp\Promise\wait($promise);
 
-        $this->assertEquals([], $socket->getTlsContext());
+        $this->assertNull($socket->getTlsContext());
 
         // For this case renegotiation not needed because options is equals
         $promise = $socket->setupTls();
         $this->assertNull(\Amp\Promise\wait($promise));
 
-        $this->assertArrayHasKey('protocol', $socket->getTlsContext());
+        $this->assertInstanceOf(TlsContext::class, $socket->getTlsContext());
     }
 }

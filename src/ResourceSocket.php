@@ -201,15 +201,18 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function getTlsContext(): array
+    public function getTlsContext(): ?TlsContext
     {
         $resource = $this->getResource();
 
         if ($resource === null || !\is_resource($resource)) {
-            return [];
+            return null;
         }
 
-        return \stream_get_meta_data($resource)['crypto'] ?? [];
+        $metadata = \stream_get_meta_data($resource)['crypto'] ?? [];
+        $tlsContext = stream_context_get_options($resource)['ssl'] ?? [];
+
+        return empty($metadata) ? null : TlsContext::fromMetaData($metadata, $tlsContext);
     }
 
     /** @inheritDoc */

@@ -36,9 +36,7 @@ interface EncryptableSocket extends Socket
     public function getTlsState(): int;
 
     /**
-     * @return array The TLS (crypto) context array if TLS is enabled on the socket or an empty array.
-     *
-     * @example ($socket->getTlsContext()['alpn_protocol'] ?? '') === 'h2'
+     * @return TlsContext|null The TLS (crypto) context if TLS is enabled on the socket or null otherwise.
      */
-    public function getTlsContext(): array;
+    public function getTlsContext(): ?TlsContext;
 }

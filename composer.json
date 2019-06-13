@@ -35,6 +35,7 @@
         "amphp/amp": "^2",
         "amphp/dns": "^1 || ^0.9",
         "amphp/byte-stream": "^1.6",
+        "kelunik/certificate": "^1.1",
         "league/uri-parser": "^1.4"
     },
     "require-dev": {
