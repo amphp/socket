@@ -18,6 +18,25 @@ final class TlsInfo
     private $parsedCertificates;
 
     /**
+     * Constructs a new instance from a stream socket resource.
+     *
+     * @param resource $resource Stream socket resource.
+     *
+     * @return self|null Returns null if TLS is not enabled on the stream socket.
+     */
+    public static function fromStreamResource($resource): ?self
+    {
+        if (!\is_resource($resource) || \get_resource_type($resource) !== 'stream') {
+            throw new \Error("Expected a valid stream resource");
+        }
+
+        $metadata = \stream_get_meta_data($resource)['crypto'] ?? [];
+        $tlsContext = stream_context_get_options($resource)['ssl'] ?? [];
+
+        return empty($metadata) ? null : self::fromMetaData($metadata, $tlsContext);
+    }
+
+    /**
      * Constructs a new instance from PHP's internal info.
      *
      * Always pass the info as obtained from PHP as this method might extract additional fields in the future.
@@ -30,7 +49,7 @@ final class TlsInfo
     public static function fromMetaData(array $cryptoInfo, array $tlsContext): self
     {
         if (isset($tlsContext["peer_certificate"])) {
-            $certificates = \array_merge([$tlsContext["peer_certificate"]] ?: [], $tlsContext["peer_certificate_chain"] ?? []);
+            $certificates = \array_merge([$tlsContext["peer_certificate"]], $tlsContext["peer_certificate_chain"] ?? []);
         } else {
             $certificates = $tlsContext["peer_certificate_chain"] ?? [];
         }
