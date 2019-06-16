@@ -29,17 +29,23 @@ final class TlsInfo
      */
     public static function fromMetaData(array $cryptoInfo, array $tlsContext): self
     {
+        if (isset($tlsContext["peer_certificate"])) {
+            $certificates = \array_merge([$tlsContext["peer_certificate"]] ?: [], $tlsContext["peer_certificate_chain"] ?? []);
+        } else {
+            $certificates = $tlsContext["peer_certificate_chain"] ?? [];
+        }
+
         return new self(
             $cryptoInfo["protocol"],
             $cryptoInfo["cipher_name"],
             $cryptoInfo["cipher_bits"],
             $cryptoInfo["cipher_version"],
             $cryptoInfo["alpn_protocol"] ?? null,
-            \array_merge([$tlsContext["peer_certificate"]] ?: [], $tlsContext["peer_certificate_chain"] ?? [])
+            empty($certificates) ? null : $certificates
         );
     }
 
-    private function __construct(string $version, string $cipherName, int $cipherBits, string $cipherVersion, ?string $alpnProtocol, array $certificates)
+    private function __construct(string $version, string $cipherName, int $cipherBits, string $cipherVersion, ?string $alpnProtocol, ?array $certificates)
     {
         $this->version = $version;
         $this->cipherName = $cipherName;
@@ -74,9 +80,17 @@ final class TlsInfo
         return $this->alpnProtocol;
     }
 
-    /** @return Certificate[] */
+    /**
+     * @return Certificate[]
+     *
+     * @throws SocketException If peer certificates were not captured.
+     */
     public function getPeerCertificates(): array
     {
+        if ($this->certificates === null) {
+            throw new SocketException("Peer certificates not captured; use ClientTlsContext::withPeerCapturing() to capture peer certificates");
+        }
+
         if ($this->parsedCertificates === null) {
             $this->parsedCertificates = \array_map(static function ($resource) {
                 return new Certificate($resource);

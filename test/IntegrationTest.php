@@ -60,13 +60,13 @@ class IntegrationTest extends TestCase
         $socket = \Amp\Promise\wait($promise);
         $this->assertInstanceOf(EncryptableSocket::class, $socket);
 
-        $this->assertNull($socket->getTlsContext());
+        $this->assertNull($socket->getTlsInfo());
 
         // For this case renegotiation not needed because options is equals
         $promise = $socket->setupTls();
         $this->assertNull(\Amp\Promise\wait($promise));
 
-        $this->assertInstanceOf(TlsInfo::class, $socket->getTlsContext());
+        $this->assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
     }
 
     public function provideCryptoConnectArgs(): array
@@ -87,12 +87,12 @@ class IntegrationTest extends TestCase
         /** @var EncryptableSocket $sock */
         $socket = \Amp\Promise\wait($promise);
 
-        $this->assertNull($socket->getTlsContext());
+        $this->assertNull($socket->getTlsInfo());
 
         // For this case renegotiation not needed because options is equals
         $promise = $socket->setupTls();
         $this->assertNull(\Amp\Promise\wait($promise));
 
-        $this->assertInstanceOf(TlsInfo::class, $socket->getTlsContext());
+        $this->assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
     }
 }
