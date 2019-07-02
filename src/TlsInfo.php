@@ -31,7 +31,7 @@ final class TlsInfo
         }
 
         $metadata = \stream_get_meta_data($resource)['crypto'] ?? [];
-        $tlsContext = stream_context_get_options($resource)['ssl'] ?? [];
+        $tlsContext = \stream_context_get_options($resource)['ssl'] ?? [];
 
         return empty($metadata) ? null : self::fromMetaData($metadata, $tlsContext);
     }
