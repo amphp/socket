@@ -12,25 +12,10 @@ final class DatagramSocket
 {
     public const DEFAULT_CHUNK_SIZE = 8192;
 
-    /** @var resource UDP socket resource. */
-    private $socket;
-
-    /** @var string Watcher ID. */
-    private $watcher;
-
-    /** @var SocketAddress */
-    private $address;
-
-    /** @var Deferred|null */
-    private $reader;
-
-    /** @var int */
-    private $chunkSize;
-
     /**
      * Create a new Datagram (UDP server) on the specified server address.
      *
-     * @param string           $uri     URI in scheme://host:port format. UDP is assumed if no scheme is present.
+     * @param string           $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
      * @param BindContext|null $context Context options for listening.
      *
      * @return DatagramSocket
@@ -56,14 +41,25 @@ final class DatagramSocket
         $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND, $streamContext);
 
         if (!$server || $errno) {
-            throw new SocketException(\sprintf('Could not create datagram %s: [Error: #%d] %s', $uri, $errno, $errstr), $errno);
+            throw new SocketException(\sprintf('Could not create datagram %s: [Error: #%d] %s', $uri, $errno, $errstr),
+                $errno);
         }
 
         return new self($server, $context->getChunkSize());
     }
+    /** @var resource UDP socket resource. */
+    private $socket;
+    /** @var string Watcher ID. */
+    private $watcher;
+    /** @var SocketAddress */
+    private $address;
+    /** @var Deferred|null */
+    private $reader;
+    /** @var int */
+    private $chunkSize;
 
     /**
-     * @param resource $socket    A bound udp socket resource
+     * @param resource $socket A bound udp socket resource
      * @param int      $chunkSize Maximum chunk size for the
      *
      * @throws \Error If a stream resource is not given for $socket.
@@ -142,20 +138,20 @@ final class DatagramSocket
     }
 
     /**
-     * @param string $address
-     * @param string $data
+     * @param SocketAddress $address
+     * @param string        $data
      *
      * @return Promise<int> Resolves with the number of bytes written to the socket.
      *
      * @throws SocketException If the UDP socket closes before the data can be sent.
      */
-    public function send(string $address, string $data): Promise
+    public function send(SocketAddress $address, string $data): Promise
     {
         if (!$this->socket) {
             return new Failure(new SocketException('The endpoint is not writable'));
         }
 
-        $result = @\stream_socket_sendto($this->socket, $data, 0, $address);
+        $result = @\stream_socket_sendto($this->socket, $data, 0, $address->toString());
 
         if ($result < 0 || $result === false) {
             $error = \error_get_last();
