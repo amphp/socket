@@ -41,8 +41,10 @@ final class DatagramSocket
         $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND, $streamContext);
 
         if (!$server || $errno) {
-            throw new SocketException(\sprintf('Could not create datagram %s: [Error: #%d] %s', $uri, $errno, $errstr),
-                $errno);
+            throw new SocketException(
+                \sprintf('Could not create datagram %s: [Error: #%d] %s', $uri, $errno, $errstr),
+                $errno
+            );
         }
 
         return new self($server, $context->getChunkSize());
