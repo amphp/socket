@@ -8,6 +8,7 @@ use Amp\Socket;
 use Amp\Socket\Server;
 use PHPUnit\Framework\TestCase;
 use function Amp\asyncCall;
+use function Amp\ByteStream\buffer;
 
 class ServerTest extends TestCase
 {
@@ -75,6 +76,7 @@ class ServerTest extends TestCase
                         $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                         $this->assertSame('Hello World', yield $socket->read());
                         $socket->write('test');
+                        $socket->close();
                     });
                 }
             });
@@ -89,7 +91,7 @@ class ServerTest extends TestCase
             yield $client->setupTls();
             yield $client->write('Hello World');
 
-            $this->assertSame('test', yield $client->read());
+            $this->assertSame('test', yield buffer($client));
 
             $server->close();
 
