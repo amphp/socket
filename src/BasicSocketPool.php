@@ -51,21 +51,21 @@ final class BasicSocketPool implements SocketPool {
             return $this->checkoutNewSocket($uri, $token);
         }
 
-        foreach ($this->sockets[$uri] as $socketId => $socket) {
-            if (!$socket->isAvailable) {
+        foreach ($this->sockets[$uri] as $socketId => $struct) {
+            if (!$struct->isAvailable) {
                 continue;
-            } elseif (!\is_resource($socket->resource) || \feof($socket->resource)) {
-                $this->clear(new ClientSocket($socket->resource));
+            } elseif (!\is_resource($struct->resource) || \feof($struct->resource)) {
+                $this->clear($struct->socket);
                 continue;
             }
 
-            $socket->isAvailable = false;
+            $struct->isAvailable = false;
 
-            if ($socket->idleWatcher !== null) {
-                Loop::disable($socket->idleWatcher);
+            if ($struct->idleWatcher !== null) {
+                Loop::disable($struct->idleWatcher);
             }
 
-            return new Success(new ClientSocket($socket->resource));
+            return new Success($struct->socket);
         }
 
         return $this->checkoutNewSocket($uri, $token);
@@ -76,58 +76,61 @@ final class BasicSocketPool implements SocketPool {
             $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
             try {
-                /** @var ClientSocket $rawSocket */
-                $rawSocket = yield connect($uri, $this->socketContext, $token);
+                /** @var ClientSocket $socket */
+                $socket = yield connect($uri, $this->socketContext, $token);
             } finally {
                 if (--$this->pendingCount[$uri] === 0) {
                     unset($this->pendingCount[$uri]);
                 }
             }
 
-            $socketId = (int) $rawSocket->getResource();
+            $socketId = (int) $socket->getResource();
 
-            $socket = new class {
+            $struct = new class {
                 use Struct;
 
                 public $id;
                 public $uri;
                 public $resource;
                 public $isAvailable;
+                public $socket;
                 public $idleWatcher;
             };
 
-            $socket->id = $socketId;
-            $socket->uri = $uri;
-            $socket->resource = $rawSocket->getResource();
-            $socket->isAvailable = false;
+            $struct->id = $socketId;
+            $struct->uri = $uri;
+            $struct->resource = $socket->getResource();
+            $struct->isAvailable = false;
+            $struct->socket = $socket;
 
-            $this->sockets[$uri][$socketId] = $socket;
-            $this->socketIdUriMap[$socketId] = $uri;
+            $hash = \spl_object_hash($socket);
+            $this->sockets[$uri][$hash] = $struct;
+            $this->socketIdUriMap[$hash] = $uri;
 
-            return $rawSocket;
+            return $socket;
         });
     }
 
     /** @inheritdoc */
     public function clear(ClientSocket $socket) {
-        $socketId = (int) $socket->getResource();
+        $hash = \spl_object_hash($socket);
 
-        if (!isset($this->socketIdUriMap[$socketId])) {
+        if (!isset($this->socketIdUriMap[$hash])) {
             throw new \Error(
-                sprintf('Unknown socket: %d', $socketId)
+                sprintf('Unknown socket: %d', $hash)
             );
         }
 
-        $uri = $this->socketIdUriMap[$socketId];
-        $socket = $this->sockets[$uri][$socketId];
+        $uri = $this->socketIdUriMap[$hash];
+        $struct = $this->sockets[$uri][$hash];
 
-        if ($socket->idleWatcher) {
-            Loop::cancel($socket->idleWatcher);
+        if ($struct->idleWatcher) {
+            Loop::cancel($struct->idleWatcher);
         }
 
         unset(
-            $this->sockets[$uri][$socketId],
-            $this->socketIdUriMap[$socketId]
+            $this->sockets[$uri][$hash],
+            $this->socketIdUriMap[$hash]
         );
 
         if (empty($this->sockets[$uri])) {
@@ -137,32 +140,32 @@ final class BasicSocketPool implements SocketPool {
 
     /** @inheritdoc */
     public function checkin(ClientSocket $socket) {
-        $socketId = (int) $socket->getResource();
+        $hash = \spl_object_hash($socket);
 
-        if (!isset($this->socketIdUriMap[$socketId])) {
+        if (!isset($this->socketIdUriMap[$hash])) {
             throw new \Error(
-                \sprintf('Unknown socket: %d', $socketId)
+                \sprintf('Unknown socket: %d', $hash)
             );
         }
 
-        $uri = $this->socketIdUriMap[$socketId];
+        $uri = $this->socketIdUriMap[$hash];
 
         if (!\is_resource($socket->getResource()) || \feof($socket->getResource())) {
             $this->clear($socket);
             return;
         }
 
-        $socket = $this->sockets[$uri][$socketId];
-        $socket->isAvailable = true;
+        $struct = $this->sockets[$uri][$hash];
+        $struct->isAvailable = true;
 
-        if (isset($socket->idleWatcher)) {
-            Loop::enable($socket->idleWatcher);
+        if (isset($struct->idleWatcher)) {
+            Loop::enable($struct->idleWatcher);
         } else {
-            $socket->idleWatcher = Loop::delay($this->idleTimeout, function () use ($socket) {
-                $this->clear(new ClientSocket($socket->resource));
+            $struct->idleWatcher = Loop::delay($this->idleTimeout, function () use ($struct) {
+                $this->clear($struct->socket);
             });
 
-            Loop::unreference($socket->idleWatcher);
+            Loop::unreference($struct->idleWatcher);
         }
     }
 }
