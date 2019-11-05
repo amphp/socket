@@ -167,6 +167,14 @@ final class Server
     }
 
     /**
+     * @return bool
+     */
+    public function isClosed(): bool
+    {
+        return $this->socket === null;
+    }
+
+    /**
      * References the accept watcher.
      *
      * @see Loop::reference()

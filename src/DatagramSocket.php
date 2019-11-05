@@ -206,6 +206,14 @@ final class DatagramSocket
     }
 
     /**
+     * @return bool
+     */
+    public function isClosed(): bool
+    {
+        return $this->socket === null;
+    }
+
+    /**
      * @return SocketAddress
      */
     public function getAddress(): SocketAddress
