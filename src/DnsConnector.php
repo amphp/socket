@@ -15,8 +15,6 @@ final class DnsConnector implements Connector
 {
     public function connect(string $uri, ?ConnectContext $context = null, ?CancellationToken $token = null): Promise
     {
-        $context = $context ?? new ConnectContext;
-
         return call(static function () use ($uri, $context, $token) {
             $context = $context ?? new ConnectContext;
             $token = $token ?? new NullCancellationToken;
