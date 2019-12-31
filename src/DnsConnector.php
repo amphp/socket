@@ -13,9 +13,18 @@ use function Amp\call;
 
 final class DnsConnector implements Connector
 {
+    private $resolver;
+
+    public function __construct(?Dns\Resolver $resolver = null)
+    {
+        $this->resolver = $resolver;
+    }
+
     public function connect(string $uri, ?ConnectContext $context = null, ?CancellationToken $token = null): Promise
     {
-        return call(static function () use ($uri, $context, $token) {
+        $resolver = $this->resolver;
+
+        return call(static function () use ($uri, $context, $token, $resolver) {
             $context = $context ?? new ConnectContext;
             $token = $token ?? new NullCancellationToken;
             $attempt = 0;
@@ -33,7 +42,7 @@ final class DnsConnector implements Connector
                 $uris = [$uri];
             } else {
                 // Host is not an IP address, so resolve the domain name.
-                $records = yield Dns\resolve($host, $context->getDnsTypeRestriction());
+                $records = yield ($resolver ?? Dns\resolver())->resolve($host, $context->getDnsTypeRestriction());
 
                 // Usually the faster response should be preferred, but we don't have a reliable way of determining IPv6
                 // support, so we always prefer IPv4 here.
