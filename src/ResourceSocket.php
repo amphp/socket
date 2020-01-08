@@ -58,6 +58,9 @@ final class ResourceSocket implements EncryptableSocket
     /** @var string|null */
     private $remoteAddress;
 
+    /** @var TlsInfo|null */
+    private $tlsInfo;
+
     /**
      * @param resource              $resource  Stream resource.
      * @param int                   $chunkSize Read and write chunk size.
@@ -203,13 +206,17 @@ final class ResourceSocket implements EncryptableSocket
     /** @inheritDoc */
     public function getTlsInfo(): ?TlsInfo
     {
+        if (null !== $this->tlsInfo) {
+            return $this->tlsInfo;
+        }
+
         $resource = $this->getResource();
 
         if ($resource === null || !\is_resource($resource)) {
             return null;
         }
 
-        return TlsInfo::fromStreamResource($resource);
+        return $this->tlsInfo = TlsInfo::fromStreamResource($resource);
     }
 
     /** @inheritDoc */
