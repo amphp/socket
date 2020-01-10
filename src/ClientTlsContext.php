@@ -14,6 +14,8 @@ final class ClientTlsContext
     private $peerName;
     /** @var bool */
     private $verifyPeer = true;
+    /** @var bool  */
+    private $allowSelfSigned = false;
     /** @var int */
     private $verifyDepth = 10;
     /** @var string|null */
@@ -128,6 +130,32 @@ final class ClientTlsContext
     public function hasPeerVerification(): bool
     {
         return $this->verifyPeer;
+    }
+
+    /**
+     * Allow self-signed certificates
+     *
+     * @return self Cloned, modified instance.
+     */
+    public function allowSelfSigned(): self
+    {
+        $clone = clone $this;
+        $clone->allowSelfSigned = true;
+
+        return $clone;
+    }
+
+    /**
+     * Disallow self-signed certificates
+     *
+     * @return self Cloned, modified instance.
+     */
+    public function disallowSelfSigned(): self
+    {
+        $clone = clone $this;
+        $clone->allowSelfSigned = false;
+
+        return $clone;
     }
 
     /**
@@ -398,15 +426,16 @@ final class ClientTlsContext
     public function toStreamContextArray(): array
     {
         $options = [
-            'crypto_method' => $this->toStreamCryptoMethod(),
-            'peer_name' => $this->peerName,
-            'verify_peer' => $this->verifyPeer,
-            'verify_peer_name' => $this->verifyPeer,
-            'verify_depth' => $this->verifyDepth,
-            'ciphers' => $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS,
-            'capture_peer_cert' => $this->capturePeer,
+            'crypto_method'           => $this->toStreamCryptoMethod(),
+            'peer_name'               => $this->peerName,
+            'verify_peer'             => $this->verifyPeer,
+            'verify_peer_name'        => $this->verifyPeer,
+            'allow_self_signed'       => $this->allowSelfSigned,
+            'verify_depth'            => $this->verifyDepth,
+            'ciphers'                 => $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS,
+            'capture_peer_cert'       => $this->capturePeer,
             'capture_peer_cert_chain' => $this->capturePeer,
-            'SNI_enabled' => $this->sniEnabled,
+            'SNI_enabled'             => $this->sniEnabled,
         ];
 
         if ($this->certificate !== null) {
