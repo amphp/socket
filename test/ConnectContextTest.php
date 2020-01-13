@@ -180,6 +180,7 @@ class ConnectContextTest extends TestCase
             'peer_name' => 'amphp.org',
             'verify_peer' => true,
             'verify_peer_name' => true,
+            'allow_self_signed' => false,
             'verify_depth' => 10,
             'ciphers' => \OPENSSL_DEFAULT_STREAM_CIPHERS,
             'capture_peer_cert' => false,

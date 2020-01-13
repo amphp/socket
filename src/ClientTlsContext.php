@@ -14,7 +14,7 @@ final class ClientTlsContext
     private $peerName;
     /** @var bool */
     private $verifyPeer = true;
-    /** @var bool  */
+    /** @var bool */
     private $allowSelfSigned = false;
     /** @var int */
     private $verifyDepth = 10;
@@ -133,7 +133,7 @@ final class ClientTlsContext
     }
 
     /**
-     * Allow self-signed certificates
+     * Allow self-signed certificates.
      *
      * @return self Cloned, modified instance.
      */
@@ -146,7 +146,7 @@ final class ClientTlsContext
     }
 
     /**
-     * Disallow self-signed certificates
+     * Disallow self-signed certificates.
      *
      * @return self Cloned, modified instance.
      */
