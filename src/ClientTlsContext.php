@@ -159,6 +159,14 @@ final class ClientTlsContext
     }
 
     /**
+     * @return bool is allowed self-signed certificates
+     */
+    public function isAllowedSelfSigned(): bool
+    {
+        return $this->allowSelfSigned;
+    }
+
+    /**
      * Maximum chain length the peer might present including the certificates in the local trust store.
      *
      * @param int $verifyDepth Maximum length of the certificate chain.
@@ -426,16 +434,16 @@ final class ClientTlsContext
     public function toStreamContextArray(): array
     {
         $options = [
-            'crypto_method'           => $this->toStreamCryptoMethod(),
-            'peer_name'               => $this->peerName,
-            'verify_peer'             => $this->verifyPeer,
-            'verify_peer_name'        => $this->verifyPeer,
-            'allow_self_signed'       => $this->allowSelfSigned,
-            'verify_depth'            => $this->verifyDepth,
-            'ciphers'                 => $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS,
-            'capture_peer_cert'       => $this->capturePeer,
+            'crypto_method' => $this->toStreamCryptoMethod(),
+            'peer_name' => $this->peerName,
+            'verify_peer' => $this->verifyPeer,
+            'verify_peer_name' => $this->verifyPeer,
+            'allow_self_signed' => $this->allowSelfSigned,
+            'verify_depth' => $this->verifyDepth,
+            'ciphers' => $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS,
+            'capture_peer_cert' => $this->capturePeer,
             'capture_peer_cert_chain' => $this->capturePeer,
-            'SNI_enabled'             => $this->sniEnabled,
+            'SNI_enabled' => $this->sniEnabled,
         ];
 
         if ($this->certificate !== null) {

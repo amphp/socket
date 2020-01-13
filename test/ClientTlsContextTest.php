@@ -239,6 +239,26 @@ class ClientTlsContextTest extends TestCase
         $this->assertFalse($clonedContext->hasPeerCapturing());
     }
 
+    public function testWithSelfSigned(): void
+    {
+        $context = new ClientTlsContext('');
+        $clonedContext = $context->allowSelfSigned();
+
+        $this->assertFalse($context->isAllowedSelfSigned());
+        $this->assertTrue($clonedContext->isAllowedSelfSigned());
+    }
+
+    public function testWithoutSelfSigned(): void
+    {
+        $context = new ClientTlsContext('');
+        $context = $context->allowSelfSigned();
+
+        $clonedContext = $context->disallowSelfSigned();
+
+        $this->assertTrue($context->isAllowedSelfSigned());
+        $this->assertFalse($clonedContext->isAllowedSelfSigned());
+    }
+
     public function testWithSni(): void
     {
         $context = new ClientTlsContext('');
@@ -372,6 +392,7 @@ class ClientTlsContextTest extends TestCase
             'peer_name' => $context->getPeerName(),
             'verify_peer' => $context->hasPeerVerification(),
             'verify_peer_name' => $context->hasPeerVerification(),
+            'allow_self_signed' => $context->isAllowedSelfSigned(),
             'verify_depth' => $context->getVerificationDepth(),
             'ciphers' => $context->getCiphers(),
             'capture_peer_cert' => $context->hasPeerCapturing(),
