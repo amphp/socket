@@ -413,7 +413,7 @@ final class ServerTlsContext
         ];
 
         if (!empty($this->alpnProtocols)) {
-            $options['alpn_protocols'] = \implode(', ', $this->alpnProtocols);
+            $options['alpn_protocols'] = \implode(',', $this->alpnProtocols);
         }
 
         if ($this->defaultCertificate !== null) {

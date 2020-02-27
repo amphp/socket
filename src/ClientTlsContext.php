@@ -430,7 +430,7 @@ final class ClientTlsContext
         }
 
         if (!empty($this->alpnProtocols)) {
-            $options['alpn_protocols'] = \implode(', ', $this->alpnProtocols);
+            $options['alpn_protocols'] = \implode(',', $this->alpnProtocols);
         }
 
         return ['ssl' => $options];
