@@ -46,7 +46,14 @@ final class Socks5Connector implements Connector
     {
         $this->target = $target;
         $this->connector = connector();
-        $this->authenticators = [];
+        $this->authenticators = [
+            new class implements Socks5Authenticator {
+                public function getIdentifier(): int
+                {
+                    return 0;
+                }
+            },
+        ];
     }
 
     public function connect(string $uri, ?ConnectContext $context = null, ?CancellationToken $token = null): Promise
@@ -72,13 +79,17 @@ final class Socks5Connector implements Connector
                 $buffer .= $chunk;
             }
 
-            $serverAuthMethod = \ord($buffer[0]);
+            if ($buffer[0] !== "\x05") {
+                throw new SocketException('The SOCKS5 proxy response is invalid, unexpected version 0x' . \bin2hex($buffer[0]));
+            }
+
+            $serverAuthMethod = \ord($buffer[1]);
             if ($serverAuthMethod === 255) {
                 throw new SocketException('The SOCKS5 proxy rejected all available authentication methods: ' . $this->target);
             }
 
             if (!isset($this->authenticators[$serverAuthMethod])) {
-                throw new SocketException('The SOCKS5 proxy selected an authentication method not configured in this connector: ' . $this->target);
+                throw new SocketException('The SOCKS5 proxy selected an authentication method not configured in this connector: 0x' . \bin2hex($buffer[1]));
             }
 
             $socketAddress = SocketAddress::fromSocketName(\str_replace(['tcp://', 'udp://'], '', $uri));
@@ -91,7 +102,7 @@ final class Socks5Connector implements Connector
             }
 
             $addr = @\inet_pton($socketAddress->getHost());
-            $port = $socketAddress->getPort();
+            $port = \pack('n', $socketAddress->getPort());
 
             if ($addr === false) {
                 $addrType = self::ADDR_TYPE_DOMAIN_NAME;
@@ -103,6 +114,8 @@ final class Socks5Connector implements Connector
             }
 
             yield $socket->write("\x05\x01\x00{$addrType}{$addr}{$port}");
+
+            $buffer = \substr($buffer, 2);
 
             while (\strlen($buffer) < 5) {
                 $chunk = yield $socket->read();
