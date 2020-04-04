@@ -52,10 +52,10 @@ final class ResourceSocket implements EncryptableSocket
     /** @var ResourceOutputStream */
     private $writer;
 
-    /** @var string|null */
+    /** @var SocketAddress */
     private $localAddress;
 
-    /** @var string|null */
+    /** @var SocketAddress */
     private $remoteAddress;
 
     /** @var TlsInfo|null */
@@ -130,7 +130,7 @@ final class ResourceSocket implements EncryptableSocket
 
         return call(function () use ($resource) {
             try {
-                return Internal\shutdownTls($resource);
+                yield Internal\shutdownTls($resource);
             } finally {
                 $this->tlsState = self::TLS_STATE_DISABLED;
             }
@@ -185,7 +185,11 @@ final class ResourceSocket implements EncryptableSocket
         return $this->localAddress;
     }
 
-    /** @inheritDoc */
+    /**
+     * @inheritDoc
+     *
+     * @return resource|null
+     */
     public function getResource()
     {
         return $this->reader->getResource();

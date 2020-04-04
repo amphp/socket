@@ -127,7 +127,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
                 $cancellationToken->unsubscribe($id);
                 $deferred->fail(new TlsException('TLS negotiation failed: ' . (\feof($socket)
                         ? 'Connection reset by peer'
-                        : \error_get_last()['message'])));
+                        : (\error_get_last()['message']) ?? 'Unknown error')));
             }
         }, $deferred);
 
@@ -168,7 +168,7 @@ function normalizeBindToOption(string $bindTo = null)
         return null;
     }
 
-    if (\preg_match("/\\[(?P<ip>[0-9a-f:]+)\\](:(?P<port>\\d+))?$/", $bindTo ?? '', $match)) {
+    if (\preg_match("/\\[(?P<ip>[0-9a-f:]+)\\](:(?P<port>\\d+))?$/", $bindTo, $match)) {
         $ip = $match['ip'];
         $port = $match['port'] ?? 0;
 
@@ -183,7 +183,7 @@ function normalizeBindToOption(string $bindTo = null)
         return "[{$ip}]:{$port}";
     }
 
-    if (\preg_match("/(?P<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)(:(?P<port>\\d+))?$/", $bindTo ?? '', $match)) {
+    if (\preg_match("/(?P<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)(:(?P<port>\\d+))?$/", $bindTo, $match)) {
         $ip = $match['ip'];
         $port = $match['port'] ?? 0;
 

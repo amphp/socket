@@ -67,6 +67,7 @@ final class DnsConnector implements Connector
                 try {
                     $streamContext = \stream_context_create($context->withoutTlsContext()->toStreamContextArray());
 
+                    /** @psalm-suppress NullArgument */
                     if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $streamContext)) {
                         throw new ConnectException(\sprintf(
                             'Connection to %s failed: [Error #%d] %s%s',
@@ -80,7 +81,10 @@ final class DnsConnector implements Connector
                     \stream_set_blocking($socket, false);
 
                     $deferred = new Deferred;
-                    $watcher = Loop::onWritable($socket, [$deferred, 'resolve']);
+                    $watcher = Loop::onWritable($socket, static function () use ($deferred) {
+                        $deferred->resolve();
+                    });
+
                     $id = $token->subscribe([$deferred, 'fail']);
 
                     try {
@@ -98,6 +102,7 @@ final class DnsConnector implements Connector
                     }
 
                     // The following hack looks like the only way to detect connection refused errors with PHP's stream sockets.
+                    /** @psalm-suppress TypeDoesNotContainType */
                     if (\stream_socket_get_name($socket, true) === false) {
                         \fclose($socket);
                         throw new ConnectException(\sprintf(
@@ -129,8 +134,12 @@ final class DnsConnector implements Connector
                 return ResourceSocket::fromClientSocket($socket, $context->getTlsContext());
             }
 
-            // This is reached if either all URIs failed or the maximum number of attempts is reached.
-            /** @noinspection PhpUndefinedVariableInspection */
+            /**
+             * This is reached if either all URIs failed or the maximum number of attempts is reached.
+             *
+             * @noinspection PhpUndefinedVariableInspection
+             * @psalm-suppress PossiblyUndefinedVariable
+             */
             throw $e;
         });
     }

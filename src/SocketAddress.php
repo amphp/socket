@@ -19,6 +19,7 @@ final class SocketAddress
     {
         $name = @\stream_socket_get_name($resource, true);
 
+        /** @psalm-suppress TypeDoesNotContainType */
         if ($name === false || $name === "\0") {
             return self::fromLocalResource($resource);
         }
@@ -38,6 +39,7 @@ final class SocketAddress
         do {
             $name = @\stream_socket_get_name($resource, $wantPeer);
 
+            /** @psalm-suppress RedundantCondition */
             if ($name !== false && $name !== "\0") {
                 return self::fromSocketName($name);
             }
@@ -49,7 +51,7 @@ final class SocketAddress
     /**
      * @param string $name
      *
-     * @return SocketAddress|null
+     * @return self
      */
     public static function fromSocketName(string $name): self
     {

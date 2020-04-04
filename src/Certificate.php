@@ -8,7 +8,9 @@ namespace Amp\Socket;
  */
 final class Certificate
 {
+    /** @var string */
     private $certFile;
+    /** @var string */
     private $keyFile;
 
     /**

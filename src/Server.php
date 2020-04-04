@@ -9,13 +9,13 @@ use Amp\Success;
 
 final class Server
 {
-    /** @var resource Stream socket server resource. */
+    /** @var resource|null Stream socket server resource. */
     private $socket;
 
     /** @var string Watcher ID. */
     private $watcher;
 
-    /** @var string|null Stream socket name */
+    /** @var SocketAddress Stream socket name */
     private $address;
 
     /** @var int */
@@ -96,6 +96,7 @@ final class Server
 
             $deferred->resolve(ResourceSocket::fromServerSocket($client, $chunkSize));
 
+            /** @psalm-suppress RedundantCondition Resolution of the deferred above might accept immediately again */
             if (!$acceptor) {
                 Loop::disable($watcher);
             }
@@ -160,6 +161,7 @@ final class Server
     public function close(): void
     {
         if ($this->socket) {
+            /** @psalm-suppress InvalidPropertyAssignmentValue */
             \fclose($this->socket);
         }
 

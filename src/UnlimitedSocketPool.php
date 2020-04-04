@@ -22,10 +22,15 @@ final class UnlimitedSocketPool implements SocketPool
         'unix' => null,
     ];
 
+    /** @var object[][] */
     private $sockets = [];
+    /** @var string[] */
     private $objectIdCacheKeyMap = [];
+    /** @var int[] */
     private $pendingCount = [];
+    /** @var int */
     private $idleTimeout;
+    /** @var Connector */
     private $connector;
 
     public function __construct(int $idleTimeout = 10000, ?Connector $connector = null)
@@ -54,8 +59,8 @@ final class UnlimitedSocketPool implements SocketPool
 
         $cacheKey = $uri;
 
-        if ($context && $context->getTlsContext()) {
-            $cacheKey .= ' + ' . \serialize($context->getTlsContext()->toStreamContextArray());
+        if ($context && ($tlsContext = $context->getTlsContext())) {
+            $cacheKey .= ' + ' . \serialize($tlsContext->toStreamContextArray());
         }
 
         if ($fragment !== null) {
@@ -198,7 +203,7 @@ final class UnlimitedSocketPool implements SocketPool
     private function checkoutNewSocket(
         string $uri,
         string $cacheKey,
-        ConnectContext $connectContext,
+        ConnectContext $connectContext = null,
         CancellationToken $token = null
     ): Promise {
         return call(function () use ($uri, $cacheKey, $connectContext, $token) {
@@ -213,13 +218,17 @@ final class UnlimitedSocketPool implements SocketPool
                 }
             }
 
+            /** @psalm-suppress MissingConstructor */
             $socketEntry = new class {
                 use Struct;
 
-                public $id;
+                /** @var string */
                 public $uri;
+                /** @var EncryptableSocket */
                 public $object;
+                /** @var bool */
                 public $isAvailable;
+                /** @var string|null */
                 public $idleWatcher;
             };
 
@@ -235,9 +244,6 @@ final class UnlimitedSocketPool implements SocketPool
         });
     }
 
-    /**
-     * @param string $objectId
-     */
     private function clearFromId(string $objectId): void
     {
         if (!isset($this->objectIdCacheKeyMap[$objectId])) {

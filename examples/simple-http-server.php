@@ -15,9 +15,10 @@ use function Amp\asyncCoroutine;
 
 Loop::run(static function () {
     $clientHandler = asyncCoroutine(static function (ResourceSocket $socket) {
-        [$ip, $port] = \explode(':', $socket->getRemoteAddress());
+        $address = $socket->getRemoteAddress();
+        [$ip, $port] = \explode(':', (string) $address);
 
-        echo "Accepted connection from {$ip}:{$port}." . PHP_EOL;
+        echo "Accepted connection from {$address}." . PHP_EOL;
 
         $body = "Hey, your IP is {$ip} and your local port used is {$port}.";
         $bodyLength = \strlen($body);
