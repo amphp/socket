@@ -42,7 +42,11 @@ final class Socks5Connector implements Connector
     /** @var Socks5Authenticator[] */
     private $authenticators;
 
-    public function __construct(string $target)
+    /**
+     * @param string                $target
+     * @param Socks5Authenticator[] $authenticators
+     */
+    public function __construct(string $target, array $authenticators)
     {
         $this->target = $target;
         $this->connector = connector();
@@ -54,6 +58,10 @@ final class Socks5Connector implements Connector
                 }
             },
         ];
+
+        foreach ($authenticators as $authenticator) {
+            $this->authenticators[$authenticator->getIdentifier()] = $authenticator;
+        }
     }
 
     public function connect(string $uri, ?ConnectContext $context = null, ?CancellationToken $token = null): Promise
