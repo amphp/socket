@@ -39,11 +39,12 @@ class ServerTlsContextTest extends TestCase
 
     /**
      * @dataProvider minimumVersionInvalidDataProvider
-     * @expectedException \Error
-     * @expectedExceptionMessage Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed
      */
     public function testWithMinimumVersionInvalid($version)
     {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed');
+
         (new ServerTlsContext)->withMinimumVersion($version);
     }
 
@@ -115,11 +116,12 @@ class ServerTlsContextTest extends TestCase
 
     /**
      * @dataProvider verifyDepthInvalidDataProvider
-     * @expectedException \Error
-     * @expectedExceptionMessageRegExp /Invalid verification depth (.*), must be greater than or equal to 0/
      */
     public function testWithVerificationDepthInvalid($verifyDepth)
     {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessageMatches('/Invalid verification depth (.*), must be greater than or equal to 0/');
+
         (new ServerTlsContext)->withVerificationDepth($verifyDepth);
     }
 

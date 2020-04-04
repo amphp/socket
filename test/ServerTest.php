@@ -12,21 +12,19 @@ use function Amp\ByteStream\buffer;
 
 class ServerTest extends TestCase
 {
-    /**
-     * @expectedException \Error
-     * @expectedExceptionMessage Only tcp and unix schemes allowed for server creation
-     */
     public function testListenInvalidScheme(): void
     {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Only tcp and unix schemes allowed for server creation');
+
         Server::listen("invalid://127.0.0.1:0");
     }
 
-    /**
-     * @expectedException \Amp\Socket\SocketException
-     * @expectedExceptionMessageRegExp /Could not create server .*: \[Error: #.*\] .*$/
-     */
     public function testListenStreamSocketServerError(): void
     {
+        $this->expectException(Socket\SocketException::class);
+        $this->expectExceptionMessageMatches('/Could not create server .*: \[Error: #.*\] .*$/');
+
         Server::listen('error');
     }
 

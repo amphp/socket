@@ -50,11 +50,12 @@ class functionsTest extends TestCase
 
     /**
      * @dataProvider parseUriInvalidUriDataProvider
-     * @expectedException \Error
-     * @expectedExceptionMessage Invalid URI:
      */
     public function testParseUriInvalidUri($uri)
     {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Invalid URI:');
+
         Internal\parseUri($uri);
     }
 
@@ -69,11 +70,12 @@ class functionsTest extends TestCase
 
     /**
      * @dataProvider parseUriInvalidSchemeDataProvider
-     * @expectedException \Error
-     * @expectedExceptionMessageRegExp "Invalid URI scheme (.*); tcp, udp, unix or udg scheme expected"
      */
     public function testParseUriInvalidScheme($uri)
     {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessageMatches('(Invalid URI scheme (.*); tcp, udp, unix or udg scheme expected)');
+
         Internal\parseUri($uri);
     }
 
@@ -114,11 +116,12 @@ class functionsTest extends TestCase
 
     /**
      * @dataProvider normalizeBindToOptionInvalidBindToDataProvider
-     * @expectedException \Error
-     * @expectedExceptionMessage Invalid bindTo value:
      */
     public function testNormalizeBindToOptionInvalidBindTo($bindTo)
     {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Invalid bindTo value:');
+
         Internal\normalizeBindToOption($bindTo);
     }
 
@@ -132,11 +135,12 @@ class functionsTest extends TestCase
 
     /**
      * @dataProvider normalizeBindToOptionInvalidPortDataProvider
-     * @expectedException \Error
-     * @expectedExceptionMessage Invalid port:
      */
     public function testNormalizeBindToOptionInvalidPort($bindTo)
     {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Invalid port:');
+
         Internal\normalizeBindToOption($bindTo);
     }
 
@@ -150,11 +154,12 @@ class functionsTest extends TestCase
 
     /**
      * @dataProvider normalizeBindToOptionInvalidIpv6DataProvider
-     * @expectedException \Error
-     * @expectedExceptionMessage Invalid IPv6 address:
      */
     public function testNormalizeBindToOptionInvalidIpv6($bindTo)
     {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Invalid IPv6 address:');
+
         Internal\normalizeBindToOption($bindTo);
     }
 
@@ -168,11 +173,12 @@ class functionsTest extends TestCase
 
     /**
      * @dataProvider normalizeBindToOptionInvalidIpv4DataProvider
-     * @expectedException \Error
-     * @expectedExceptionMessage Invalid IPv4 address:
      */
     public function testNormalizeBindToOptionInvalidIpv4($bindTo)
     {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Invalid IPv4 address:');
+
         Internal\normalizeBindToOption($bindTo);
     }
 }

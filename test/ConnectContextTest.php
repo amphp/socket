@@ -156,12 +156,14 @@ class ConnectContextTest extends TestCase
 
     /**
      * @dataProvider withDnsTypeRestrictionInvalidTypeDataProvider
-     * @expectedException \Error
-     * @expectedExceptionMessage Invalid resolver type restriction
      */
     public function testWithDnsTypeRestrictionInvalidType($type): void
     {
         $context = new ConnectContext();
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Invalid resolver type restriction');
+
         $context->withDnsTypeRestriction($type);
     }
 
