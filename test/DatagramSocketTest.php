@@ -21,7 +21,12 @@ class DatagramSocketTest extends AsyncTestCase
     public function testBindEndpointError(): void
     {
         $this->expectException(Socket\SocketException::class);
-        $this->expectExceptionMessageMatches('/Could not create datagram .*: \[Error: #.*\] .*$/');
+
+        if (\PHP_VERSION_ID >= 70200) {
+            $this->expectExceptionMessageMatches('/Could not create datagram .*: \[Error: #.*\] .*$/');
+        } else {
+            $this->expectExceptionMessageRegExp('/Could not create datagram .*: \[Error: #.*\] .*$/');
+        }
 
         DatagramSocket::bind('error');
     }

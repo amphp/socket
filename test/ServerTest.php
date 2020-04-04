@@ -23,7 +23,12 @@ class ServerTest extends TestCase
     public function testListenStreamSocketServerError(): void
     {
         $this->expectException(Socket\SocketException::class);
-        $this->expectExceptionMessageMatches('/Could not create server .*: \[Error: #.*\] .*$/');
+
+        if (\PHP_VERSION_ID >= 70200) {
+            $this->expectExceptionMessageMatches('/Could not create server .*: \[Error: #.*\] .*$/');
+        } else {
+            $this->expectExceptionMessageRegExp('/Could not create server .*: \[Error: #.*\] .*$/');
+        }
 
         Server::listen('error');
     }
