@@ -115,7 +115,9 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
             $cancellationToken,
             $id
         ) {
+            \error_clear_last();
             $result = @\stream_socket_enable_crypto($socket, true);
+            $lastError = \error_get_last();
 
             // If $result is 0, just wait for the next invocation
             if ($result === true) {
@@ -127,7 +129,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
                 $cancellationToken->unsubscribe($id);
                 $deferred->fail(new TlsException('TLS negotiation failed: ' . (\feof($socket)
                         ? 'Connection reset by peer'
-                        : (\error_get_last()['message']) ?? 'Unknown error')));
+                        : ($lastError['message'] ?? 'Unknown error'))));
             }
         }, $deferred);
 
