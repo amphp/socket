@@ -72,7 +72,7 @@ function parseUri(string $uri): array
  * @param array             $options
  * @param CancellationToken $cancellationToken
  *
- * @return Promise
+ * @return Promise<void>
  *
  * @internal
  */
@@ -90,7 +90,8 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
 
     // Yes, that function can return true / false / 0, don't use weak comparisons.
     if ($result === true) {
-        return new Success($socket);
+        /** @psalm-suppress InvalidReturnStatement */
+        return new Success;
     }
 
     if ($result === false) {
@@ -142,9 +143,10 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
  *
  * @param resource $socket
  *
- * @return Promise
+ * @return Promise<void>
  *
  * @internal
+ * @psalm-suppress InvalidReturnType
  */
 function shutdownTls($socket): Promise
 {
@@ -152,6 +154,7 @@ function shutdownTls($socket): Promise
     // don't set _enabled to false, TLS can be setup only once
     @\stream_socket_enable_crypto($socket, false);
 
+    /** @psalm-suppress InvalidReturnStatement */
     return new Success;
 }
 

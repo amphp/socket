@@ -15,7 +15,7 @@ interface EncryptableSocket extends Socket
     /**
      * @param CancellationToken|null $cancellationToken
      *
-     * @return Promise<null> Resolved when TLS is successfully set up on the socket.
+     * @return Promise<void> Resolved when TLS is successfully set up on the socket.
      *
      * @throws SocketException Promise fails and the socket is closed if setting up TLS fails.
      */
@@ -24,7 +24,7 @@ interface EncryptableSocket extends Socket
     /**
      * @param CancellationToken|null $cancellationToken
      *
-     * @return Promise<null> Resolved when TLS is successfully shutdown.
+     * @return Promise<void> Resolved when TLS is successfully shutdown.
      *
      * @throws SocketException Promise fails and the socket is closed if shutting down TLS fails.
      */
