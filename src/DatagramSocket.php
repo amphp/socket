@@ -49,6 +49,7 @@ final class DatagramSocket
 
         return new self($server, $context->getChunkSize());
     }
+
     /** @var resource|null UDP socket resource. */
     private $socket;
     /** @var string Watcher ID. */
@@ -155,12 +156,22 @@ final class DatagramSocket
             return new Failure(new SocketException('The endpoint is not writable'));
         }
 
-        $result = @\stream_socket_sendto($this->socket, $data, 0, $address->toString());
+        try {
+            try {
+                \set_error_handler(static function (int $errno, string $errstr) {
+                    throw new SocketException(\sprintf('Could not send packet on endpoint: %s', $errstr));
+                });
 
-        /** @psalm-suppress TypeDoesNotContainType */
-        if ($result < 0 || $result === false) {
-            $error = \error_get_last()['message'] ?? 'Unknown error';
-            return new Failure(new SocketException('Could not send packet on endpoint: ' . $error));
+                $result = @\stream_socket_sendto($this->socket, $data, 0, $address->toString());
+                /** @psalm-suppress TypeDoesNotContainType */
+                if ($result < 0 || $result === false) {
+                    throw new SocketException('Could not send packet on endpoint: Unknown error');
+                }
+            } finally {
+                \restore_error_handler();
+            }
+        } catch (SocketException $e) {
+            return new Failure($e);
         }
 
         return new Success($result);

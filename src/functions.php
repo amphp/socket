@@ -10,21 +10,20 @@ use Amp\Promise;
 const LOOP_CONNECTOR_IDENTIFIER = Connector::class;
 
 /**
- * @deprecated Use Server::listen() instead.
- *
  * Listen for client connections on the specified server address.
  *
  * If you want to accept TLS connections, you have to use `yield $socket->setupTls()` after accepting new clients.
  *
- * @see Server::listen()
- *
- * @param string           $uri     URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param string           $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param BindContext|null $context Context options for listening.
  *
  * @return Server
  *
  * @throws SocketException If binding to the specified URI failed.
  * @throws \Error If an invalid scheme is given.
+ * @see Server::listen()
+ *
+ * @deprecated Use Server::listen() instead.
  */
 function listen(string $uri, ?BindContext $context = null): Server
 {
@@ -56,7 +55,7 @@ function connector(Connector $connector = null): Connector
 /**
  * Asynchronously establish a socket connection to the specified URI.
  *
- * @param string                 $uri     URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param string                 $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ConnectContext         $context Socket connect context to use when connecting.
  * @param CancellationToken|null $token
  *
@@ -79,12 +78,17 @@ function connect(string $uri, ConnectContext $context = null, CancellationToken 
  */
 function createPair(): array
 {
-    if (($sockets = @\stream_socket_pair(\stripos(PHP_OS, 'win') === 0 ? STREAM_PF_INET : STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP)) === false) {
-        $message = 'Failed to create socket pair.';
-        if ($error = \error_get_last()) {
-            $message .= \sprintf(' Errno: %d; %s', $error['type'], $error['message']);
+    try {
+        \set_error_handler(static function (int $errno, string $errstr) {
+            throw new SocketException(\sprintf('Failed to create socket pair.  Errno: %d; %s', $errno, $errstr));
+        });
+
+        $sockets = @\stream_socket_pair(\stripos(PHP_OS, 'win') === 0 ? STREAM_PF_INET : STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        if ($sockets === false) {
+            throw new SocketException('Failed to create socket pair.');
         }
-        throw new SocketException($message);
+    } finally {
+        \restore_error_handler();
     }
 
     return [ResourceSocket::fromClientSocket($sockets[0]), ResourceSocket::fromClientSocket($sockets[1])];
