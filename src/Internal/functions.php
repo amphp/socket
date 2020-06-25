@@ -92,7 +92,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
             new TlsException('TLS negotiation failed: ' . $errstr);
         });
 
-        $result = @\stream_socket_enable_crypto($socket, $enable = true);
+        $result = \stream_socket_enable_crypto($socket, $enable = true);
         if ($result === false) {
             throw new TlsException('TLS negotiation failed: Unknown error');
         }
@@ -134,7 +134,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
                         throw new TlsException('TLS negotiation failed: ' . $errstr);
                     });
 
-                    $result = @\stream_socket_enable_crypto($socket, true);
+                    $result = \stream_socket_enable_crypto($socket, true);
                     if ($result === false) {
                         $message = \feof($socket) ? 'Connection reset by peer' : 'Unknown error';
                         throw new TlsException('TLS negotiation failed: ' . $message);

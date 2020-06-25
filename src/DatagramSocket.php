@@ -162,7 +162,7 @@ final class DatagramSocket
                     throw new SocketException(\sprintf('Could not send packet on endpoint: %s', $errstr));
                 });
 
-                $result = @\stream_socket_sendto($this->socket, $data, 0, $address->toString());
+                $result = \stream_socket_sendto($this->socket, $data, 0, $address->toString());
                 /** @psalm-suppress TypeDoesNotContainType */
                 if ($result < 0 || $result === false) {
                     throw new SocketException('Could not send packet on endpoint: Unknown error');
