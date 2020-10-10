@@ -9,9 +9,9 @@ namespace Amp\Socket;
 final class Certificate
 {
     /** @var string */
-    private $certFile;
+    private string $certFile;
     /** @var string */
-    private $keyFile;
+    private string $keyFile;
 
     /**
      * @param string      $certFile Certificate file with the certificate + intermediaries.

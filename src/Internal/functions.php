@@ -11,7 +11,6 @@ use Amp\Promise;
 use Amp\Socket\TlsException;
 use Amp\Success;
 use League\Uri;
-use function Amp\call;
 
 /**
  * Parse an URI into [scheme, host, port].
@@ -108,58 +107,56 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
         return new Success;
     }
 
-    return call(static function () use ($socket, $cancellationToken) {
-        $cancellationToken->throwIfRequested();
+    $cancellationToken->throwIfRequested();
 
-        $deferred = new Deferred;
+    $deferred = new Deferred;
 
-        // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
-        $id = $cancellationToken->subscribe(static function ($e) use ($deferred, &$watcher) {
-            Loop::cancel($watcher);
+    // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
+    $id = $cancellationToken->subscribe(static function ($e) use ($deferred, &$watcher) {
+        Loop::cancel($watcher);
 
-            $deferred->fail($e);
-        });
-
-        $watcher = Loop::onReadable($socket, static function (string $watcher, $socket, Deferred $deferred) use (
-            $cancellationToken,
-            $id
-        ) {
-            try {
-                try {
-                    \set_error_handler(static function (int $errno, string $errstr) use ($socket) {
-                        if (\feof($socket)) {
-                            $errstr = 'Connection reset by peer';
-                        }
-
-                        throw new TlsException('TLS negotiation failed: ' . $errstr);
-                    });
-
-                    $result = \stream_socket_enable_crypto($socket, true);
-                    if ($result === false) {
-                        $message = \feof($socket) ? 'Connection reset by peer' : 'Unknown error';
-                        throw new TlsException('TLS negotiation failed: ' . $message);
-                    }
-                } finally {
-                    \restore_error_handler();
-                }
-            } catch (TlsException $e) {
-                Loop::cancel($watcher);
-                $cancellationToken->unsubscribe($id);
-                $deferred->fail($e);
-
-                return;
-            }
-
-            // If $result is 0, just wait for the next invocation
-            if ($result === true) {
-                Loop::cancel($watcher);
-                $cancellationToken->unsubscribe($id);
-                $deferred->resolve();
-            }
-        }, $deferred);
-
-        return $deferred->promise();
+        $deferred->fail($e);
     });
+
+    $watcher = Loop::onReadable($socket, static function (string $watcher, $socket, Deferred $deferred) use (
+        $cancellationToken,
+        $id
+    ) {
+        try {
+            try {
+                \set_error_handler(static function (int $errno, string $errstr) use ($socket) {
+                    if (\feof($socket)) {
+                        $errstr = 'Connection reset by peer';
+                    }
+
+                    throw new TlsException('TLS negotiation failed: ' . $errstr);
+                });
+
+                $result = \stream_socket_enable_crypto($socket, true);
+                if ($result === false) {
+                    $message = \feof($socket) ? 'Connection reset by peer' : 'Unknown error';
+                    throw new TlsException('TLS negotiation failed: ' . $message);
+                }
+            } finally {
+                \restore_error_handler();
+            }
+        } catch (TlsException $e) {
+            Loop::cancel($watcher);
+            $cancellationToken->unsubscribe($id);
+            $deferred->fail($e);
+
+            return;
+        }
+
+        // If $result is 0, just wait for the next invocation
+        if ($result === true) {
+            Loop::cancel($watcher);
+            $cancellationToken->unsubscribe($id);
+            $deferred->resolve();
+        }
+    }, $deferred);
+
+    return $deferred->promise();
 }
 
 /**
@@ -191,7 +188,7 @@ function shutdownTls($socket): Promise
  *
  * @throws \Error If an invalid option has been passed.
  */
-function normalizeBindToOption(string $bindTo = null)
+function normalizeBindToOption(string $bindTo = null): ?string
 {
     if ($bindTo === null) {
         return null;
@@ -237,7 +234,7 @@ function normalizeBindToOption(string $bindTo = null)
  *
  * @return string|null
  */
-function cleanupSocketName($address)
+function cleanupSocketName(string|false $address): ?string
 {
     // https://3v4l.org/5C1lo
     if ($address === false || $address === "\0") {

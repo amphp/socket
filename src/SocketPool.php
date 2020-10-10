@@ -4,7 +4,6 @@ namespace Amp\Socket;
 
 use Amp\CancellationToken;
 use Amp\CancelledException;
-use Amp\Promise;
 
 /**
  * Allows pooling of connections for stateless protocols.
@@ -23,10 +22,10 @@ interface SocketPool
      *     optional fragment component can be used to differentiate different socket groups connected to the same URI.
      *     Connections to the same host with a different ConnectContext must use separate socket groups internally to
      *     prevent TLS negotiation with the wrong peer name or other TLS settings.
-     * @param ConnectContext         $context Socket connect context to use when connecting.
+     * @param ConnectContext|null    $context Socket connect context to use when connecting.
      * @param CancellationToken|null $token Optional cancellation token to cancel the checkout request.
      *
-     * @return Promise<EncryptableSocket> Resolves to an EncryptableSocket instance once a connection is available.
+     * @return EncryptableSocket Resolves to an EncryptableSocket instance once a connection is available.
      *
      * @throws SocketException
      * @throws CancelledException
@@ -35,7 +34,7 @@ interface SocketPool
         string $uri,
         ConnectContext $context = null,
         CancellationToken $token = null
-    ): Promise;
+    ): EncryptableSocket;
 
     /**
      * Return a previously checked-out socket to the pool so it can be reused.

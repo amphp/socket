@@ -7,23 +7,17 @@ use function Amp\Socket\Internal\normalizeBindToOption;
 
 final class ConnectContext
 {
-    /** @var string|null */
-    private $bindTo;
+    private ?string $bindTo = null;
 
-    /** @var int */
-    private $connectTimeout = 10000;
+    private int $connectTimeout = 10000;
 
-    /** @var int */
-    private $maxAttempts = 2;
+    private int $maxAttempts = 2;
 
-    /** @var null|int */
-    private $typeRestriction;
+    private ?int $typeRestriction = null;
 
-    /** @var bool */
-    private $tcpNoDelay = false;
+    private bool $tcpNoDelay = false;
 
-    /** @var ClientTlsContext|null */
-    private $tlsContext;
+    private ?ClientTlsContext $tlsContext = null;
 
     public function withoutBindTo(): self
     {

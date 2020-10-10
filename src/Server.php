@@ -4,25 +4,20 @@ namespace Amp\Socket;
 
 use Amp\Deferred;
 use Amp\Loop;
-use Amp\Promise;
-use Amp\Success;
+use function Amp\await;
 
 final class Server
 {
     /** @var resource|null Stream socket server resource. */
     private $socket;
 
-    /** @var string Watcher ID. */
-    private $watcher;
+    private string $watcher;
 
-    /** @var SocketAddress Stream socket name */
-    private $address;
+    private SocketAddress $address;
 
-    /** @var int */
-    private $chunkSize;
+    private int $chunkSize;
 
-    /** @var Deferred|null */
-    private $acceptor;
+    private ?Deferred $acceptor = null;
 
     /**
      * Listen for client connections on the specified server address.
@@ -83,7 +78,7 @@ final class Server
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
             &$acceptor,
             $chunkSize
-        ) {
+        ): void {
             // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
             if (!$client = @\stream_socket_accept($socket, 0)) {  // Timeout of 0 to be non-blocking.
                 return; // Accepting client failed.
@@ -130,29 +125,29 @@ final class Server
     }
 
     /**
-     * @return Promise<ResourceSocket|null>
+     * @return ResourceSocket|null
      *
      * @throws PendingAcceptError If another accept request is pending.
      */
-    public function accept(): Promise
+    public function accept(): ?ResourceSocket
     {
         if ($this->acceptor) {
             throw new PendingAcceptError;
         }
 
         if (!$this->socket) {
-            return new Success; // Resolve with null when server is closed.
+            return null; // Resolve with null when server is closed.
         }
 
         // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
         if ($client = @\stream_socket_accept($this->socket, 0)) { // Timeout of 0 to be non-blocking.
-            return new Success(ResourceSocket::fromServerSocket($client, $this->chunkSize));
+            return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         }
 
         $this->acceptor = new Deferred;
         Loop::enable($this->watcher);
 
-        return $this->acceptor->promise();
+        return await($this->acceptor->promise());
     }
 
     /**

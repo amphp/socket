@@ -3,24 +3,24 @@
 namespace Amp\Socket\Test;
 
 use Amp\CancelledException;
+use Amp\PHPUnit\AsyncTestCase;
+use Amp\Socket;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use Amp\Socket\ConnectException;
 use Amp\Socket\EncryptableSocket;
 use Amp\Socket\TlsInfo;
 use Amp\TimeoutCancellationToken;
-use PHPUnit\Framework\TestCase;
 
-class IntegrationTest extends TestCase
+class IntegrationTest extends AsyncTestCase
 {
     /**
      * @dataProvider provideConnectArgs
      */
     public function testConnect($uri): void
     {
-        $promise = \Amp\Socket\connect($uri);
-        $sock = \Amp\Promise\wait($promise);
-        $this->assertInstanceOf(EncryptableSocket::class, $sock);
+        $socket = Socket\connect($uri);
+        $this->assertInstanceOf(EncryptableSocket::class, $socket);
     }
 
     public function provideConnectArgs(): array
@@ -34,8 +34,7 @@ class IntegrationTest extends TestCase
     public function testConnectFailure(): void
     {
         $this->expectException(ConnectException::class);
-        $promise = \Amp\Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(1000));
-        \Amp\Promise\wait($promise);
+        Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(1000));
     }
 
     /**
@@ -45,8 +44,7 @@ class IntegrationTest extends TestCase
     {
         $this->expectException(CancelledException::class);
         $token = new TimeoutCancellationToken(1000);
-        $promise = \Amp\Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(2000), $token);
-        $sock = \Amp\Promise\wait($promise);
+        Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(2000), $token);
     }
 
     /**
@@ -56,15 +54,13 @@ class IntegrationTest extends TestCase
     {
         $name = \explode(':', $uri)[0];
 
-        $promise = \Amp\Socket\connect($uri, (new ConnectContext)->withTlsContext(new ClientTlsContext($name)));
-        $socket = \Amp\Promise\wait($promise);
+        $socket = Socket\connect($uri, (new ConnectContext)->withTlsContext(new ClientTlsContext($name)));
         $this->assertInstanceOf(EncryptableSocket::class, $socket);
 
         $this->assertNull($socket->getTlsInfo());
 
         // For this case renegotiation not needed because options is equals
-        $promise = $socket->setupTls();
-        $this->assertNull(\Amp\Promise\wait($promise));
+        $socket->setupTls();
 
         $this->assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
     }
@@ -83,15 +79,12 @@ class IntegrationTest extends TestCase
         $context = (new ConnectContext)
             ->withTlsContext(new ClientTlsContext('www.google.com'));
 
-        $promise = \Amp\socket\connect('www.google.com:443', $context);
-        /** @var EncryptableSocket $sock */
-        $socket = \Amp\Promise\wait($promise);
+        $socket = Socket\connect('www.google.com:443', $context);
 
         $this->assertNull($socket->getTlsInfo());
 
         // For this case renegotiation not needed because options is equals
-        $promise = $socket->setupTls();
-        $this->assertNull(\Amp\Promise\wait($promise));
+        $socket->setupTls();
 
         $this->assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
     }

@@ -7,31 +7,32 @@ final class ClientTlsContext
     public const TLSv1_0 = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
     public const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
     public const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+    public const TLSv1_3 = \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT;
 
-    /** @var int */
-    private $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
-    /** @var string|null */
-    private $peerName;
-    /** @var bool */
-    private $verifyPeer = true;
-    /** @var int */
-    private $verifyDepth = 10;
-    /** @var string|null */
-    private $ciphers;
-    /** @var string|null */
-    private $caFile;
-    /** @var string|null */
-    private $caPath;
-    /** @var bool */
-    private $capturePeer = false;
-    /** @var bool */
-    private $sniEnabled = true;
-    /** @var int */
-    private $securityLevel = 2;
-    /** @var Certificate|null */
-    private $certificate;
+    private int $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
+
+    private string $peerName;
+
+    private bool $verifyPeer = true;
+
+    private int $verifyDepth = 10;
+
+    private ?string $ciphers = null;
+
+    private ?string $caFile = null;
+
+    private ?string $caPath = null;
+
+    private bool $capturePeer = false;
+
+    private bool $sniEnabled = true;
+
+    private int $securityLevel = 2;
+
+    private ?Certificate $certificate = null;
+
     /** @var string[] */
-    private $alpnProtocols = [];
+    private array $alpnProtocols = [];
 
     public function __construct(string $peerName)
     {

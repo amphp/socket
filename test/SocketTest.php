@@ -2,27 +2,23 @@
 
 namespace Amp\Socket\Test;
 
-use Amp\Loop;
+use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\Server;
-use PHPUnit\Framework\TestCase;
-use function Amp\asyncCall;
 use function Amp\ByteStream\buffer;
-use function Amp\Promise\wait;
+use function Amp\defer;
 
-class SocketTest extends TestCase
+class SocketTest extends AsyncTestCase
 {
     public function testReadAndClose(): void
     {
-        Loop::run(function () {
-            $data = "Testing\n";
+        $data = "Testing\n";
 
-            [$serverSock, $clientSock] = Socket\createPair();
+        [$serverSock, $clientSock] = Socket\createPair();
 
-            yield $serverSock->end($data);
+        $serverSock->end($data);
 
-            $this->assertSame($data, yield buffer($clientSock));
-        });
+        $this->assertSame($data, buffer($clientSock));
     }
 
     public function testSocketAddress(): void
@@ -48,16 +44,21 @@ class SocketTest extends TestCase
     {
         $server = Server::listen('127.0.0.1:0');
 
-        asyncCall(function () use ($server) {
-            yield Socket\connect($server->getAddress());
+        defer(function () use ($server): void {
+            $socket = Socket\connect($server->getAddress());
+            $socket->close();
         });
 
-        /** @var Socket\ResourceSocket $client */
-        $client = wait($server->accept());
+        $client = $server->accept();
 
         $this->expectException(Socket\TlsException::class);
         $this->expectExceptionMessage("Can't enable TLS without configuration.");
 
-        wait($client->setupTls());
+        try {
+            $client->setupTls();
+        } finally {
+            $server->close();
+            $client->close();
+        }
     }
 }

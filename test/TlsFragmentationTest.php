@@ -3,14 +3,13 @@
 namespace Amp\Socket\Test;
 
 use Amp\ByteStream;
-use Amp\Delayed;
-use Amp\Loop;
-use Amp\PHPUnit\TestCase;
+use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\Server;
-use function Amp\asyncCall;
+use function Amp\defer;
+use function Amp\delay;
 
-class TlsFragmentationTest extends TestCase
+class TlsFragmentationTest extends AsyncTestCase
 {
     public function testTls(): void
     {
@@ -22,73 +21,69 @@ class TlsFragmentationTest extends TestCase
             $this->markTestSkipped('Your PHP version is affected by PHP bug 77390');
         }
 
-        Loop::run(function () {
-            $proxyServer = Server::listen('127.0.0.1:0');
+        $proxyServer = Server::listen('127.0.0.1:0');
 
-            $tlsContext = (new Socket\ServerTlsContext)
-                ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
-            $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+        $tlsContext = (new Socket\ServerTlsContext)
+            ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
+        $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-            // Proxy to apply chunking of single bytes
-            asyncCall(function () use ($proxyServer, $server) {
-                /** @var Socket\ResourceSocket $proxyClient */
-                while ($proxyClient = yield $proxyServer->accept()) {
-                    asyncCall(function () use ($proxyClient, $server) {
-                        $proxyUpstream = yield Socket\connect($server->getAddress());
+        // Proxy to apply chunking of single bytes
+        defer(function () use ($proxyServer, $server): void {
+            /** @var Socket\ResourceSocket $proxyClient */
+            while ($proxyClient = $proxyServer->accept()) {
+                defer(function () use ($proxyClient, $server): void {
+                    $proxyUpstream = Socket\connect($server->getAddress());
 
-                        $this->pipe($proxyClient, $proxyUpstream);
-                        $this->pipe($proxyUpstream, $proxyClient);
-                    });
-                }
-            });
-
-            asyncCall(function () use ($server) {
-                /** @var Socket\ResourceSocket $client */
-                while ($client = yield $server->accept()) {
-                    asyncCall(function () use ($client) {
-                        yield $client->setupTls();
-                        $this->assertInstanceOf(Socket\ResourceSocket::class, $client);
-                        $this->assertSame('Hello World', yield from $this->read($client, 11));
-                        $client->write('test');
-                    });
-                }
-            });
-
-            $context = (new Socket\ConnectContext())->withTlsContext(
-                (new Socket\ClientTlsContext('amphp.org'))
-                ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
-            );
-
-            /** @var Socket\ResourceSocket $client */
-            $client = yield Socket\connect($proxyServer->getAddress(), $context);
-            yield $client->setupTls();
-            yield $client->write('Hello World');
-
-            $this->assertSame('test', yield from $this->read($client, 4));
-
-            $server->close();
-
-            Loop::stop();
+                    $this->pipe($proxyClient, $proxyUpstream);
+                    $this->pipe($proxyUpstream, $proxyClient);
+                });
+            }
         });
+
+        defer(function () use ($server): void {
+            /** @var Socket\ResourceSocket $client */
+            while ($client = $server->accept()) {
+                defer(function () use ($client): void {
+                    $client->setupTls();
+                    $this->assertInstanceOf(Socket\ResourceSocket::class, $client);
+                    $this->assertSame('Hello World', $this->read($client, 11));
+                    $client->write('test');
+                });
+            }
+        });
+
+        $context = (new Socket\ConnectContext())->withTlsContext(
+            (new Socket\ClientTlsContext('amphp.org'))
+            ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
+        );
+
+        /** @var Socket\ResourceSocket $client */
+        $client = Socket\connect($proxyServer->getAddress(), $context);
+        $client->setupTls();
+        $client->write('Hello World');
+
+        $this->assertSame('test', $this->read($client, 4));
+
+        $server->close();
     }
 
     private function pipe(ByteStream\InputStream $source, ByteStream\OutputStream $destination): void
     {
-        asyncCall(static function () use ($source, $destination): \Generator {
-            while (($chunk = yield $source->read()) !== null) {
+        defer(static function () use ($source, $destination): void {
+            while (($chunk = $source->read()) !== null) {
                 foreach (\str_split($chunk) as $byte) {
-                    yield $destination->write($byte);
-                    yield new Delayed(1);
+                    $destination->write($byte);
+                    delay(1);
                 }
             }
         });
     }
 
-    private function read(ByteStream\InputStream $source, int $minLength)
+    private function read(ByteStream\InputStream $source, int $minLength): string
     {
         $buffer = '';
 
-        while (null !== $chunk = yield $source->read()) {
+        while (null !== $chunk = $source->read()) {
             $buffer .= $chunk;
 
             if (\strlen($buffer) >= $minLength) {

@@ -6,9 +6,7 @@ use Amp\ByteStream\ClosedException;
 use Amp\ByteStream\ResourceInputStream;
 use Amp\ByteStream\ResourceOutputStream;
 use Amp\CancellationToken;
-use Amp\Failure;
-use Amp\Promise;
-use function Amp\call;
+use function Amp\await;
 
 final class ResourceSocket implements EncryptableSocket
 {
@@ -40,26 +38,19 @@ final class ResourceSocket implements EncryptableSocket
         return new self($resource, $chunkSize, $tlsContext);
     }
 
-    /** @var ClientTlsContext|null */
-    private $tlsContext;
+    private ?ClientTlsContext $tlsContext;
 
-    /** @var int */
-    private $tlsState;
+    private int $tlsState;
 
-    /** @var ResourceInputStream */
-    private $reader;
+    private ResourceInputStream $reader;
 
-    /** @var ResourceOutputStream */
-    private $writer;
+    private ResourceOutputStream $writer;
 
-    /** @var SocketAddress */
-    private $localAddress;
+    private SocketAddress $localAddress;
 
-    /** @var SocketAddress */
-    private $remoteAddress;
+    private SocketAddress $remoteAddress;
 
-    /** @var TlsInfo|null */
-    private $tlsInfo;
+    private ?TlsInfo $tlsInfo = null;
 
     /**
      * @param resource              $resource  Stream resource.
@@ -80,12 +71,12 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function setupTls(?CancellationToken $cancellationToken = null): Promise
+    public function setupTls(?CancellationToken $cancellationToken = null): void
     {
         $resource = $this->getResource();
 
         if ($resource === null) {
-            return new Failure(new ClosedException("Can't setup TLS, because the socket has already been closed"));
+            throw new ClosedException("Can't setup TLS, because the socket has already been closed");
         }
 
         $this->tlsState = self::TLS_STATE_SETUP_PENDING;
@@ -96,68 +87,60 @@ final class ResourceSocket implements EncryptableSocket
             $context = @\stream_context_get_options($resource);
 
             if (empty($context['ssl'])) {
-                return new Failure(new TlsException(
+                throw new TlsException(
                     "Can't enable TLS without configuration. " .
                     "If you used Amp\\Socket\\listen(), be sure to pass a ServerTlsContext within the BindContext " .
                     "in the second argument, otherwise set the 'ssl' context option to the PHP stream resource."
-                ));
+                );
             }
 
             $promise = Internal\setupTls($resource, $context, $cancellationToken);
         }
 
-        return call(function () use ($promise) {
-            try {
-                yield $promise;
+        try {
+            await($promise);
 
-                $this->tlsState = self::TLS_STATE_ENABLED;
-            } catch (\Throwable $exception) {
-                $this->close();
+            $this->tlsState = self::TLS_STATE_ENABLED;
+        } catch (\Throwable $exception) {
+            $this->close();
 
-                throw $exception;
-            }
-        });
+            throw $exception;
+        }
     }
 
     /** @inheritDoc */
-    public function shutdownTls(?CancellationToken $cancellationToken = null): Promise
+    public function shutdownTls(?CancellationToken $cancellationToken = null): void
     {
         if (($resource = $this->reader->getResource()) === null) {
-            return new Failure(new ClosedException("Can't shutdown TLS, because the socket has already been closed"));
+            throw new ClosedException("Can't shutdown TLS, because the socket has already been closed");
         }
 
         $this->tlsState = self::TLS_STATE_SHUTDOWN_PENDING;
 
-        return call(function () use ($resource) {
-            try {
-                yield Internal\shutdownTls($resource);
-            } finally {
-                $this->tlsState = self::TLS_STATE_DISABLED;
-            }
-        });
+        try {
+            await(Internal\shutdownTls($resource));
+        } finally {
+            $this->tlsState = self::TLS_STATE_DISABLED;
+        }
     }
 
     /** @inheritDoc */
-    public function read(): Promise
+    public function read(): ?string
     {
         return $this->reader->read();
     }
 
     /** @inheritDoc */
-    public function write(string $data): Promise
+    public function write(string $data): void
     {
-        return $this->writer->write($data);
+        $this->writer->write($data);
     }
 
     /** @inheritDoc */
-    public function end(string $data = ''): Promise
+    public function end(string $data = ''): void
     {
-        $promise = $this->writer->end($data);
-        $promise->onResolve(function () {
-            $this->close();
-        });
-
-        return $promise;
+        $this->writer->end($data);
+        $this->close();
     }
 
     /** @inheritDoc */

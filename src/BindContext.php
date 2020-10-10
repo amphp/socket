@@ -6,20 +6,19 @@ use function Amp\Socket\Internal\normalizeBindToOption;
 
 final class BindContext
 {
-    /** @var string|null */
-    private $bindTo;
-    /** @var int */
-    private $backlog = 128;
-    /** @var bool */
-    private $reusePort = false;
-    /** @var bool */
-    private $broadcast = false;
-    /** @var bool */
-    private $tcpNoDelay = false;
-    /** @var int */
-    private $chunkSize = 8192;
-    /** @var ServerTlsContext|null */
-    private $tlsContext;
+    private ?string $bindTo = null;
+
+    private int $backlog = 128;
+
+    private bool $reusePort = false;
+
+    private bool $broadcast = false;
+
+    private bool $tcpNoDelay = false;
+
+    private int $chunkSize = 8192;
+
+    private ?ServerTlsContext $tlsContext = null;
 
     public function withoutBindTo(): self
     {

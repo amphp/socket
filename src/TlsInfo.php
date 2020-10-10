@@ -9,20 +9,20 @@ use Kelunik\Certificate\Certificate;
  */
 final class TlsInfo
 {
-    /** @var string */
-    private $version;
-    /** @var string */
-    private $cipherName;
-    /** @var int */
-    private $cipherBits;
-    /** @var string */
-    private $cipherVersion;
-    /** @var string|null */
-    private $alpnProtocol;
-    /** @var array|null */
-    private $certificates;
+    private string $version;
+
+    private string $cipherName;
+
+    private int $cipherBits;
+
+    private string $cipherVersion;
+
+    private ?string $alpnProtocol;
+
+    private ?array $certificates;
+
     /** @var Certificate[]|null */
-    private $parsedCertificates;
+    private ?array $parsedCertificates = null;
 
     /**
      * Constructs a new instance from a stream socket resource.

@@ -3,14 +3,9 @@
 namespace Amp\Socket;
 
 use Amp\CancellationToken;
-use Amp\CancelledException;
-use Amp\Failure;
 use Amp\Loop;
-use Amp\Promise;
 use Amp\Struct;
-use Amp\Success;
 use League\Uri;
-use function Amp\call;
 
 /**
  * SocketPool implementation that doesn't impose any limits on concurrent open connections.
@@ -23,15 +18,17 @@ final class UnlimitedSocketPool implements SocketPool
     ];
 
     /** @var object[][] */
-    private $sockets = [];
+    private array $sockets = [];
+
     /** @var string[] */
-    private $objectIdCacheKeyMap = [];
+    private array $objectIdCacheKeyMap = [];
+
     /** @var int[] */
-    private $pendingCount = [];
-    /** @var int */
-    private $idleTimeout;
-    /** @var Connector */
-    private $connector;
+    private array $pendingCount = [];
+
+    private int $idleTimeout;
+
+    private Connector $connector;
 
     public function __construct(int $idleTimeout = 10000, ?Connector $connector = null)
     {
@@ -44,15 +41,11 @@ final class UnlimitedSocketPool implements SocketPool
         string $uri,
         ConnectContext $context = null,
         CancellationToken $token = null
-    ): Promise {
+    ): EncryptableSocket {
         // A request might already be cancelled before we reach the checkout, so do not even attempt to checkout in that
         // case. The weird logic is required to throw the token's exception instead of creating a new one.
         if ($token && $token->isRequested()) {
-            try {
-                $token->throwIfRequested();
-            } catch (CancelledException $e) {
-                return new Failure($e);
-            }
+            $token->throwIfRequested();
         }
 
         [$uri, $fragment] = $this->normalizeUri($uri);
@@ -94,7 +87,7 @@ final class UnlimitedSocketPool implements SocketPool
                 Loop::disable($socket->idleWatcher);
             }
 
-            return new Success($socket->object);
+            return $socket->object;
         }
 
         return $this->checkoutNewSocket($uri, $cacheKey, $context, $token);
@@ -205,43 +198,35 @@ final class UnlimitedSocketPool implements SocketPool
         string $cacheKey,
         ConnectContext $connectContext = null,
         CancellationToken $token = null
-    ): Promise {
-        return call(function () use ($uri, $cacheKey, $connectContext, $token) {
-            $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
+    ): EncryptableSocket {
+        $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
-            try {
-                /** @var EncryptableSocket $socket */
-                $socket = yield $this->connector->connect($uri, $connectContext, $token);
-            } finally {
-                if (--$this->pendingCount[$uri] === 0) {
-                    unset($this->pendingCount[$uri]);
-                }
+        try {
+            $socket = $this->connector->connect($uri, $connectContext, $token);
+        } finally {
+            if (--$this->pendingCount[$uri] === 0) {
+                unset($this->pendingCount[$uri]);
             }
+        }
 
-            /** @psalm-suppress MissingConstructor */
-            $socketEntry = new class {
-                use Struct;
+        /** @psalm-suppress MissingConstructor */
+        $socketEntry = new class {
+            use Struct;
+            public string $uri;
+            public EncryptableSocket $object;
+            public bool $isAvailable;
+            public ?string $idleWatcher = null;
+        };
 
-                /** @var string */
-                public $uri;
-                /** @var EncryptableSocket */
-                public $object;
-                /** @var bool */
-                public $isAvailable;
-                /** @var string|null */
-                public $idleWatcher;
-            };
+        $socketEntry->uri = $uri;
+        $socketEntry->isAvailable = false;
+        $socketEntry->object = $socket;
 
-            $socketEntry->uri = $uri;
-            $socketEntry->isAvailable = false;
-            $socketEntry->object = $socket;
+        $objectId = \spl_object_hash($socket);
+        $this->sockets[$cacheKey][$objectId] = $socketEntry;
+        $this->objectIdCacheKeyMap[$objectId] = $cacheKey;
 
-            $objectId = \spl_object_hash($socket);
-            $this->sockets[$cacheKey][$objectId] = $socketEntry;
-            $this->objectIdCacheKeyMap[$objectId] = $cacheKey;
-
-            return $socket;
-        });
+        return $socket;
     }
 
     private function clearFromId(string $objectId): void

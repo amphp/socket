@@ -3,10 +3,8 @@
 namespace Amp\Socket;
 
 use Amp\Deferred;
-use Amp\Failure;
 use Amp\Loop;
-use Amp\Promise;
-use Amp\Success;
+use function Amp\await;
 
 final class DatagramSocket
 {
@@ -52,14 +50,14 @@ final class DatagramSocket
 
     /** @var resource|null UDP socket resource. */
     private $socket;
-    /** @var string Watcher ID. */
-    private $watcher;
-    /** @var SocketAddress */
-    private $address;
-    /** @var Deferred|null */
-    private $reader;
-    /** @var int */
-    private $chunkSize;
+
+    private string $watcher;
+
+    private SocketAddress $address;
+
+    private ?Deferred $reader = null;
+
+    private int $chunkSize;
 
     /**
      * @param resource $socket A bound udp socket resource
@@ -83,7 +81,7 @@ final class DatagramSocket
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
             &$reader,
             &$chunkSize
-        ) {
+        ): void {
             $deferred = $reader;
             $reader = null;
 
@@ -122,59 +120,55 @@ final class DatagramSocket
     }
 
     /**
-     * @return Promise<array{0: SocketAddress, 1: string}|null> Resolves with null if the socket is closed.
+     * @return array{0: SocketAddress, 1: string}|null Resolves with null if the socket is closed.
      *
      * @throws PendingReceiveError If a receive request is already pending.
      */
-    public function receive(): Promise
+    public function receive(): ?array
     {
         if ($this->reader) {
             throw new PendingReceiveError;
         }
 
         if (!$this->socket) {
-            return new Success; // Resolve with null when endpoint is closed.
+            return null; // Resolve with null when endpoint is closed.
         }
 
         $this->reader = new Deferred;
         Loop::enable($this->watcher);
 
-        return $this->reader->promise();
+        return await($this->reader->promise());
     }
 
     /**
      * @param SocketAddress $address
      * @param string        $data
      *
-     * @return Promise<int> Resolves with the number of bytes written to the socket.
+     * @return int Returns with the number of bytes written to the socket.
      *
      * @throws SocketException If the UDP socket closes before the data can be sent.
      */
-    public function send(SocketAddress $address, string $data): Promise
+    public function send(SocketAddress $address, string $data): int
     {
         if (!$this->socket) {
-            return new Failure(new SocketException('The endpoint is not writable'));
+            throw new SocketException('The endpoint is not writable');
         }
 
         try {
-            try {
-                \set_error_handler(static function (int $errno, string $errstr) {
-                    throw new SocketException(\sprintf('Could not send packet on endpoint: %s', $errstr));
-                });
+            \set_error_handler(static function (int $errno, string $errstr) {
+                throw new SocketException(\sprintf('Could not send packet on endpoint: %s', $errstr));
+            });
 
-                $result = \stream_socket_sendto($this->socket, $data, 0, $address->toString());
-                /** @psalm-suppress TypeDoesNotContainType */
-                if ($result < 0 || $result === false) {
-                    throw new SocketException('Could not send packet on endpoint: Unknown error');
-                }
-            } finally {
-                \restore_error_handler();
+            $result = \stream_socket_sendto($this->socket, $data, 0, $address->toString());
+            /** @psalm-suppress TypeDoesNotContainType */
+            if ($result < 0 || $result === false) {
+                throw new SocketException('Could not send packet on endpoint: Unknown error');
             }
-        } catch (SocketException $e) {
-            return new Failure($e);
+        } finally {
+            \restore_error_handler();
         }
 
-        return new Success($result);
+        return $result;
     }
 
     /**

@@ -5,7 +5,6 @@ namespace Amp\Socket;
 use Amp\CancellationToken;
 use Amp\CancelledException;
 use Amp\Loop;
-use Amp\Promise;
 
 const LOOP_CONNECTOR_IDENTIFIER = Connector::class;
 
@@ -56,15 +55,15 @@ function connector(Connector $connector = null): Connector
  * Asynchronously establish a socket connection to the specified URI.
  *
  * @param string                 $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
- * @param ConnectContext         $context Socket connect context to use when connecting.
+ * @param ConnectContext|null    $context Socket connect context to use when connecting.
  * @param CancellationToken|null $token
  *
- * @return Promise<EncryptableSocket>
+ * @return EncryptableSocket
  *
  * @throws ConnectException
  * @throws CancelledException
  */
-function connect(string $uri, ConnectContext $context = null, CancellationToken $token = null): Promise
+function connect(string $uri, ConnectContext $context = null, CancellationToken $token = null): EncryptableSocket
 {
     return connector()->connect($uri, $context, $token);
 }

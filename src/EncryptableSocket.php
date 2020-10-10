@@ -3,7 +3,6 @@
 namespace Amp\Socket;
 
 use Amp\CancellationToken;
-use Amp\Promise;
 
 interface EncryptableSocket extends Socket
 {
@@ -15,20 +14,20 @@ interface EncryptableSocket extends Socket
     /**
      * @param CancellationToken|null $cancellationToken
      *
-     * @return Promise<void> Resolved when TLS is successfully set up on the socket.
+     * @return void Returns when TLS is successfully set up on the socket.
      *
      * @throws SocketException Promise fails and the socket is closed if setting up TLS fails.
      */
-    public function setupTls(?CancellationToken $cancellationToken = null): Promise;
+    public function setupTls(?CancellationToken $cancellationToken = null): void;
 
     /**
      * @param CancellationToken|null $cancellationToken
      *
-     * @return Promise<void> Resolved when TLS is successfully shutdown.
+     * @return void Returns when TLS is successfully shutdown.
      *
      * @throws SocketException Promise fails and the socket is closed if shutting down TLS fails.
      */
-    public function shutdownTls(?CancellationToken $cancellationToken = null): Promise;
+    public function shutdownTls(?CancellationToken $cancellationToken = null): void;
 
     /**
      * @return int One of the TLS_STATE_* constants defined in this interface.

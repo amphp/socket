@@ -2,23 +2,24 @@
 
 namespace Amp\Socket\Test;
 
-use Amp\PHPUnit\TestCase;
+use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket\Connector;
+use Amp\Socket\EncryptableSocket;
 use Amp\Socket\StaticConnector;
 
-class StaticConnectorTest extends TestCase
+class StaticConnectorTest extends AsyncTestCase
 {
     public function testConnect(): void
     {
-        /** @var Connector $underlyingConnector */
-        $underlyingConnector = $this->prophesize(Connector::class);
-        $staticSocketPool = new StaticConnector('override-uri', $underlyingConnector->reveal());
+        $underlyingConnector = $this->createMock(Connector::class);
+        $staticSocketPool = new StaticConnector('override-uri', $underlyingConnector);
 
-        $expected = new \Amp\LazyPromise(function () {
-            // nothing
-        });
+        $expected = $this->createMock(EncryptableSocket::class);
 
-        $underlyingConnector->connect('override-uri', null, null)->shouldBeCalled()->willReturn($expected);
+        $underlyingConnector->expects($this->once())
+            ->method('connect')
+            ->with('override-uri', null, null)
+            ->willReturn($expected);
 
         $returned = $staticSocketPool->connect('test-url');
 

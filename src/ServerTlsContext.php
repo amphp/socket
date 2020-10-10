@@ -7,31 +7,33 @@ final class ServerTlsContext
     public const TLSv1_0 = \STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
     public const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_SERVER;
     public const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_SERVER;
+    public const TLSv1_3 = \STREAM_CRYPTO_METHOD_TLSv1_3_SERVER;
 
-    /** @var int */
-    private $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
-    /** @var null|string */
-    private $peerName;
-    /** @var bool */
-    private $verifyPeer = false;
-    /** @var int */
-    private $verifyDepth = 10;
-    /** @var null|string */
-    private $ciphers;
-    /** @var null|string */
-    private $caFile;
-    /** @var null|string */
-    private $caPath;
-    /** @var bool */
-    private $capturePeer = false;
-    /** @var null|Certificate */
-    private $defaultCertificate;
+    private int $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
+
+    private ?string $peerName = null;
+
+    private bool $verifyPeer = false;
+
+    private int $verifyDepth = 10;
+
+    private ?string$ciphers = null;
+
+    private ?string$caFile = null;
+
+    private ?string$caPath = null;
+
+    private bool $capturePeer = false;
+
+    private ?Certificate $defaultCertificate = null;
+
     /** @var Certificate[] */
-    private $certificates = [];
-    /** @var int */
-    private $securityLevel = 2;
+    private array $certificates = [];
+
+    private int $securityLevel = 2;
+
     /** @var string[] */
-    private $alpnProtocols = [];
+    private array $alpnProtocols = [];
 
     /**
      * Minimum TLS version to negotiate.
