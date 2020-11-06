@@ -2,9 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\Deferred;
 use Amp\Loop;
-use function Amp\await;
 
 final class Server
 {
@@ -17,7 +15,9 @@ final class Server
 
     private int $chunkSize;
 
-    private ?Deferred $acceptor = null;
+    private \Closure $enqueue;
+
+    private ?\Continuation $acceptor = null;
 
     /**
      * Listen for client connections on the specified server address.
@@ -75,6 +75,11 @@ final class Server
         \stream_set_blocking($this->socket, false);
 
         $acceptor = &$this->acceptor;
+
+        $this->enqueue = static function (\Continuation $continuation) use (&$acceptor): void {
+            $acceptor = $continuation;
+        };
+
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
             &$acceptor,
             $chunkSize
@@ -84,14 +89,14 @@ final class Server
                 return; // Accepting client failed.
             }
 
-            $deferred = $acceptor;
+            $continuation = $acceptor;
             $acceptor = null;
 
-            \assert($deferred !== null);
+            \assert($continuation !== null);
 
-            $deferred->resolve(ResourceSocket::fromServerSocket($client, $chunkSize));
+            $continuation->resume(ResourceSocket::fromServerSocket($client, $chunkSize));
 
-            /** @psalm-suppress RedundantCondition Resolution of the deferred above might accept immediately again */
+            /** @psalm-suppress RedundantCondition Resuming of the fiber above might accept immediately again */
             if (!$acceptor) {
                 Loop::disable($watcher);
             }
@@ -119,8 +124,9 @@ final class Server
         $this->socket = null;
 
         if ($this->acceptor) {
-            $this->acceptor->resolve();
+            $acceptor = $this->acceptor;
             $this->acceptor = null;
+            Loop::defer(static fn() => $acceptor->resume());
         }
     }
 
@@ -144,10 +150,9 @@ final class Server
             return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         }
 
-        $this->acceptor = new Deferred;
         Loop::enable($this->watcher);
 
-        return await($this->acceptor->promise());
+        return \Fiber::suspend($this->enqueue, Loop::get());
     }
 
     /**
