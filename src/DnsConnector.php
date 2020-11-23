@@ -88,14 +88,15 @@ final class DnsConnector implements Connector
                 try {
                     await(Promise\timeout($deferred->promise(), $timeout));
                 } catch (TimeoutException $e) {
-                    Loop::cancel($watcher);
-                    $token->unsubscribe($id);
                     throw new ConnectException(\sprintf(
                         'Connecting to %s failed: timeout exceeded (%d ms)%s',
                         $uri,
                         $timeout,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
                     ), 110); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
+                } finally {
+                    Loop::cancel($watcher);
+                    $token->unsubscribe($id);
                 }
 
                 // The following hack looks like the only way to detect connection refused errors with PHP's stream sockets.
