@@ -82,13 +82,15 @@ class ServerTest extends AsyncTestCase
                 ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
         );
 
-        $client = Socket\connect($server->getAddress(), $context);
-        $client->setupTls();
-        $client->write('Hello World');
+        try {
+            $client = Socket\connect($server->getAddress(), $context);
+            $client->setupTls();
+            $client->write('Hello World');
 
-        $this->assertSame('test', buffer($client));
-
-        $server->close();
+            $this->assertSame('test', buffer($client));
+        } finally {
+            $server->close();
+        }
     }
 
     public function testSniWorksWithCorrectHostName(): void
@@ -114,13 +116,15 @@ class ServerTest extends AsyncTestCase
                 ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
         );
 
-        $client = Socket\connect($server->getAddress(), $context);
-        $client->setupTls();
-        $client->write('Hello World');
+        try {
+            $client = Socket\connect($server->getAddress(), $context);
+            $client->setupTls();
+            $client->write('Hello World');
 
-        $this->assertSame('test', $client->read());
-
-        $server->close();
+            $this->assertSame('test', $client->read());
+        } finally {
+            $server->close();
+        }
     }
 
     public function testSniWorksWithMultipleCertificates(): void
@@ -149,21 +153,24 @@ class ServerTest extends AsyncTestCase
                 ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
         );
 
-        $client = Socket\connect($server->getAddress(), $context);
-        $client->setupTls();
-        $client->write('Hello World');
+        try {
+            $client = Socket\connect($server->getAddress(), $context);
+            $client->setupTls();
+            $client->write('Hello World');
 
-        $context = (new Socket\ConnectContext)->withTlsContext(
-            (new Socket\ClientTlsContext('www.amphp.org'))
-                ->withCaFile(__DIR__ . '/tls/www.amphp.org.crt')
-        );
+            $context = (new Socket\ConnectContext)->withTlsContext(
+                (new Socket\ClientTlsContext('www.amphp.org'))
+                    ->withCaFile(__DIR__ . '/tls/www.amphp.org.crt')
+            );
 
-        $client = Socket\connect($server->getAddress(), $context);
-        $client->setupTls();
-        $client->write('Hello World');
+            $client = Socket\connect($server->getAddress(), $context);
+            $client->setupTls();
+            $client->write('Hello World');
 
-        delay(1);
-        $server->close();
+            delay(1);
+        } finally {
+            $server->close();
+        }
     }
 
     public function testSniWorksWithMultipleCertificatesAndDifferentFilesForCertAndKey(): void
@@ -196,20 +203,23 @@ class ServerTest extends AsyncTestCase
                 ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
         );
 
-        $client = Socket\connect($server->getAddress(), $context);
-        $client->setupTls();
-        $client->write('Hello World');
+        try {
+            $client = Socket\connect($server->getAddress(), $context);
+            $client->setupTls();
+            $client->write('Hello World');
 
-        $context = (new Socket\ConnectContext)->withTlsContext(
-            (new Socket\ClientTlsContext('www.amphp.org'))
-                ->withCaFile(__DIR__ . '/tls/www.amphp.org.crt')
-        );
+            $context = (new Socket\ConnectContext)->withTlsContext(
+                (new Socket\ClientTlsContext('www.amphp.org'))
+                    ->withCaFile(__DIR__ . '/tls/www.amphp.org.crt')
+            );
 
-        $client = Socket\connect($server->getAddress(), $context);
-        $client->setupTls();
-        $client->write('Hello World');
+            $client = Socket\connect($server->getAddress(), $context);
+            $client->setupTls();
+            $client->write('Hello World');
 
-        delay(1);
-        $server->close();
+            delay(1);
+        } finally {
+            $server->close();
+        }
     }
 }
