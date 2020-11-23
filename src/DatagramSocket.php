@@ -55,7 +55,7 @@ final class DatagramSocket
 
     private \Closure $enqueue;
 
-    private ?\Continuation $reader = null;
+    private ?\Fiber $reader = null;
 
     private int $chunkSize;
 
@@ -79,29 +79,29 @@ final class DatagramSocket
 
         $reader = &$this->reader;
 
-        $this->enqueue = static function (\Continuation $continuation) use (&$reader): void {
-            $reader = $continuation;
+        $this->enqueue = static function (\Fiber $fiber) use (&$reader): void {
+            $reader = $fiber;
         };
 
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
             &$reader,
             &$chunkSize
         ): void {
-            $continuation = $reader;
+            $fiber = $reader;
             $reader = null;
 
-            \assert($continuation !== null);
+            \assert($fiber !== null);
 
             $data = @\stream_socket_recvfrom($socket, $chunkSize, 0, $address);
 
             /** @psalm-suppress TypeDoesNotContainType */
             if ($data === false) {
                 Loop::cancel($watcher);
-                $continuation->resume();
+                $fiber->resume();
                 return;
             }
 
-            $continuation->resume([SocketAddress::fromSocketName($address), $data]);
+            $fiber->resume([SocketAddress::fromSocketName($address), $data]);
 
             /** @psalm-suppress RedundantCondition Resuming of the fiber above might read immediately again */
             if (!$reader) {

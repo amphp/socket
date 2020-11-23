@@ -17,7 +17,7 @@ final class Server
 
     private \Closure $enqueue;
 
-    private ?\Continuation $acceptor = null;
+    private ?\Fiber $acceptor = null;
 
     /**
      * Listen for client connections on the specified server address.
@@ -76,8 +76,8 @@ final class Server
 
         $acceptor = &$this->acceptor;
 
-        $this->enqueue = static function (\Continuation $continuation) use (&$acceptor): void {
-            $acceptor = $continuation;
+        $this->enqueue = static function (\Fiber $fiber) use (&$acceptor): void {
+            $acceptor = $fiber;
         };
 
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
@@ -89,12 +89,12 @@ final class Server
                 return; // Accepting client failed.
             }
 
-            $continuation = $acceptor;
+            $fiber = $acceptor;
             $acceptor = null;
 
-            \assert($continuation !== null);
+            \assert($fiber !== null);
 
-            $continuation->resume(ResourceSocket::fromServerSocket($client, $chunkSize));
+            $fiber->resume(ResourceSocket::fromServerSocket($client, $chunkSize));
 
             /** @psalm-suppress RedundantCondition Resuming of the fiber above might accept immediately again */
             if (!$acceptor) {
