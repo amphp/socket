@@ -15,8 +15,6 @@ final class Server
 
     private int $chunkSize;
 
-    private \Closure $enqueue;
-
     private ?\Fiber $acceptor = null;
 
     /**
@@ -75,11 +73,6 @@ final class Server
         \stream_set_blocking($this->socket, false);
 
         $acceptor = &$this->acceptor;
-
-        $this->enqueue = static function (\Fiber $fiber) use (&$acceptor): void {
-            $acceptor = $fiber;
-        };
-
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
             &$acceptor,
             $chunkSize
@@ -150,9 +143,9 @@ final class Server
             return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         }
 
+        $this->acceptor = \Fiber::this();
         Loop::enable($this->watcher);
-
-        return \Fiber::suspend($this->enqueue, Loop::get());
+        return \Fiber::suspend(Loop::get());
     }
 
     /**

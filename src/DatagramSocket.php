@@ -53,8 +53,6 @@ final class DatagramSocket
 
     private SocketAddress $address;
 
-    private \Closure $enqueue;
-
     private ?\Fiber $reader = null;
 
     private int $chunkSize;
@@ -78,11 +76,6 @@ final class DatagramSocket
         \stream_set_blocking($this->socket, false);
 
         $reader = &$this->reader;
-
-        $this->enqueue = static function (\Fiber $fiber) use (&$reader): void {
-            $reader = $fiber;
-        };
-
         $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
             &$reader,
             &$chunkSize
@@ -139,9 +132,9 @@ final class DatagramSocket
             return null; // Resolve with null when endpoint is closed.
         }
 
+        $this->reader = \Fiber::this();
         Loop::enable($this->watcher);
-
-        return \Fiber::suspend($this->enqueue, Loop::get());
+        return \Fiber::suspend(Loop::get());
     }
 
     /**
