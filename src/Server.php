@@ -145,7 +145,7 @@ final class Server
 
         $this->acceptor = \Fiber::this();
         Loop::enable($this->watcher);
-        return \Fiber::suspend(Loop::get());
+        return \Fiber::suspend(Loop::getDriver());
     }
 
     /**
