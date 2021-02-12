@@ -2,7 +2,9 @@
 
 namespace Amp\Socket;
 
+use Amp\Deferred;
 use Amp\Loop;
+use function Amp\await;
 
 final class DatagramSocket
 {
@@ -53,7 +55,7 @@ final class DatagramSocket
 
     private SocketAddress $address;
 
-    private ?\Fiber $reader = null;
+    private ?Deferred $reader = null;
 
     private int $chunkSize;
 
@@ -80,21 +82,21 @@ final class DatagramSocket
             &$reader,
             &$chunkSize
         ): void {
-            $fiber = $reader;
+            $deferred = $reader;
             $reader = null;
 
-            \assert($fiber !== null);
+            \assert($deferred !== null);
 
             $data = @\stream_socket_recvfrom($socket, $chunkSize, 0, $address);
 
             /** @psalm-suppress TypeDoesNotContainType */
             if ($data === false) {
                 Loop::cancel($watcher);
-                $fiber->resume();
+                $deferred->resolve();
                 return;
             }
 
-            $fiber->resume([SocketAddress::fromSocketName($address), $data]);
+            $deferred->resolve([SocketAddress::fromSocketName($address), $data]);
 
             /** @psalm-suppress RedundantCondition Resuming of the fiber above might read immediately again */
             if (!$reader) {
@@ -132,9 +134,9 @@ final class DatagramSocket
             return null; // Resolve with null when endpoint is closed.
         }
 
-        $this->reader = \Fiber::this();
+        $this->reader = new Deferred;
         Loop::enable($this->watcher);
-        return \Fiber::suspend(Loop::getScheduler());
+        return await($this->reader->promise());
     }
 
     /**
@@ -244,7 +246,7 @@ final class DatagramSocket
         if ($this->reader) {
             $reader = $this->reader;
             $this->reader = null;
-            Loop::defer(static fn() => $reader->resume());
+            $reader->resolve();
         }
     }
 }

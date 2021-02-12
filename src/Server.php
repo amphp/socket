@@ -2,7 +2,9 @@
 
 namespace Amp\Socket;
 
+use Amp\Deferred;
 use Amp\Loop;
+use function Amp\await;
 
 final class Server
 {
@@ -15,7 +17,7 @@ final class Server
 
     private int $chunkSize;
 
-    private ?\Fiber $acceptor = null;
+    private ?Deferred $acceptor = null;
 
     /**
      * Listen for client connections on the specified server address.
@@ -82,12 +84,12 @@ final class Server
                 return; // Accepting client failed.
             }
 
-            $fiber = $acceptor;
+            $deferred = $acceptor;
             $acceptor = null;
 
-            \assert($fiber !== null);
+            \assert($deferred !== null);
 
-            $fiber->resume(ResourceSocket::fromServerSocket($client, $chunkSize));
+            $deferred->resolve(ResourceSocket::fromServerSocket($client, $chunkSize));
 
             /** @psalm-suppress RedundantCondition Resuming of the fiber above might accept immediately again */
             if (!$acceptor) {
@@ -119,7 +121,7 @@ final class Server
         if ($this->acceptor) {
             $acceptor = $this->acceptor;
             $this->acceptor = null;
-            Loop::defer(static fn() => $acceptor->resume());
+            $acceptor->resolve();
         }
     }
 
@@ -143,9 +145,9 @@ final class Server
             return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         }
 
-        $this->acceptor = \Fiber::this();
+        $this->acceptor = new Deferred;
         Loop::enable($this->watcher);
-        return \Fiber::suspend(Loop::getScheduler());
+        return await($this->acceptor->promise());
     }
 
     /**
