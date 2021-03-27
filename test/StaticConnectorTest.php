@@ -16,7 +16,7 @@ class StaticConnectorTest extends AsyncTestCase
 
         $expected = $this->createMock(EncryptableSocket::class);
 
-        $underlyingConnector->expects($this->once())
+        $underlyingConnector->expects(self::once())
             ->method('connect')
             ->with('override-uri', null, null)
             ->willReturn($expected);

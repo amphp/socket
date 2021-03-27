@@ -9,14 +9,11 @@ final class BindContext
     private ?string $bindTo = null;
 
     private int $backlog = 128;
+    private int $chunkSize = 8192;
 
     private bool $reusePort = false;
-
     private bool $broadcast = false;
-
     private bool $tcpNoDelay = false;
-
-    private int $chunkSize = 8192;
 
     private ?ServerTlsContext $tlsContext = null;
 
@@ -149,16 +146,18 @@ final class BindContext
 
     public function toStreamContextArray(): array
     {
-        $array = ['socket' => [
-            'bindto' => $this->bindTo,
-            'backlog' => $this->backlog,
-            'ipv6_v6only' => true,
-            // SO_REUSEADDR has SO_REUSEPORT semantics on Windows
-            'so_reuseaddr' => $this->reusePort && \stripos(\PHP_OS, 'WIN') === 0,
-            'so_reuseport' => $this->reusePort,
-            'so_broadcast' => $this->broadcast,
-            'tcp_nodelay' => $this->tcpNoDelay,
-        ]];
+        $array = [
+            'socket' => [
+                'bindto' => $this->bindTo,
+                'backlog' => $this->backlog,
+                'ipv6_v6only' => true,
+                // SO_REUSEADDR has SO_REUSEPORT semantics on Windows
+                'so_reuseaddr' => $this->reusePort && \stripos(\PHP_OS, 'WIN') === 0,
+                'so_reuseport' => $this->reusePort,
+                'so_broadcast' => $this->broadcast,
+                'tcp_nodelay' => $this->tcpNoDelay,
+            ],
+        ];
 
         if ($this->tlsContext) {
             $array = \array_merge($array, $this->tlsContext->toStreamContextArray());

@@ -5,12 +5,12 @@ namespace Amp\Socket\Internal;
 use Amp\CancellationToken;
 use Amp\Deferred;
 use Amp\Failure;
-use Amp\Loop;
 use Amp\NullCancellationToken;
 use Amp\Promise;
 use Amp\Socket\TlsException;
 use Amp\Success;
 use League\Uri;
+use Revolt\EventLoop\Loop;
 
 /**
  * Parse an URI into [scheme, host, port].
@@ -30,7 +30,7 @@ function parseUri(string $uri): array
         return [$scheme, \ltrim($path, '/'), 0];
     }
 
-    if (\strpos($uri, '://') === false) {
+    if (!\str_contains($uri, '://')) {
         // Set a default scheme of tcp if none was given.
         $uri = 'tcp://' . $uri;
     }
@@ -57,7 +57,7 @@ function parseUri(string $uri): array
         );
     }
 
-    if (\strpos($host, ':') !== false) { // IPv6 address
+    if (\str_contains($host, ':')) { // IPv6 address
         $host = \sprintf('[%s]', \trim($host, '[]'));
     }
 
@@ -88,7 +88,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
 
     try {
         \set_error_handler(static function (int $errno, string $errstr) {
-            new TlsException('TLS negotiation failed: ' . $errstr);
+            throw new TlsException('TLS negotiation failed: ' . $errstr);
         });
 
         $result = \stream_socket_enable_crypto($socket, $enable = true);

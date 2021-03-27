@@ -6,7 +6,7 @@ use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\Server;
 use function Amp\ByteStream\buffer;
-use function Amp\defer;
+use function Revolt\EventLoop\defer;
 
 class SocketTest extends AsyncTestCase
 {
@@ -18,7 +18,7 @@ class SocketTest extends AsyncTestCase
 
         $serverSock->end($data);
 
-        $this->assertSame($data, buffer($clientSock));
+        self::assertSame($data, buffer($clientSock));
     }
 
     public function testSocketAddress(): void
@@ -30,11 +30,11 @@ class SocketTest extends AsyncTestCase
             $clientSocket = Socket\ResourceSocket::fromClientSocket($c);
             $serverSocket = Socket\ResourceSocket::fromServerSocket($s);
 
-            $this->assertNotNull($clientSocket->getRemoteAddress());
-            $this->assertSame(__DIR__ . '/socket.sock', (string) $clientSocket->getLocalAddress());
-            $this->assertEquals($clientSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
-            $this->assertEquals($serverSocket->getRemoteAddress(), $serverSocket->getLocalAddress());
-            $this->assertEquals($serverSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
+            self::assertNotNull($clientSocket->getRemoteAddress());
+            self::assertSame(__DIR__ . '/socket.sock', (string) $clientSocket->getLocalAddress());
+            self::assertEquals($clientSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
+            self::assertEquals($serverSocket->getRemoteAddress(), $serverSocket->getLocalAddress());
+            self::assertEquals($serverSocket->getRemoteAddress(), $clientSocket->getLocalAddress());
         } finally {
             @\unlink(__DIR__ . '/socket.sock');
         }

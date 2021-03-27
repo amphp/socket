@@ -137,9 +137,9 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function end(string $data = ''): void
+    public function end(string $finalData = ''): void
     {
-        $this->writer->end($data);
+        $this->writer->end($finalData);
         $this->close();
     }
 

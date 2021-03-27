@@ -29,23 +29,29 @@
             "email": "me@kelunik.com"
         }
     ],
+    "prefer-stable": true,
+    "minimum-stability": "dev",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:revolt-php/event-loop.git"
+        }
+    ],
     "require": {
         "php": ">=8",
         "ext-openssl": "*",
-        "amphp/amp": "^3-dev",
-        "amphp/dns": "^2-dev",
-        "amphp/byte-stream": "^2-dev",
+        "amphp/amp": "dev-v3-revolt",
+        "amphp/dns": "dev-v2-revolt",
+        "amphp/byte-stream": "dev-v2-revolt",
         "kelunik/certificate": "^1.1",
         "league/uri-parser": "^1.4"
     },
     "require-dev": {
         "phpunit/phpunit": "^9",
-        "amphp/phpunit-util": "^2-dev",
+        "amphp/phpunit-util": "dev-v2-revolt",
         "amphp/php-cs-fixer-config": "dev-master",
         "psalm/phar": "^3.11@dev"
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
     "autoload": {
         "psr-4": {
             "Amp\\Socket\\": "src"

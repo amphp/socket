@@ -5,10 +5,10 @@ namespace Amp\Socket;
 use Amp\CancellationToken;
 use Amp\Deferred;
 use Amp\Dns;
-use Amp\Loop;
 use Amp\NullCancellationToken;
 use Amp\Promise;
 use Amp\TimeoutException;
+use Revolt\EventLoop\Loop;
 use function Amp\await;
 
 final class DnsConnector implements Connector
@@ -20,8 +20,11 @@ final class DnsConnector implements Connector
         $this->resolver = $resolver ?? Dns\resolver();
     }
 
-    public function connect(string $uri, ?ConnectContext $context = null, ?CancellationToken $token = null): EncryptableSocket
-    {
+    public function connect(
+        string $uri,
+        ?ConnectContext $context = null,
+        ?CancellationToken $token = null
+    ): EncryptableSocket {
         $context = $context ?? new ConnectContext;
         $token = $token ?? new NullCancellationToken;
         $attempt = 0;
@@ -48,7 +51,6 @@ final class DnsConnector implements Connector
             });
 
             foreach ($records as $record) {
-                /** @var Dns\Record $record */
                 if ($record->getType() === Dns\Record::AAAA) {
                     $uris[] = \sprintf('%s://[%s]:%d', $scheme, $record->getValue(), $port);
                 } else {
@@ -79,15 +81,18 @@ final class DnsConnector implements Connector
 
                 $deferred = new Deferred;
                 $id = $token->subscribe([$deferred, 'fail']);
-                $watcher = Loop::onWritable($socket, static function (string $watcher) use ($deferred, $id, $token): void {
-                    Loop::cancel($watcher);
-                    $token->unsubscribe($id);
-                    $deferred->resolve();
-                });
+                $watcher = Loop::onWritable(
+                    $socket,
+                    static function (string $watcher) use ($deferred, $id, $token): void {
+                        Loop::cancel($watcher);
+                        $token->unsubscribe($id);
+                        $deferred->resolve();
+                    }
+                );
 
                 try {
                     await(Promise\timeout($deferred->promise(), $timeout));
-                } catch (TimeoutException $e) {
+                } catch (TimeoutException) {
                     throw new ConnectException(\sprintf(
                         'Connecting to %s failed: timeout exceeded (%d ms)%s',
                         $uri,

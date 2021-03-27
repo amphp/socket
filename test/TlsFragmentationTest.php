@@ -6,19 +6,19 @@ use Amp\ByteStream;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\Server;
-use function Amp\defer;
-use function Amp\delay;
+use function Revolt\EventLoop\defer;
+use function Revolt\EventLoop\delay;
 
 class TlsFragmentationTest extends AsyncTestCase
 {
     public function testTls(): void
     {
         if (\PHP_VERSION_ID < 70215) {
-            $this->markTestSkipped('Your PHP version is affected by PHP bug 77390');
+            self::markTestSkipped('Your PHP version is affected by PHP bug 77390');
         }
 
         if (\PHP_VERSION_ID >= 70300 && \PHP_VERSION_ID < 70303) {
-            $this->markTestSkipped('Your PHP version is affected by PHP bug 77390');
+            self::markTestSkipped('Your PHP version is affected by PHP bug 77390');
         }
 
         $proxyServer = Server::listen('127.0.0.1:0');
@@ -48,6 +48,7 @@ class TlsFragmentationTest extends AsyncTestCase
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $client);
                     $this->assertSame('Hello World', $this->read($client, 11));
                     $client->write('test');
+                    $client->close();
                 });
             }
         });
@@ -62,8 +63,11 @@ class TlsFragmentationTest extends AsyncTestCase
         $client->setupTls();
         $client->write('Hello World');
 
-        $this->assertSame('test', $this->read($client, 4));
+        self::assertSame('test', $this->read($client, 4));
 
+        delay(100);
+
+        $proxyServer->close();
         $server->close();
     }
 
@@ -76,6 +80,8 @@ class TlsFragmentationTest extends AsyncTestCase
                     delay(1);
                 }
             }
+
+            $destination->end();
         });
     }
 

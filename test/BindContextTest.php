@@ -24,12 +24,12 @@ class BindContextTest extends TestCase
         $contextA = new BindContext;
 
         $contextB = $contextA->withBindTo($bindTo);
-        $this->assertNull($contextA->getBindTo());
-        $this->assertSame($bindTo, $contextB->getBindTo());
+        self::assertNull($contextA->getBindTo());
+        self::assertSame($bindTo, $contextB->getBindTo());
 
         $contextC = $contextB->withoutBindTo();
-        $this->assertSame($bindTo, $contextB->getBindTo());
-        $this->assertNull($contextC->getBindTo());
+        self::assertSame($bindTo, $contextB->getBindTo());
+        self::assertNull($contextC->getBindTo());
     }
 
     public function testWithTcpNoDelay(): void
@@ -38,9 +38,9 @@ class BindContextTest extends TestCase
         $contextB = $contextA->withTcpNoDelay();
         $contextC = $contextB->withoutTcpNoDelay();
 
-        $this->assertFalse($contextA->hasTcpNoDelay());
-        $this->assertTrue($contextB->hasTcpNoDelay());
-        $this->assertFalse($contextC->hasTcpNoDelay());
+        self::assertFalse($contextA->hasTcpNoDelay());
+        self::assertTrue($contextB->hasTcpNoDelay());
+        self::assertFalse($contextC->hasTcpNoDelay());
     }
 
     public function testWithTlsContext(): void
@@ -51,9 +51,9 @@ class BindContextTest extends TestCase
         $contextB = $contextA->withTlsContext($tlsContext);
         $contextC = $contextB->withoutTlsContext();
 
-        $this->assertNull($contextA->getTlsContext());
-        $this->assertSame($tlsContext, $contextB->getTlsContext());
-        $this->assertNull($contextC->getTlsContext());
+        self::assertNull($contextA->getTlsContext());
+        self::assertSame($tlsContext, $contextB->getTlsContext());
+        self::assertNull($contextC->getTlsContext());
     }
 
     public function testWithChunkSize(): void
@@ -63,8 +63,8 @@ class BindContextTest extends TestCase
         $contextA = new BindContext;
         $contextB = $contextA->withChunkSize($chunkSize);
 
-        $this->assertSame(8192, $contextA->getChunkSize());
-        $this->assertSame($chunkSize, $contextB->getChunkSize());
+        self::assertSame(8192, $contextA->getChunkSize());
+        self::assertSame($chunkSize, $contextB->getChunkSize());
     }
 
     public function backlogDataProvider(): array
@@ -82,39 +82,39 @@ class BindContextTest extends TestCase
     {
         $origContext = new BindContext;
         $clonedContext = $origContext->withBacklog($backlog);
-        $this->assertSame(128, $origContext->getBacklog());
-        $this->assertSame($backlog, $clonedContext->getBacklog());
+        self::assertSame(128, $origContext->getBacklog());
+        self::assertSame($backlog, $clonedContext->getBacklog());
     }
 
     public function testWithReusePort(): void
     {
         $origContext = new BindContext;
         $clonedContext = $origContext->withReusePort();
-        $this->assertFalse($origContext->hasReusePort());
-        $this->assertTrue($clonedContext->hasReusePort());
+        self::assertFalse($origContext->hasReusePort());
+        self::assertTrue($clonedContext->hasReusePort());
     }
 
     public function testWithoutReusePort(): void
     {
         $origContext = new BindContext;
         $clonedContext = $origContext->withoutReusePort();
-        $this->assertFalse($origContext->hasReusePort());
-        $this->assertFalse($clonedContext->hasReusePort());
+        self::assertFalse($origContext->hasReusePort());
+        self::assertFalse($clonedContext->hasReusePort());
     }
 
     public function testWithBroadcast(): void
     {
         $origContext = new BindContext;
         $clonedContext = $origContext->withBroadcast();
-        $this->assertFalse($origContext->hasBroadcast());
-        $this->assertTrue($clonedContext->hasBroadcast());
+        self::assertFalse($origContext->hasBroadcast());
+        self::assertTrue($clonedContext->hasBroadcast());
     }
 
     public function testWithoutBroadcast(): void
     {
         $origContext = new BindContext;
         $clonedContext = $origContext->withoutBroadcast();
-        $this->assertFalse($origContext->hasBroadcast());
-        $this->assertFalse($clonedContext->hasBroadcast());
+        self::assertFalse($origContext->hasBroadcast());
+        self::assertFalse($clonedContext->hasBroadcast());
     }
 }

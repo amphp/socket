@@ -5,10 +5,10 @@ namespace Amp\Socket;
 final class SocketAddress
 {
     /** @var string */
-    private $host;
+    private string $host;
 
     /** @var int|null */
-    private $port;
+    private ?int $port;
 
     /**
      * @param resource $resource

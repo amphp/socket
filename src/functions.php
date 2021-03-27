@@ -4,7 +4,7 @@ namespace Amp\Socket;
 
 use Amp\CancellationToken;
 use Amp\CancelledException;
-use Amp\Loop;
+use Revolt\EventLoop\Loop;
 
 const LOOP_CONNECTOR_IDENTIFIER = Connector::class;
 

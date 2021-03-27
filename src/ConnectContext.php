@@ -10,7 +10,6 @@ final class ConnectContext
     private ?string $bindTo = null;
 
     private int $connectTimeout = 10000;
-
     private int $maxAttempts = 2;
 
     private ?int $typeRestriction = null;

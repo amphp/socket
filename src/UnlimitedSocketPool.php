@@ -3,9 +3,9 @@
 namespace Amp\Socket;
 
 use Amp\CancellationToken;
-use Amp\Loop;
-use Amp\Struct;
 use League\Uri;
+use Revolt\EventLoop\Internal\Struct;
+use Revolt\EventLoop\Loop;
 
 /**
  * SocketPool implementation that doesn't impose any limits on concurrent open connections.
@@ -212,6 +212,7 @@ final class UnlimitedSocketPool implements SocketPool
         /** @psalm-suppress MissingConstructor */
         $socketEntry = new class {
             use Struct;
+
             public string $uri;
             public EncryptableSocket $object;
             public bool $isAvailable;

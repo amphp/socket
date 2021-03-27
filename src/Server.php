@@ -3,7 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\Deferred;
-use Amp\Loop;
+use Revolt\EventLoop\Loop;
 use function Amp\await;
 
 final class Server
@@ -176,7 +176,7 @@ final class Server
      *
      * @see Loop::reference()
      */
-    final public function reference(): void
+    public function reference(): void
     {
         Loop::reference($this->watcher);
     }
@@ -186,7 +186,7 @@ final class Server
      *
      * @see Loop::unreference()
      */
-    final public function unreference(): void
+    public function unreference(): void
     {
         Loop::unreference($this->watcher);
     }
@@ -204,7 +204,7 @@ final class Server
      *
      * @return resource|null
      */
-    final public function getResource()
+    public function getResource()
     {
         return $this->socket;
     }

@@ -442,18 +442,11 @@ final class ClientTlsContext
      */
     public function toStreamCryptoMethod(): int
     {
-        switch ($this->minVersion) {
-            case self::TLSv1_0:
-                return self::TLSv1_0 | self::TLSv1_1 | self::TLSv1_2;
-
-            case self::TLSv1_1:
-                return self::TLSv1_1 | self::TLSv1_2;
-
-            case self::TLSv1_2:
-                return self::TLSv1_2;
-
-            default:
-                throw new \RuntimeException('Unknown minimum TLS version: ' . $this->minVersion);
-        }
+        return match ($this->minVersion) {
+            self::TLSv1_0 => self::TLSv1_0 | self::TLSv1_1 | self::TLSv1_2,
+            self::TLSv1_1 => self::TLSv1_1 | self::TLSv1_2,
+            self::TLSv1_2 => self::TLSv1_2,
+            default => throw new \RuntimeException('Unknown minimum TLS version: ' . $this->minVersion),
+        };
     }
 }

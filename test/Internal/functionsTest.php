@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 class functionsTest extends TestCase
 {
-    public function parseUriDataProvider()
+    public function parseUriDataProvider(): array
     {
         return [
             [
@@ -36,12 +36,12 @@ class functionsTest extends TestCase
     /**
      * @dataProvider parseUriDataProvider
      */
-    public function testParseUri($uri, $expected)
+    public function testParseUri($uri, $expected): void
     {
-        $this->assertEquals($expected, Internal\parseUri($uri));
+        self::assertEquals($expected, Internal\parseUri($uri));
     }
 
-    public function parseUriInvalidUriDataProvider()
+    public function parseUriInvalidUriDataProvider(): array
     {
         return [
             ['///////'],
@@ -51,7 +51,7 @@ class functionsTest extends TestCase
     /**
      * @dataProvider parseUriInvalidUriDataProvider
      */
-    public function testParseUriInvalidUri($uri)
+    public function testParseUriInvalidUri($uri): void
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Invalid URI:');
@@ -59,7 +59,7 @@ class functionsTest extends TestCase
         Internal\parseUri($uri);
     }
 
-    public function parseUriInvalidSchemeDataProvider()
+    public function parseUriInvalidSchemeDataProvider(): array
     {
         return [
             ['http://example.com'],
@@ -71,7 +71,7 @@ class functionsTest extends TestCase
     /**
      * @dataProvider parseUriInvalidSchemeDataProvider
      */
-    public function testParseUriInvalidScheme($uri)
+    public function testParseUriInvalidScheme($uri): void
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessageMatches('(Invalid URI scheme (.*); tcp, udp, unix or udg scheme expected)');
@@ -79,7 +79,7 @@ class functionsTest extends TestCase
         Internal\parseUri($uri);
     }
 
-    public function normalizeBindToOptionDataProvider()
+    public function normalizeBindToOptionDataProvider(): array
     {
         return [
             [null, null],
@@ -96,13 +96,13 @@ class functionsTest extends TestCase
     /**
      * @dataProvider normalizeBindToOptionDataProvider
      */
-    public function testNormalizeBindToOption($bindTo, $expected)
+    public function testNormalizeBindToOption($bindTo, $expected): void
     {
         $actual = Internal\normalizeBindToOption($bindTo);
-        $this->assertSame($expected, $actual);
+        self::assertSame($expected, $actual);
     }
 
-    public function normalizeBindToOptionInvalidBindToDataProvider()
+    public function normalizeBindToOptionInvalidBindToDataProvider(): array
     {
         return [
             ['-1.-1.-1.-1'],
@@ -117,7 +117,7 @@ class functionsTest extends TestCase
     /**
      * @dataProvider normalizeBindToOptionInvalidBindToDataProvider
      */
-    public function testNormalizeBindToOptionInvalidBindTo($bindTo)
+    public function testNormalizeBindToOptionInvalidBindTo($bindTo): void
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Invalid bindTo value:');
@@ -125,7 +125,7 @@ class functionsTest extends TestCase
         Internal\normalizeBindToOption($bindTo);
     }
 
-    public function normalizeBindToOptionInvalidPortDataProvider()
+    public function normalizeBindToOptionInvalidPortDataProvider(): array
     {
         return [
             ['123.123.123.123:123456'],
@@ -136,7 +136,7 @@ class functionsTest extends TestCase
     /**
      * @dataProvider normalizeBindToOptionInvalidPortDataProvider
      */
-    public function testNormalizeBindToOptionInvalidPort($bindTo)
+    public function testNormalizeBindToOptionInvalidPort($bindTo): void
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Invalid port:');
@@ -144,7 +144,7 @@ class functionsTest extends TestCase
         Internal\normalizeBindToOption($bindTo);
     }
 
-    public function normalizeBindToOptionInvalidIpv6DataProvider()
+    public function normalizeBindToOptionInvalidIpv6DataProvider(): array
     {
         return [
             ['[::::]'],
@@ -155,7 +155,7 @@ class functionsTest extends TestCase
     /**
      * @dataProvider normalizeBindToOptionInvalidIpv6DataProvider
      */
-    public function testNormalizeBindToOptionInvalidIpv6($bindTo)
+    public function testNormalizeBindToOptionInvalidIpv6($bindTo): void
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Invalid IPv6 address:');
@@ -163,7 +163,7 @@ class functionsTest extends TestCase
         Internal\normalizeBindToOption($bindTo);
     }
 
-    public function normalizeBindToOptionInvalidIpv4DataProvider()
+    public function normalizeBindToOptionInvalidIpv4DataProvider(): array
     {
         return [
             ['256.256.256.256'],
@@ -174,7 +174,7 @@ class functionsTest extends TestCase
     /**
      * @dataProvider normalizeBindToOptionInvalidIpv4DataProvider
      */
-    public function testNormalizeBindToOptionInvalidIpv4($bindTo)
+    public function testNormalizeBindToOptionInvalidIpv4($bindTo): void
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Invalid IPv4 address:');

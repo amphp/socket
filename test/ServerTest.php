@@ -6,8 +6,8 @@ use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\Server;
 use function Amp\ByteStream\buffer;
-use function Amp\defer;
-use function Amp\delay;
+use function Revolt\EventLoop\defer;
+use function Revolt\EventLoop\delay;
 
 class ServerTest extends AsyncTestCase
 {
@@ -31,10 +31,10 @@ class ServerTest extends AsyncTestCase
     {
         try {
             $socket = Server::listen('[::1]:0');
-            $this->assertMatchesRegularExpression('(\[::1\]:\d+)', (string) $socket->getAddress());
+            self::assertMatchesRegularExpression('(\[::1\]:\d+)', (string) $socket->getAddress());
         } catch (Socket\SocketException $e) {
             if ($e->getMessage() === 'Could not create server tcp://[::1]:0: [Error: #0] Cannot assign requested address') {
-                $this->markTestSkipped('Missing IPv6 support');
+                self::markTestSkipped('Missing IPv6 support');
             }
 
             throw $e;
@@ -87,7 +87,7 @@ class ServerTest extends AsyncTestCase
             $client->setupTls();
             $client->write('Hello World');
 
-            $this->assertSame('test', buffer($client));
+            self::assertSame('test', buffer($client));
         } finally {
             $server->close();
         }
@@ -121,7 +121,7 @@ class ServerTest extends AsyncTestCase
             $client->setupTls();
             $client->write('Hello World');
 
-            $this->assertSame('test', $client->read());
+            self::assertSame('test', $client->read());
         } finally {
             $server->close();
         }
@@ -176,12 +176,15 @@ class ServerTest extends AsyncTestCase
     public function testSniWorksWithMultipleCertificatesAndDifferentFilesForCertAndKey(): void
     {
         if (\PHP_VERSION_ID < 70200) {
-            $this->markTestSkipped('This test requires PHP 7.2 or higher.');
+            self::markTestSkipped('This test requires PHP 7.2 or higher.');
         }
 
         $tlsContext = (new Socket\ServerTlsContext)->withCertificates([
             'amphp.org' => new Socket\Certificate(__DIR__ . '/tls/amphp.org.crt', __DIR__ . '/tls/amphp.org.key'),
-            'www.amphp.org' => new Socket\Certificate(__DIR__ . '/tls/www.amphp.org.crt', __DIR__ . '/tls/www.amphp.org.key'),
+            'www.amphp.org' => new Socket\Certificate(
+                __DIR__ . '/tls/www.amphp.org.crt',
+                __DIR__ . '/tls/www.amphp.org.key'
+            ),
         ]);
 
         $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));

@@ -27,9 +27,9 @@ class ConnectContextTest extends TestCase
         $contextB = $contextA->withBindTo($bindTo);
         $contextC = $contextB->withoutBindTo();
 
-        $this->assertNull($contextA->getBindTo());
-        $this->assertSame($bindTo, $contextB->getBindTo());
-        $this->assertNull($contextC->getBindTo());
+        self::assertNull($contextA->getBindTo());
+        self::assertSame($bindTo, $contextB->getBindTo());
+        self::assertNull($contextC->getBindTo());
     }
 
     public function testWithTcpNoDelay(): void
@@ -38,9 +38,9 @@ class ConnectContextTest extends TestCase
         $contextB = $contextA->withTcpNoDelay();
         $contextC = $contextB->withoutTcpNoDelay();
 
-        $this->assertFalse($contextA->hasTcpNoDelay());
-        $this->assertTrue($contextB->hasTcpNoDelay());
-        $this->assertFalse($contextC->hasTcpNoDelay());
+        self::assertFalse($contextA->hasTcpNoDelay());
+        self::assertTrue($contextB->hasTcpNoDelay());
+        self::assertFalse($contextC->hasTcpNoDelay());
     }
 
     public function withConnectTimeoutDataProvider(): array
@@ -59,8 +59,8 @@ class ConnectContextTest extends TestCase
         $context = new ConnectContext();
         $clonedContext = $context->withConnectTimeout($timeout);
 
-        $this->assertSame(10000, $context->getConnectTimeout());
-        $this->assertSame($timeout, $clonedContext->getConnectTimeout());
+        self::assertSame(10000, $context->getConnectTimeout());
+        self::assertSame($timeout, $clonedContext->getConnectTimeout());
     }
 
     public function withConnectTimeoutInvalidTimeoutDataProvider(): array
@@ -99,8 +99,8 @@ class ConnectContextTest extends TestCase
         $context = new ConnectContext();
         $clonedContext = $context->withMaxAttempts($maxAttempts);
 
-        $this->assertSame(2, $context->getMaxAttempts());
-        $this->assertSame($maxAttempts, $clonedContext->getMaxAttempts());
+        self::assertSame(2, $context->getMaxAttempts());
+        self::assertSame($maxAttempts, $clonedContext->getMaxAttempts());
     }
 
     public function withMaxAttemptsInvalidTimeoutDataProvider(): array
@@ -141,9 +141,9 @@ class ConnectContextTest extends TestCase
         $contextB = $contextA->withDnsTypeRestriction($type);
         $contextC = $contextB->withoutDnsTypeRestriction();
 
-        $this->assertNull($contextA->getDnsTypeRestriction());
-        $this->assertSame($type, $contextB->getDnsTypeRestriction());
-        $this->assertNull($contextC->getDnsTypeRestriction());
+        self::assertNull($contextA->getDnsTypeRestriction());
+        self::assertSame($type, $contextB->getDnsTypeRestriction());
+        self::assertNull($contextC->getDnsTypeRestriction());
     }
 
     public function withDnsTypeRestrictionInvalidTypeDataProvider(): array
@@ -172,7 +172,7 @@ class ConnectContextTest extends TestCase
         $context = new ConnectContext();
         $clonedContext = $context->withBindTo('127.0.0.1:12345')->withTlsContext(new ClientTlsContext('amphp.org'));
 
-        $this->assertSame(['socket' => ['tcp_nodelay' => false]], $context->toStreamContextArray());
+        self::assertSame(['socket' => ['tcp_nodelay' => false]], $context->toStreamContextArray());
 
         $expected = ['socket' => [
             'tcp_nodelay' => false,
@@ -193,6 +193,6 @@ class ConnectContextTest extends TestCase
             $expected['ssl']['security_level'] = 2;
         }
 
-        $this->assertSame($expected, $clonedContext->toStreamContextArray());
+        self::assertSame($expected, $clonedContext->toStreamContextArray());
     }
 }

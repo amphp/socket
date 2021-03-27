@@ -7,8 +7,8 @@ use Amp\Socket;
 use Amp\Socket\DatagramSocket;
 use function Amp\async;
 use function Amp\await;
-use function Amp\defer;
-use function Amp\delay;
+use function Revolt\EventLoop\defer;
+use function Revolt\EventLoop\delay;
 
 class DatagramSocketTest extends AsyncTestCase
 {
@@ -32,7 +32,7 @@ class DatagramSocketTest extends AsyncTestCase
     {
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
 
-        $this->assertIsResource($endpoint->getResource());
+        self::assertIsResource($endpoint->getResource());
 
         $socket = Socket\connect('udp://' . $endpoint->getAddress());
         $remote = $socket->getLocalAddress();
@@ -57,7 +57,7 @@ class DatagramSocketTest extends AsyncTestCase
     public function testSend()
     {
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
-        $this->assertIsResource($endpoint->getResource());
+        self::assertIsResource($endpoint->getResource());
 
         $socket = Socket\connect('udp://' . $endpoint->getAddress());
         \assert($socket instanceof Socket\EncryptableSocket);
@@ -77,7 +77,7 @@ class DatagramSocketTest extends AsyncTestCase
 
         $data = $socket->read();
 
-        $this->assertSame('b', $data);
+        self::assertSame('b', $data);
 
         $socket->close();
         $endpoint->close();
@@ -95,7 +95,7 @@ class DatagramSocketTest extends AsyncTestCase
         $socket->write('Hello!');
 
         try {
-            while ([$address, $data] = $endpoint->receive()) {
+            while ([$address] = $endpoint->receive()) {
                 $endpoint->send($address, \str_repeat('-', 2 ** 20));
             }
         } finally {
@@ -107,11 +107,11 @@ class DatagramSocketTest extends AsyncTestCase
     {
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
 
-        $promise = async(fn() => $endpoint->receive());
+        $promise = async(fn () => $endpoint->receive());
 
         $endpoint->close();
 
-        $this->assertNull(await($promise));
+        self::assertNull(await($promise));
     }
 
     public function testReceiveAfterClose()
@@ -120,7 +120,7 @@ class DatagramSocketTest extends AsyncTestCase
 
         $endpoint->close();
 
-        $this->assertNull($endpoint->receive());
+        self::assertNull($endpoint->receive());
     }
 
     public function testSimultaneousReceive()
@@ -129,8 +129,8 @@ class DatagramSocketTest extends AsyncTestCase
 
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
         try {
-            async(fn() => $endpoint->receive());
-            await(async(fn() => $endpoint->receive()));
+            async(fn () => $endpoint->receive());
+            await(async(fn () => $endpoint->receive()));
         } finally {
             $endpoint->close();
         }
@@ -147,13 +147,13 @@ class DatagramSocketTest extends AsyncTestCase
             \assert($socket instanceof Socket\EncryptableSocket);
 
             $socket->write('Hello!');
-            [$address, $data] = $endpoint->receive();
-            $this->assertSame('H', $data);
+            [, $data] = $endpoint->receive();
+            self::assertSame('H', $data);
 
             $endpoint->setChunkSize(5);
             $socket->write('Hello!');
-            [$address, $data] = $endpoint->receive();
-            $this->assertSame('Hello', $data);
+            [, $data] = $endpoint->receive();
+            self::assertSame('Hello', $data);
         } finally {
             $endpoint->close();
         }

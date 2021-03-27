@@ -20,7 +20,7 @@ class IntegrationTest extends AsyncTestCase
     public function testConnect($uri): void
     {
         $socket = Socket\connect($uri);
-        $this->assertInstanceOf(EncryptableSocket::class, $socket);
+        self::assertInstanceOf(EncryptableSocket::class, $socket);
     }
 
     public function provideConnectArgs(): array
@@ -55,14 +55,14 @@ class IntegrationTest extends AsyncTestCase
         $name = \explode(':', $uri)[0];
 
         $socket = Socket\connect($uri, (new ConnectContext)->withTlsContext(new ClientTlsContext($name)));
-        $this->assertInstanceOf(EncryptableSocket::class, $socket);
+        self::assertInstanceOf(EncryptableSocket::class, $socket);
 
-        $this->assertNull($socket->getTlsInfo());
+        self::assertNull($socket->getTlsInfo());
 
         // For this case renegotiation not needed because options is equals
         $socket->setupTls();
 
-        $this->assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
+        self::assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
     }
 
     public function provideCryptoConnectArgs(): array
@@ -81,11 +81,11 @@ class IntegrationTest extends AsyncTestCase
 
         $socket = Socket\connect('www.google.com:443', $context);
 
-        $this->assertNull($socket->getTlsInfo());
+        self::assertNull($socket->getTlsInfo());
 
         // For this case renegotiation not needed because options is equals
         $socket->setupTls();
 
-        $this->assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
+        self::assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
     }
 }
