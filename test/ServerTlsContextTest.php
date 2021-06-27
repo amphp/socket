@@ -15,6 +15,7 @@ class ServerTlsContextTest extends TestCase
             [ServerTlsContext::TLSv1_0],
             [ServerTlsContext::TLSv1_1],
             [ServerTlsContext::TLSv1_2],
+            [ServerTlsContext::TLSv1_3],
         ];
     }
 
@@ -26,7 +27,7 @@ class ServerTlsContextTest extends TestCase
         $context = new ServerTlsContext;
         $clonedContext = $context->withMinimumVersion($version);
 
-        $this->assertSame(ServerTlsContext::TLSv1_0, $context->getMinimumVersion());
+        $this->assertSame(ServerTlsContext::TLSv1_2, $context->getMinimumVersion());
         $this->assertSame($version, $clonedContext->getMinimumVersion());
     }
 
@@ -43,7 +44,7 @@ class ServerTlsContextTest extends TestCase
     public function testWithMinimumVersionInvalid($version)
     {
         $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed');
+        $this->expectExceptionMessage('Invalid minimum version');
 
         (new ServerTlsContext)->withMinimumVersion($version);
     }
