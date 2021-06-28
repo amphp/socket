@@ -2,12 +2,17 @@
 
 namespace Amp\Socket;
 
+// STREAM_CRYPTO_METHOD_TLSv1_3_SERVER defined in PHP 7.4+
+if (!\defined('STREAM_CRYPTO_METHOD_TLSv1_3_SERVER')) {
+    \define('STREAM_CRYPTO_METHOD_TLSv1_3_SERVER', 64);
+}
+
 final class ServerTlsContext
 {
     public const TLSv1_0 = \STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
     public const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_SERVER;
     public const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_SERVER;
-    public const TLSv1_3 = \STREAM_CRYPTO_METHOD_TLSv1_3_SERVER ?? 64;
+    public const TLSv1_3 = \STREAM_CRYPTO_METHOD_TLSv1_3_SERVER;
 
     private const TLS_VERSIONS = [
         'TLSv1.0' => self::TLSv1_0,
@@ -17,7 +22,7 @@ final class ServerTlsContext
     ];
 
     /** @var int */
-    private $minVersion = self::TLSv1_2;
+    private $minVersion = self::TLSv1_0;
     /** @var null|string */
     private $peerName;
     /** @var bool */

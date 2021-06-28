@@ -27,7 +27,7 @@ class ServerTlsContextTest extends TestCase
         $context = new ServerTlsContext;
         $clonedContext = $context->withMinimumVersion($version);
 
-        $this->assertSame(ServerTlsContext::TLSv1_2, $context->getMinimumVersion());
+        $this->assertSame(ServerTlsContext::TLSv1_0, $context->getMinimumVersion());
         $this->assertSame($version, $clonedContext->getMinimumVersion());
     }
 
