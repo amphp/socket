@@ -2,23 +2,22 @@
 
 namespace Amp\Socket;
 
-// STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT defined in PHP 7.4+
-if (!\defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT')) {
-    \define('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT', 65);
-}
-
 final class ClientTlsContext
 {
     public const TLSv1_0 = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
     public const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
     public const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
-    public const TLSv1_3 = \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT;
+    public const TLSv1_3 = \PHP_VERSION_ID >= 70400 ? \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT : 0;
 
-    private const TLS_VERSIONS = [
+    private const TLS_VERSIONS = \PHP_VERSION_ID >= 70400 ? [
         'TLSv1.0' => self::TLSv1_0,
         'TLSv1.1' => self::TLSv1_1,
         'TLSv1.2' => self::TLSv1_2,
         'TLSv1.3' => self::TLSv1_3,
+    ] : [
+        'TLSv1.0' => self::TLSv1_0,
+        'TLSv1.1' => self::TLSv1_1,
+        'TLSv1.2' => self::TLSv1_2,
     ];
 
     /** @var int */
