@@ -15,6 +15,7 @@ class ClientTlsContextTest extends TestCase
             [ClientTlsContext::TLSv1_0],
             [ClientTlsContext::TLSv1_1],
             [ClientTlsContext::TLSv1_2],
+            [ClientTlsContext::TLSv1_3],
         ];
     }
 
@@ -47,7 +48,7 @@ class ClientTlsContextTest extends TestCase
     public function testWithMinimumVersionInvalid($version): void
     {
         $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed');
+        $this->expectExceptionMessage('Invalid minimum version');
 
         (new ClientTlsContext(''))->withMinimumVersion($version);
     }

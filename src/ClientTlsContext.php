@@ -7,9 +7,21 @@ final class ClientTlsContext
     public const TLSv1_0 = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
     public const TLSv1_1 = \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
     public const TLSv1_2 = \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+    public const TLSv1_3 = \PHP_VERSION_ID >= 70400 ? \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT : 0;
+
+    private const TLS_VERSIONS = \PHP_VERSION_ID >= 70400 ? [
+        'TLSv1.0' => self::TLSv1_0,
+        'TLSv1.1' => self::TLSv1_1,
+        'TLSv1.2' => self::TLSv1_2,
+        'TLSv1.3' => self::TLSv1_3,
+    ] : [
+        'TLSv1.0' => self::TLSv1_0,
+        'TLSv1.1' => self::TLSv1_1,
+        'TLSv1.2' => self::TLSv1_2,
+    ];
 
     /** @var int */
-    private $minVersion = \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
+    private $minVersion = self::TLSv1_0;
     /** @var string|null */
     private $peerName;
     /** @var bool */
@@ -43,15 +55,18 @@ final class ClientTlsContext
      *
      * Defaults to TLS 1.0.
      *
-     * @param int $version `ServerTlsContext::TLSv1_0`, `ServerTlsContext::TLSv1_1`, or `ServerTlsContext::TLSv1_2`.
+     * @param int $version One of the `ClientTlsContext::TLSv*` constants.
      *
      * @return self Cloned, modified instance.
      * @throws \Error If an invalid minimum version is given.
      */
     public function withMinimumVersion(int $version): self
     {
-        if ($version !== self::TLSv1_0 && $version !== self::TLSv1_1 && $version !== self::TLSv1_2) {
-            throw new \Error('Invalid minimum version, only TLSv1.0, TLSv1.1 or TLSv1.2 allowed');
+        if (!\in_array($version, self::TLS_VERSIONS, true)) {
+            throw new \Error(\sprintf(
+                'Invalid minimum version, only %s allowed',
+                implode(', ', \array_keys(self::TLS_VERSIONS))
+            ));
         }
 
         $clone = clone $this;
@@ -443,13 +458,16 @@ final class ClientTlsContext
     {
         switch ($this->minVersion) {
             case self::TLSv1_0:
-                return self::TLSv1_0 | self::TLSv1_1 | self::TLSv1_2;
+                return self::TLSv1_0 | self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3;
 
             case self::TLSv1_1:
-                return self::TLSv1_1 | self::TLSv1_2;
+                return self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3;
 
             case self::TLSv1_2:
-                return self::TLSv1_2;
+                return self::TLSv1_2 | self::TLSv1_3;
+
+            case self::TLSv1_3:
+                return self::TLSv1_3;
 
             default:
                 throw new \RuntimeException('Unknown minimum TLS version: ' . $this->minVersion);
