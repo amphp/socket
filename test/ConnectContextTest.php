@@ -178,7 +178,10 @@ class ConnectContextTest extends TestCase
             'tcp_nodelay' => false,
             'bindto' => '127.0.0.1:12345',
         ], 'ssl' => [
-            'crypto_method' => ClientTlsContext::TLSv1_0 | ClientTlsContext::TLSv1_1 | ClientTlsContext::TLSv1_2,
+            'crypto_method' => ClientTlsContext::TLSv1_0
+                | ClientTlsContext::TLSv1_1
+                | ClientTlsContext::TLSv1_2
+                | ClientTlsContext::TLSv1_3,
             'peer_name' => 'amphp.org',
             'verify_peer' => true,
             'verify_peer_name' => true,
