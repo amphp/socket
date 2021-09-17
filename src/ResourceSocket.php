@@ -6,7 +6,6 @@ use Amp\ByteStream\ClosedException;
 use Amp\ByteStream\ResourceInputStream;
 use Amp\ByteStream\ResourceOutputStream;
 use Amp\CancellationToken;
-use function Amp\await;
 
 final class ResourceSocket implements EncryptableSocket
 {
@@ -82,7 +81,7 @@ final class ResourceSocket implements EncryptableSocket
         $this->tlsState = self::TLS_STATE_SETUP_PENDING;
 
         if ($this->tlsContext) {
-            $promise = Internal\setupTls($resource, $this->tlsContext->toStreamContextArray(), $cancellationToken);
+            $context = $this->tlsContext->toStreamContextArray();
         } else {
             $context = @\stream_context_get_options($resource);
 
@@ -93,12 +92,10 @@ final class ResourceSocket implements EncryptableSocket
                     "in the second argument, otherwise set the 'ssl' context option to the PHP stream resource."
                 );
             }
-
-            $promise = Internal\setupTls($resource, $context, $cancellationToken);
         }
 
         try {
-            await($promise);
+            Internal\setupTls($resource, $context, $cancellationToken);
 
             $this->tlsState = self::TLS_STATE_ENABLED;
         } catch (\Throwable $exception) {
@@ -118,7 +115,7 @@ final class ResourceSocket implements EncryptableSocket
         $this->tlsState = self::TLS_STATE_SHUTDOWN_PENDING;
 
         try {
-            await(Internal\shutdownTls($resource));
+            Internal\shutdownTls($resource);
         } finally {
             $this->tlsState = self::TLS_STATE_DISABLED;
         }

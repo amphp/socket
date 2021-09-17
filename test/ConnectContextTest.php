@@ -46,8 +46,8 @@ class ConnectContextTest extends TestCase
     public function withConnectTimeoutDataProvider(): array
     {
         return [
-            [1],
-            [12345],
+            [1.0],
+            [123.45],
         ];
     }
 
@@ -59,7 +59,7 @@ class ConnectContextTest extends TestCase
         $context = new ConnectContext();
         $clonedContext = $context->withConnectTimeout($timeout);
 
-        self::assertSame(10000, $context->getConnectTimeout());
+        self::assertEquals(10.0, $context->getConnectTimeout());
         self::assertSame($timeout, $clonedContext->getConnectTimeout());
     }
 

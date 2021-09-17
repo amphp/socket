@@ -53,7 +53,7 @@ class ServerTest extends AsyncTestCase
 
         $socket = Socket\connect($server->getAddress());
 
-        delay(1);
+        delay(0.001);
 
         $socket->close();
         $server->close();
@@ -175,10 +175,6 @@ class ServerTest extends AsyncTestCase
 
     public function testSniWorksWithMultipleCertificatesAndDifferentFilesForCertAndKey(): void
     {
-        if (\PHP_VERSION_ID < 70200) {
-            self::markTestSkipped('This test requires PHP 7.2 or higher.');
-        }
-
         $tlsContext = (new Socket\ServerTlsContext)->withCertificates([
             'amphp.org' => new Socket\Certificate(__DIR__ . '/tls/amphp.org.crt', __DIR__ . '/tls/amphp.org.key'),
             'www.amphp.org' => new Socket\Certificate(

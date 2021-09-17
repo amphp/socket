@@ -6,8 +6,6 @@ use Amp\CancellationToken;
 use Amp\CancelledException;
 use Revolt\EventLoop\Loop;
 
-const LOOP_CONNECTOR_IDENTIFIER = Connector::class;
-
 /**
  * Listen for client connections on the specified server address.
  *
@@ -38,17 +36,15 @@ function listen(string $uri, ?BindContext $context = null): Server
  */
 function connector(Connector $connector = null): Connector
 {
-    if ($connector === null) {
-        if ($connector = Loop::getState(LOOP_CONNECTOR_IDENTIFIER)) {
-            return $connector;
-        }
+    static $map;
+    $map ??= new \WeakMap();
+    $driver = Loop::getDriver();
 
-        $connector = new DnsConnector;
+    if ($connector) {
+        return $map[$driver] = $connector;
     }
 
-    Loop::setState(LOOP_CONNECTOR_IDENTIFIER, $connector);
-
-    return $connector;
+    return $map[$driver] ??= new DnsConnector();
 }
 
 /**
@@ -78,7 +74,7 @@ function connect(string $uri, ConnectContext $context = null, CancellationToken 
 function createPair(): array
 {
     try {
-        \set_error_handler(static function (int $errno, string $errstr) {
+        \set_error_handler(static function (int $errno, string $errstr): void {
             throw new SocketException(\sprintf('Failed to create socket pair.  Errno: %d; %s', $errno, $errstr));
         });
 

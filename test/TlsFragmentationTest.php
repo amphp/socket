@@ -65,7 +65,7 @@ class TlsFragmentationTest extends AsyncTestCase
 
         self::assertSame('test', $this->read($client, 4));
 
-        delay(100);
+        delay(0.1);
 
         $proxyServer->close();
         $server->close();
@@ -77,7 +77,7 @@ class TlsFragmentationTest extends AsyncTestCase
             while (($chunk = $source->read()) !== null) {
                 foreach (\str_split($chunk) as $byte) {
                     $destination->write($byte);
-                    delay(1);
+                    delay(0.001);
                 }
             }
 

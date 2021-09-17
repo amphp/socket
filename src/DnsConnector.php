@@ -3,13 +3,12 @@
 namespace Amp\Socket;
 
 use Amp\CancellationToken;
+use Amp\CancelledException;
 use Amp\Deferred;
 use Amp\Dns;
 use Amp\NullCancellationToken;
-use Amp\Promise;
-use Amp\TimeoutException;
+use Amp\TimeoutCancellationToken;
 use Revolt\EventLoop\Loop;
-use function Amp\await;
 
 final class DnsConnector implements Connector
 {
@@ -25,8 +24,8 @@ final class DnsConnector implements Connector
         ?ConnectContext $context = null,
         ?CancellationToken $token = null
     ): EncryptableSocket {
-        $context = $context ?? new ConnectContext;
-        $token = $token ?? new NullCancellationToken;
+        $context ??= new ConnectContext;
+        $token ??= new NullCancellationToken;
         $attempt = 0;
         $uris = [];
         $failures = [];
@@ -80,21 +79,23 @@ final class DnsConnector implements Connector
                 \stream_set_blocking($socket, false);
 
                 $deferred = new Deferred;
-                $id = $token->subscribe([$deferred, 'fail']);
+                $id = $token->subscribe([$deferred, 'error']);
                 $watcher = Loop::onWritable(
                     $socket,
                     static function (string $watcher) use ($deferred, $id, $token): void {
                         Loop::cancel($watcher);
                         $token->unsubscribe($id);
-                        $deferred->resolve();
+                        $deferred->complete(null);
                     }
                 );
 
                 try {
-                    await(Promise\timeout($deferred->promise(), $timeout));
-                } catch (TimeoutException) {
+                    $deferred->getFuture()->join(new TimeoutCancellationToken($timeout));
+                } catch (CancelledException) {
+                    $token->throwIfRequested(); // Rethrow if cancelled from user-provided token.
+
                     throw new ConnectException(\sprintf(
-                        'Connecting to %s failed: timeout exceeded (%d ms)%s',
+                        'Connecting to %s failed: timeout exceeded (%0.3f s)%s',
                         $uri,
                         $timeout,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''

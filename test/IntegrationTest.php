@@ -34,7 +34,7 @@ class IntegrationTest extends AsyncTestCase
     public function testConnectFailure(): void
     {
         $this->expectException(ConnectException::class);
-        Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(1000));
+        Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(1));
     }
 
     /**
@@ -42,9 +42,9 @@ class IntegrationTest extends AsyncTestCase
      */
     public function testConnectCancellation(): void
     {
-        $this->expectException(CancelledException::class);
+        $this->expectException(ConnectException::class);
         $token = new TimeoutCancellationToken(1000);
-        Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(2000), $token);
+        Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(2), $token);
     }
 
     /**

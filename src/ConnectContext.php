@@ -9,7 +9,7 @@ final class ConnectContext
 {
     private ?string $bindTo = null;
 
-    private int $connectTimeout = 10000;
+    private float $connectTimeout = 10;
     private int $maxAttempts = 2;
 
     private ?int $typeRestriction = null;
@@ -38,7 +38,7 @@ final class ConnectContext
         return $this->bindTo;
     }
 
-    public function withConnectTimeout(int $timeout): self
+    public function withConnectTimeout(float $timeout): self
     {
         if ($timeout <= 0) {
             throw new \Error("Invalid connect timeout ({$timeout}), must be greater than 0");
@@ -50,7 +50,7 @@ final class ConnectContext
         return $clone;
     }
 
-    public function getConnectTimeout(): int
+    public function getConnectTimeout(): float
     {
         return $this->connectTimeout;
     }

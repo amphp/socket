@@ -50,7 +50,7 @@
         "phpunit/phpunit": "^9",
         "amphp/phpunit-util": "dev-v2-revolt",
         "amphp/php-cs-fixer-config": "dev-master",
-        "psalm/phar": "^3.11@dev"
+        "psalm/phar": "^4.7"
     },
     "autoload": {
         "psr-4": {

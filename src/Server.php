@@ -4,7 +4,6 @@ namespace Amp\Socket;
 
 use Amp\Deferred;
 use Revolt\EventLoop\Loop;
-use function Amp\await;
 
 final class Server
 {
@@ -89,7 +88,7 @@ final class Server
 
             \assert($deferred !== null);
 
-            $deferred->resolve(ResourceSocket::fromServerSocket($client, $chunkSize));
+            $deferred->complete(ResourceSocket::fromServerSocket($client, $chunkSize));
 
             /** @psalm-suppress RedundantCondition Resuming of the fiber above might accept immediately again */
             if (!$acceptor) {
@@ -119,9 +118,8 @@ final class Server
         $this->socket = null;
 
         if ($this->acceptor) {
-            $acceptor = $this->acceptor;
+            $this->acceptor->complete(null);
             $this->acceptor = null;
-            $acceptor->resolve();
         }
     }
 
@@ -147,7 +145,7 @@ final class Server
 
         $this->acceptor = new Deferred;
         Loop::enable($this->watcher);
-        return await($this->acceptor->promise());
+        return $this->acceptor->getFuture()->join();
     }
 
     /**

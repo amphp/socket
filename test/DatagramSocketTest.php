@@ -5,8 +5,7 @@ namespace Amp\Socket\Test;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\DatagramSocket;
-use function Amp\async;
-use function Amp\await;
+use function Amp\Future\spawn;
 use function Revolt\EventLoop\defer;
 use function Revolt\EventLoop\delay;
 
@@ -48,7 +47,7 @@ class DatagramSocketTest extends AsyncTestCase
             }
         });
 
-        delay(100);
+        delay(0.1);
 
         $endpoint->close();
         $socket->close();
@@ -107,11 +106,11 @@ class DatagramSocketTest extends AsyncTestCase
     {
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
 
-        $promise = async(fn () => $endpoint->receive());
+        $future = spawn(fn () => $endpoint->receive());
 
         $endpoint->close();
 
-        self::assertNull(await($promise));
+        self::assertNull($future->join());
     }
 
     public function testReceiveAfterClose()
@@ -129,8 +128,8 @@ class DatagramSocketTest extends AsyncTestCase
 
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
         try {
-            async(fn () => $endpoint->receive());
-            await(async(fn () => $endpoint->receive()));
+            spawn(fn () => $endpoint->receive());
+            spawn(fn () => $endpoint->receive())->join();
         } finally {
             $endpoint->close();
         }

@@ -4,7 +4,6 @@ namespace Amp\Socket;
 
 use Amp\Deferred;
 use Revolt\EventLoop\Loop;
-use function Amp\await;
 
 final class DatagramSocket
 {
@@ -92,11 +91,11 @@ final class DatagramSocket
             /** @psalm-suppress TypeDoesNotContainType */
             if ($data === false) {
                 Loop::cancel($watcher);
-                $deferred->resolve();
+                $deferred->complete(null);
                 return;
             }
 
-            $deferred->resolve([SocketAddress::fromSocketName($address), $data]);
+            $deferred->complete([SocketAddress::fromSocketName($address), $data]);
 
             /** @psalm-suppress RedundantCondition Resuming of the fiber above might read immediately again */
             if (!$reader) {
@@ -136,7 +135,7 @@ final class DatagramSocket
 
         $this->reader = new Deferred;
         Loop::enable($this->watcher);
-        return await($this->reader->promise());
+        return $this->reader->getFuture()->join();
     }
 
     /**
@@ -149,14 +148,17 @@ final class DatagramSocket
      */
     public function send(SocketAddress $address, string $data): int
     {
+        static $errorHandler;
+        $errorHandler ??= static function (int $errno, string $errstr): void {
+            throw new SocketException(\sprintf('Could not send packet on endpoint: %s', $errstr));
+        };
+
         if (!$this->socket) {
             throw new SocketException('The endpoint is not writable');
         }
 
         try {
-            \set_error_handler(static function (int $errno, string $errstr) {
-                throw new SocketException(\sprintf('Could not send packet on endpoint: %s', $errstr));
-            });
+            \set_error_handler($errorHandler);
 
             $result = \stream_socket_sendto($this->socket, $data, 0, $address->toString());
             /** @psalm-suppress TypeDoesNotContainType */
@@ -244,9 +246,8 @@ final class DatagramSocket
         $this->socket = null;
 
         if ($this->reader) {
-            $reader = $this->reader;
+            $this->reader->complete(null);
             $this->reader = null;
-            $reader->resolve();
         }
     }
 }

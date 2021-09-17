@@ -4,11 +4,8 @@ namespace Amp\Socket\Internal;
 
 use Amp\CancellationToken;
 use Amp\Deferred;
-use Amp\Failure;
 use Amp\NullCancellationToken;
-use Amp\Promise;
 use Amp\Socket\TlsException;
-use Amp\Success;
 use League\Uri;
 use Revolt\EventLoop\Loop;
 
@@ -67,20 +64,20 @@ function parseUri(string $uri): array
 /**
  * Enable encryption on an existing socket stream.
  *
- * @param resource          $socket
- * @param array             $options
- * @param CancellationToken $cancellationToken
+ * @param resource $socket
+ * @param array $options
+ * @param CancellationToken|null $cancellationToken
  *
- * @return Promise<void>
+ * @return void
  *
  * @internal
  */
-function setupTls($socket, array $options, ?CancellationToken $cancellationToken): Promise
+function setupTls($socket, array $options, ?CancellationToken $cancellationToken): void
 {
     $cancellationToken = $cancellationToken ?? new NullCancellationToken;
 
     if (isset(\stream_get_meta_data($socket)['crypto'])) {
-        return new Failure(new TlsException("Can't setup TLS, because it has already been set up"));
+        throw new TlsException("Can't setup TLS, because it has already been set up");
     }
 
     \error_clear_last();
@@ -96,7 +93,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
             throw new TlsException('TLS negotiation failed: Unknown error');
         }
     } catch (TlsException $e) {
-        return new Failure($e);
+        throw $e;
     } finally {
         \restore_error_handler();
     }
@@ -104,7 +101,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
     // Yes, that function can return true / false / 0, don't use weak comparisons.
     if ($result === true) {
         /** @psalm-suppress InvalidReturnStatement */
-        return new Success;
+        return;
     }
 
     $cancellationToken->throwIfRequested();
@@ -114,14 +111,14 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
     // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
     $id = $cancellationToken->subscribe(static function ($e) use ($deferred, &$watcher) {
         Loop::cancel($watcher);
-
-        $deferred->fail($e);
+        $deferred->error($e);
     });
 
-    $watcher = Loop::onReadable($socket, static function (string $watcher, $socket, Deferred $deferred) use (
+    $watcher = Loop::onReadable($socket, static function (string $watcher, $socket) use (
+        $deferred,
         $cancellationToken,
-        $id
-    ) {
+        $id,
+    ): void {
         try {
             try {
                 \set_error_handler(static function (int $errno, string $errstr) use ($socket) {
@@ -143,7 +140,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
         } catch (TlsException $e) {
             Loop::cancel($watcher);
             $cancellationToken->unsubscribe($id);
-            $deferred->fail($e);
+            $deferred->error($e);
 
             return;
         }
@@ -152,11 +149,11 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
         if ($result === true) {
             Loop::cancel($watcher);
             $cancellationToken->unsubscribe($id);
-            $deferred->resolve();
+            $deferred->complete(null);
         }
-    }, $deferred);
+    });
 
-    return $deferred->promise();
+    $deferred->getFuture()->join();
 }
 
 /**
@@ -164,19 +161,16 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
  *
  * @param resource $socket
  *
- * @return Promise<void>
+ * @return void
  *
  * @internal
  * @psalm-suppress InvalidReturnType
  */
-function shutdownTls($socket): Promise
+function shutdownTls($socket): void
 {
     // note that disabling crypto *ALWAYS* returns false, immediately
     // don't set _enabled to false, TLS can be setup only once
     @\stream_socket_enable_crypto($socket, false);
-
-    /** @psalm-suppress InvalidReturnStatement */
-    return new Success;
 }
 
 /**
