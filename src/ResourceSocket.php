@@ -6,6 +6,7 @@ use Amp\ByteStream\ClosedException;
 use Amp\ByteStream\ResourceInputStream;
 use Amp\ByteStream\ResourceOutputStream;
 use Amp\CancellationToken;
+use Amp\Future;
 
 final class ResourceSocket implements EncryptableSocket
 {
@@ -128,16 +129,15 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function write(string $data): void
+    public function write(string $data): Future
     {
-        $this->writer->write($data);
+        return $this->writer->write($data);
     }
 
     /** @inheritDoc */
-    public function end(string $finalData = ''): void
+    public function end(string $finalData = ''): Future
     {
-        $this->writer->end($finalData);
-        $this->close();
+        return $this->writer->end($finalData);
     }
 
     /** @inheritDoc */
