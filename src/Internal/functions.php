@@ -153,7 +153,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
         }
     });
 
-    $deferred->getFuture()->join();
+    $deferred->getFuture()->await();
 }
 
 /**

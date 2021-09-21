@@ -31,12 +31,6 @@
     ],
     "prefer-stable": true,
     "minimum-stability": "dev",
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "git@github.com:revolt-php/event-loop.git"
-        }
-    ],
     "require": {
         "php": ">=8",
         "ext-openssl": "*",

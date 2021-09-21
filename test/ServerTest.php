@@ -5,9 +5,9 @@ namespace Amp\Socket\Test;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\Server;
+use function Amp\delay;
 use function Amp\ByteStream\buffer;
-use function Revolt\EventLoop\defer;
-use function Revolt\EventLoop\delay;
+use function Revolt\EventLoop\queue;
 
 class ServerTest extends AsyncTestCase
 {
@@ -45,7 +45,7 @@ class ServerTest extends AsyncTestCase
     {
         $server = Server::listen('127.0.0.1:0');
 
-        defer(function () use ($server): void {
+        queue(function () use ($server): void {
             while ($socket = $server->accept()) {
                 $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
             }
@@ -65,9 +65,9 @@ class ServerTest extends AsyncTestCase
             ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
         $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        defer(function () use ($server): void {
+        queue(function () use ($server): void {
             while ($socket = $server->accept()) {
-                defer(function () use ($socket): void {
+                queue(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
@@ -99,10 +99,10 @@ class ServerTest extends AsyncTestCase
             ->withCertificates(['amphp.org' => new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem')]);
         $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        defer(function () use ($server): void {
+        queue(function () use ($server): void {
             /** @var Socket\EncryptableSocket $socket */
             while ($socket = $server->accept()) {
-                defer(function () use ($socket): void {
+                queue(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
@@ -136,10 +136,10 @@ class ServerTest extends AsyncTestCase
 
         $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        defer(function () use ($server): void {
+        queue(function () use ($server): void {
             /** @var Socket\ResourceSocket $socket */
             while ($socket = $server->accept()) {
-                defer(function () use ($socket): void {
+                queue(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
@@ -185,10 +185,10 @@ class ServerTest extends AsyncTestCase
 
         $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        defer(function () use ($server): void {
+        queue(function () use ($server): void {
             /** @var Socket\ResourceSocket $socket */
             while ($socket = $server->accept()) {
-                defer(function () use ($socket): void {
+                queue(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());

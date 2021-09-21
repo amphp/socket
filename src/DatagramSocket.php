@@ -135,7 +135,7 @@ final class DatagramSocket
 
         $this->reader = new Deferred;
         Loop::enable($this->watcher);
-        return $this->reader->getFuture()->join();
+        return $this->reader->getFuture()->await();
     }
 
     /**

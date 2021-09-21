@@ -90,7 +90,7 @@ final class DnsConnector implements Connector
                 );
 
                 try {
-                    $deferred->getFuture()->join(new TimeoutCancellationToken($timeout));
+                    $deferred->getFuture()->await(new TimeoutCancellationToken($timeout));
                 } catch (CancelledException) {
                     $token->throwIfRequested(); // Rethrow if cancelled from user-provided token.
 

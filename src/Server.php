@@ -145,7 +145,7 @@ final class Server
 
         $this->acceptor = new Deferred;
         Loop::enable($this->watcher);
-        return $this->acceptor->getFuture()->join();
+        return $this->acceptor->getFuture()->await();
     }
 
     /**

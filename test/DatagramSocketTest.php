@@ -5,9 +5,9 @@ namespace Amp\Socket\Test;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\DatagramSocket;
-use function Amp\Future\spawn;
-use function Revolt\EventLoop\defer;
-use function Revolt\EventLoop\delay;
+use function Amp\coroutine;
+use function Amp\delay;
+use function Revolt\EventLoop\queue;
 
 class DatagramSocketTest extends AsyncTestCase
 {
@@ -38,7 +38,7 @@ class DatagramSocketTest extends AsyncTestCase
 
         $socket->write('Hello!');
 
-        defer(function () use ($endpoint, $remote): void {
+        queue(function () use ($endpoint, $remote): void {
             while ([$address, $data] = $endpoint->receive()) {
                 \assert($address instanceof Socket\SocketAddress);
                 $this->assertSame('Hello!', $data);
@@ -64,7 +64,7 @@ class DatagramSocketTest extends AsyncTestCase
 
         $socket->write('a');
 
-        defer(function () use ($endpoint, $remote) {
+        queue(function () use ($endpoint, $remote) {
             while ([$address, $data] = $endpoint->receive()) {
                 \assert($address instanceof Socket\SocketAddress);
                 $this->assertSame('a', $data);
@@ -106,11 +106,11 @@ class DatagramSocketTest extends AsyncTestCase
     {
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
 
-        $future = spawn(fn () => $endpoint->receive());
+        $future = coroutine(fn () => $endpoint->receive());
 
         $endpoint->close();
 
-        self::assertNull($future->join());
+        self::assertNull($future->await());
     }
 
     public function testReceiveAfterClose()
@@ -128,8 +128,8 @@ class DatagramSocketTest extends AsyncTestCase
 
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
         try {
-            spawn(fn () => $endpoint->receive());
-            spawn(fn () => $endpoint->receive())->join();
+            coroutine(fn () => $endpoint->receive());
+            coroutine(fn () => $endpoint->receive())->await();
         } finally {
             $endpoint->close();
         }

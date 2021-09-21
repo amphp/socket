@@ -17,8 +17,8 @@ echo 'Listening for new connections on ' . $server->getAddress() . ' ...' . PHP_
 echo 'Open your browser and visit http://' . $server->getAddress() . '/' . PHP_EOL;
 
 while ($socket = $server->accept()) {
-    // Handle client within a separate green-thread using defer() to not block accepting additional clients.
-    defer(static function () use ($socket) {
+    // Handle client within a separate green-thread using queue() to not block accepting additional clients.
+    queue(static function () use ($socket) {
         try {
             $address = $socket->getRemoteAddress();
             [$ip, $port] = \explode(':', (string) $address);
