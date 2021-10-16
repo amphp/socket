@@ -7,7 +7,7 @@ use Amp\Deferred;
 use Amp\NullCancellationToken;
 use Amp\Socket\TlsException;
 use League\Uri;
-use Revolt\EventLoop\Loop;
+use Revolt\EventLoop;
 
 /**
  * Parse an URI into [scheme, host, port].
@@ -88,7 +88,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
             throw new TlsException('TLS negotiation failed: ' . $errstr);
         });
 
-        $result = \stream_socket_enable_crypto($socket, $enable = true);
+        $result = \stream_socket_enable_crypto($socket, enable: true);
         if ($result === false) {
             throw new TlsException('TLS negotiation failed: Unknown error');
         }
@@ -110,11 +110,11 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
 
     // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
     $id = $cancellationToken->subscribe(static function ($e) use ($deferred, &$watcher) {
-        Loop::cancel($watcher);
+        EventLoop::cancel($watcher);
         $deferred->error($e);
     });
 
-    $watcher = Loop::onReadable($socket, static function (string $watcher, $socket) use (
+    $watcher = EventLoop::onReadable($socket, static function (string $watcher, $socket) use (
         $deferred,
         $cancellationToken,
         $id,
@@ -129,7 +129,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
                     throw new TlsException('TLS negotiation failed: ' . $errstr);
                 });
 
-                $result = \stream_socket_enable_crypto($socket, true);
+                $result = \stream_socket_enable_crypto($socket, enable: true);
                 if ($result === false) {
                     $message = \feof($socket) ? 'Connection reset by peer' : 'Unknown error';
                     throw new TlsException('TLS negotiation failed: ' . $message);
@@ -138,7 +138,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
                 \restore_error_handler();
             }
         } catch (TlsException $e) {
-            Loop::cancel($watcher);
+            EventLoop::cancel($watcher);
             $cancellationToken->unsubscribe($id);
             $deferred->error($e);
 
@@ -147,7 +147,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
 
         // If $result is 0, just wait for the next invocation
         if ($result === true) {
-            Loop::cancel($watcher);
+            EventLoop::cancel($watcher);
             $cancellationToken->unsubscribe($id);
             $deferred->complete(null);
         }
@@ -170,7 +170,7 @@ function shutdownTls($socket): void
 {
     // note that disabling crypto *ALWAYS* returns false, immediately
     // don't set _enabled to false, TLS can be setup only once
-    @\stream_socket_enable_crypto($socket, false);
+    @\stream_socket_enable_crypto($socket, enable: false);
 }
 
 /**

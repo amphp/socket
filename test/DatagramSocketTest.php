@@ -7,7 +7,7 @@ use Amp\Socket;
 use Amp\Socket\DatagramSocket;
 use function Amp\coroutine;
 use function Amp\delay;
-use function Revolt\EventLoop\queue;
+use function Revolt\launch;
 
 class DatagramSocketTest extends AsyncTestCase
 {
@@ -38,7 +38,7 @@ class DatagramSocketTest extends AsyncTestCase
 
         $socket->write('Hello!');
 
-        queue(function () use ($endpoint, $remote): void {
+        launch(function () use ($endpoint, $remote): void {
             while ([$address, $data] = $endpoint->receive()) {
                 \assert($address instanceof Socket\SocketAddress);
                 $this->assertSame('Hello!', $data);
@@ -64,7 +64,7 @@ class DatagramSocketTest extends AsyncTestCase
 
         $socket->write('a');
 
-        queue(function () use ($endpoint, $remote) {
+        launch(function () use ($endpoint, $remote) {
             while ([$address, $data] = $endpoint->receive()) {
                 \assert($address instanceof Socket\SocketAddress);
                 $this->assertSame('a', $data);

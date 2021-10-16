@@ -10,14 +10,14 @@ interface Socket extends InputStream, OutputStream
     /**
      * References the read watcher, so the loop keeps running in case there's an active read.
      *
-     * @see Loop::reference()
+     * @see EventLoop::reference()
      */
     public function reference(): void;
 
     /**
      * Unreferences the read watcher, so the loop doesn't keep running even if there are active reads.
      *
-     * @see Loop::unreference()
+     * @see EventLoop::unreference()
      */
     public function unreference(): void;
 

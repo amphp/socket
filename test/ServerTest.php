@@ -7,7 +7,7 @@ use Amp\Socket;
 use Amp\Socket\Server;
 use function Amp\delay;
 use function Amp\ByteStream\buffer;
-use function Revolt\EventLoop\queue;
+use function Revolt\launch;
 
 class ServerTest extends AsyncTestCase
 {
@@ -45,7 +45,7 @@ class ServerTest extends AsyncTestCase
     {
         $server = Server::listen('127.0.0.1:0');
 
-        queue(function () use ($server): void {
+        launch(function () use ($server): void {
             while ($socket = $server->accept()) {
                 $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
             }
@@ -65,13 +65,13 @@ class ServerTest extends AsyncTestCase
             ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
         $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        queue(function () use ($server): void {
+        launch(function () use ($server): void {
             while ($socket = $server->accept()) {
-                queue(function () use ($socket): void {
+                launch(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
-                    $socket->write('test');
+                    $socket->write('test')->await();
                     $socket->close();
                 });
             }
@@ -85,7 +85,7 @@ class ServerTest extends AsyncTestCase
         try {
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World');
+            $client->write('Hello World')->await();
 
             self::assertSame('test', buffer($client));
         } finally {
@@ -99,14 +99,14 @@ class ServerTest extends AsyncTestCase
             ->withCertificates(['amphp.org' => new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem')]);
         $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        queue(function () use ($server): void {
+        launch(function () use ($server): void {
             /** @var Socket\EncryptableSocket $socket */
             while ($socket = $server->accept()) {
-                queue(function () use ($socket): void {
+                launch(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
-                    $socket->write('test');
+                    $socket->write('test')->await();
                 });
             }
         });
@@ -119,7 +119,7 @@ class ServerTest extends AsyncTestCase
         try {
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World');
+            $client->write('Hello World')->await();
 
             self::assertSame('test', $client->read());
         } finally {
@@ -136,14 +136,14 @@ class ServerTest extends AsyncTestCase
 
         $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        queue(function () use ($server): void {
+        launch(function () use ($server): void {
             /** @var Socket\ResourceSocket $socket */
             while ($socket = $server->accept()) {
-                queue(function () use ($socket): void {
+                launch(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
-                    $socket->write('test');
+                    $socket->write('test')->await();
                 });
             }
         });
@@ -156,7 +156,7 @@ class ServerTest extends AsyncTestCase
         try {
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World');
+            $client->write('Hello World')->await();
 
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
@@ -165,7 +165,7 @@ class ServerTest extends AsyncTestCase
 
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World');
+            $client->write('Hello World')->await();
 
             delay(1);
         } finally {
@@ -185,14 +185,14 @@ class ServerTest extends AsyncTestCase
 
         $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        queue(function () use ($server): void {
+        launch(function () use ($server): void {
             /** @var Socket\ResourceSocket $socket */
             while ($socket = $server->accept()) {
-                queue(function () use ($socket): void {
+                launch(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
-                    $socket->write('test');
+                    $socket->write('test')->await();
                 });
             }
         });
@@ -205,7 +205,7 @@ class ServerTest extends AsyncTestCase
         try {
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World');
+            $client->write('Hello World')->await();
 
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
@@ -214,7 +214,7 @@ class ServerTest extends AsyncTestCase
 
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World');
+            $client->write('Hello World')->await();
 
             delay(1);
         } finally {

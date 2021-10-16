@@ -4,7 +4,7 @@ namespace Amp\Socket;
 
 use Amp\CancellationToken;
 use Amp\CancelledException;
-use Revolt\EventLoop\Loop;
+use Revolt\EventLoop;
 
 /**
  * Listen for client connections on the specified server address.
@@ -34,11 +34,11 @@ function listen(string $uri, ?BindContext $context = null): Server
  *
  * @return Connector
  */
-function connector(Connector $connector = null): Connector
+function connector(?Connector $connector = null): Connector
 {
     static $map;
     $map ??= new \WeakMap();
-    $driver = Loop::getDriver();
+    $driver = EventLoop::getDriver();
 
     if ($connector) {
         return $map[$driver] = $connector;
@@ -59,7 +59,7 @@ function connector(Connector $connector = null): Connector
  * @throws ConnectException
  * @throws CancelledException
  */
-function connect(string $uri, ConnectContext $context = null, CancellationToken $token = null): EncryptableSocket
+function connect(string $uri, ?ConnectContext $context = null, ?CancellationToken $token = null): EncryptableSocket
 {
     return connector()->connect($uri, $context, $token);
 }

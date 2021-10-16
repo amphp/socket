@@ -8,7 +8,7 @@ use Amp\Deferred;
 use Amp\Dns;
 use Amp\NullCancellationToken;
 use Amp\TimeoutCancellationToken;
-use Revolt\EventLoop\Loop;
+use Revolt\EventLoop;
 
 final class DnsConnector implements Connector
 {
@@ -80,10 +80,10 @@ final class DnsConnector implements Connector
 
                 $deferred = new Deferred;
                 $id = $token->subscribe([$deferred, 'error']);
-                $watcher = Loop::onWritable(
+                $watcher = EventLoop::onWritable(
                     $socket,
                     static function (string $watcher) use ($deferred, $id, $token): void {
-                        Loop::cancel($watcher);
+                        EventLoop::cancel($watcher);
                         $token->unsubscribe($id);
                         $deferred->complete(null);
                     }
@@ -101,7 +101,7 @@ final class DnsConnector implements Connector
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
                     ), 110); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
                 } finally {
-                    Loop::cancel($watcher);
+                    EventLoop::cancel($watcher);
                     $token->unsubscribe($id);
                 }
 

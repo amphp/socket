@@ -6,7 +6,7 @@ use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\Server;
 use function Amp\ByteStream\buffer;
-use function Revolt\EventLoop\queue;
+use function Revolt\launch;
 
 class SocketTest extends AsyncTestCase
 {
@@ -44,7 +44,7 @@ class SocketTest extends AsyncTestCase
     {
         $server = Server::listen('127.0.0.1:0');
 
-        queue(function () use ($server): void {
+        launch(function () use ($server): void {
             $socket = Socket\connect($server->getAddress());
             $socket->close();
         });

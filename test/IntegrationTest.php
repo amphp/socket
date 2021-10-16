@@ -2,7 +2,6 @@
 
 namespace Amp\Socket\Test;
 
-use Amp\CancelledException;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\ClientTlsContext;

@@ -4,8 +4,7 @@ namespace Amp\Socket;
 
 use Amp\CancellationToken;
 use League\Uri;
-use Revolt\EventLoop\Internal\Struct;
-use Revolt\EventLoop\Loop;
+use Revolt\EventLoop;
 
 /**
  * SocketPool implementation that doesn't impose any limits on concurrent open connections.
@@ -84,7 +83,7 @@ final class UnlimitedSocketPool implements SocketPool
             $socket->isAvailable = false;
 
             if ($socket->idleWatcher !== null) {
-                Loop::disable($socket->idleWatcher);
+                EventLoop::disable($socket->idleWatcher);
             }
 
             return $socket->object;
@@ -128,13 +127,13 @@ final class UnlimitedSocketPool implements SocketPool
         $socket->isAvailable = true;
 
         if (isset($socket->idleWatcher)) {
-            Loop::enable($socket->idleWatcher);
+            EventLoop::enable($socket->idleWatcher);
         } else {
-            $socket->idleWatcher = Loop::delay($this->idleTimeout, function () use ($socket) {
+            $socket->idleWatcher = EventLoop::delay($this->idleTimeout, function () use ($socket) {
                 $this->clearFromId(\spl_object_hash($socket->object));
             });
 
-            Loop::unreference($socket->idleWatcher);
+            EventLoop::unreference($socket->idleWatcher);
         }
     }
 
@@ -211,8 +210,6 @@ final class UnlimitedSocketPool implements SocketPool
 
         /** @psalm-suppress MissingConstructor */
         $socketEntry = new class {
-            use Struct;
-
             public string $uri;
             public EncryptableSocket $object;
             public bool $isAvailable;
@@ -242,7 +239,7 @@ final class UnlimitedSocketPool implements SocketPool
         $socket = $this->sockets[$cacheKey][$objectId];
 
         if ($socket->idleWatcher) {
-            Loop::cancel($socket->idleWatcher);
+            EventLoop::cancel($socket->idleWatcher);
         }
 
         unset(

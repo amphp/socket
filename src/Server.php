@@ -3,7 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\Deferred;
-use Revolt\EventLoop\Loop;
+use Revolt\EventLoop;
 
 final class Server
 {
@@ -74,7 +74,7 @@ final class Server
         \stream_set_blocking($this->socket, false);
 
         $acceptor = &$this->acceptor;
-        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
+        $this->watcher = EventLoop::onReadable($this->socket, static function ($watcher, $socket) use (
             &$acceptor,
             $chunkSize
         ): void {
@@ -92,11 +92,11 @@ final class Server
 
             /** @psalm-suppress RedundantCondition Resuming of the fiber above might accept immediately again */
             if (!$acceptor) {
-                Loop::disable($watcher);
+                EventLoop::disable($watcher);
             }
         });
 
-        Loop::disable($this->watcher);
+        EventLoop::disable($this->watcher);
     }
 
     /**
@@ -113,7 +113,7 @@ final class Server
 
     private function free(): void
     {
-        Loop::cancel($this->watcher);
+        EventLoop::cancel($this->watcher);
 
         $this->socket = null;
 
@@ -144,7 +144,7 @@ final class Server
         }
 
         $this->acceptor = new Deferred;
-        Loop::enable($this->watcher);
+        EventLoop::enable($this->watcher);
         return $this->acceptor->getFuture()->await();
     }
 
@@ -172,21 +172,21 @@ final class Server
     /**
      * References the accept watcher.
      *
-     * @see Loop::reference()
+     * @see EventLoop::reference()
      */
     public function reference(): void
     {
-        Loop::reference($this->watcher);
+        EventLoop::reference($this->watcher);
     }
 
     /**
      * Unreferences the accept watcher.
      *
-     * @see Loop::unreference()
+     * @see EventLoop::unreference()
      */
     public function unreference(): void
     {
-        Loop::unreference($this->watcher);
+        EventLoop::unreference($this->watcher);
     }
 
     /**

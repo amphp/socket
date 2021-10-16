@@ -3,7 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\Deferred;
-use Revolt\EventLoop\Loop;
+use Revolt\EventLoop;
 
 final class DatagramSocket
 {
@@ -77,7 +77,7 @@ final class DatagramSocket
         \stream_set_blocking($this->socket, false);
 
         $reader = &$this->reader;
-        $this->watcher = Loop::onReadable($this->socket, static function ($watcher, $socket) use (
+        $this->watcher = EventLoop::onReadable($this->socket, static function ($watcher, $socket) use (
             &$reader,
             &$chunkSize
         ): void {
@@ -90,7 +90,7 @@ final class DatagramSocket
 
             /** @psalm-suppress TypeDoesNotContainType */
             if ($data === false) {
-                Loop::cancel($watcher);
+                EventLoop::cancel($watcher);
                 $deferred->complete(null);
                 return;
             }
@@ -99,11 +99,11 @@ final class DatagramSocket
 
             /** @psalm-suppress RedundantCondition Resuming of the fiber above might read immediately again */
             if (!$reader) {
-                Loop::disable($watcher);
+                EventLoop::disable($watcher);
             }
         });
 
-        Loop::disable($this->watcher);
+        EventLoop::disable($this->watcher);
     }
 
     /**
@@ -134,7 +134,7 @@ final class DatagramSocket
         }
 
         $this->reader = new Deferred;
-        Loop::enable($this->watcher);
+        EventLoop::enable($this->watcher);
         return $this->reader->getFuture()->await();
     }
 
@@ -185,21 +185,21 @@ final class DatagramSocket
     /**
      * References the receive watcher.
      *
-     * @see Loop::reference()
+     * @see EventLoop::reference()
      */
     public function reference(): void
     {
-        Loop::reference($this->watcher);
+        EventLoop::reference($this->watcher);
     }
 
     /**
      * Unreferences the receive watcher.
      *
-     * @see Loop::unreference()
+     * @see EventLoop::unreference()
      */
     public function unreference(): void
     {
-        Loop::unreference($this->watcher);
+        EventLoop::unreference($this->watcher);
     }
 
     /**
@@ -241,7 +241,7 @@ final class DatagramSocket
 
     private function free(): void
     {
-        Loop::cancel($this->watcher);
+        EventLoop::cancel($this->watcher);
 
         $this->socket = null;
 
