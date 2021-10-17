@@ -148,15 +148,16 @@ class ServerTest extends AsyncTestCase
             }
         });
 
-        $context = (new Socket\ConnectContext)->withTlsContext(
-            (new Socket\ClientTlsContext('amphp.org'))
-                ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
-        );
-
         try {
+            $context = (new Socket\ConnectContext)->withTlsContext(
+                (new Socket\ClientTlsContext('amphp.org'))
+                    ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
+            );
+
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World')->await();
+            self::assertSame('test', $client->read());
 
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
@@ -166,8 +167,7 @@ class ServerTest extends AsyncTestCase
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World')->await();
-
-            delay(1);
+            self::assertSame('test', $client->read());
         } finally {
             $server->close();
         }
@@ -197,15 +197,16 @@ class ServerTest extends AsyncTestCase
             }
         });
 
-        $context = (new Socket\ConnectContext)->withTlsContext(
-            (new Socket\ClientTlsContext('amphp.org'))
-                ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
-        );
-
         try {
+            $context = (new Socket\ConnectContext)->withTlsContext(
+                (new Socket\ClientTlsContext('amphp.org'))
+                    ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
+            );
+
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World')->await();
+            self::assertSame('test', $client->read());
 
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
@@ -215,8 +216,7 @@ class ServerTest extends AsyncTestCase
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World')->await();
-
-            delay(1);
+            self::assertSame('test', $client->read());
         } finally {
             $server->close();
         }
