@@ -92,8 +92,6 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
         if ($result === false) {
             throw new TlsException('TLS negotiation failed: Unknown error');
         }
-    } catch (TlsException $e) {
-        throw $e;
     } finally {
         \restore_error_handler();
     }
