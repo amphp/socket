@@ -6,8 +6,8 @@ use Amp\ByteStream;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\Server;
+use Revolt\EventLoop;
 use function Amp\delay;
-use function Revolt\launch;
 
 class TlsFragmentationTest extends AsyncTestCase
 {
@@ -28,10 +28,10 @@ class TlsFragmentationTest extends AsyncTestCase
         $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
         // Proxy to apply chunking of single bytes
-        launch(function () use ($proxyServer, $server): void {
+        EventLoop::queue(function () use ($proxyServer, $server): void {
             /** @var Socket\ResourceSocket $proxyClient */
             while ($proxyClient = $proxyServer->accept()) {
-                launch(function () use ($proxyClient, $server): void {
+                EventLoop::queue(function () use ($proxyClient, $server): void {
                     $proxyUpstream = Socket\connect($server->getAddress());
 
                     $this->pipe($proxyClient, $proxyUpstream);
@@ -40,10 +40,10 @@ class TlsFragmentationTest extends AsyncTestCase
             }
         });
 
-        launch(function () use ($server): void {
+        EventLoop::queue(function () use ($server): void {
             /** @var Socket\ResourceSocket $client */
             while ($client = $server->accept()) {
-                launch(function () use ($client): void {
+                EventLoop::queue(function () use ($client): void {
                     $client->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $client);
                     $this->assertSame('Hello World', $this->read($client, 11));
@@ -73,7 +73,7 @@ class TlsFragmentationTest extends AsyncTestCase
 
     private function pipe(ByteStream\InputStream $source, ByteStream\OutputStream $destination): void
     {
-        launch(static function () use ($source, $destination): void {
+        EventLoop::queue(static function () use ($source, $destination): void {
             while (($chunk = $source->read()) !== null) {
                 foreach (\str_split($chunk) as $byte) {
                     $destination->write($byte);
