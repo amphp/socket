@@ -2,8 +2,10 @@
 
 namespace Amp\Socket;
 
-use Amp\Deferred;
+use Amp\CancellationToken;
+use Amp\CancelledException;
 use Revolt\EventLoop;
+use Revolt\EventLoop\Suspension;
 
 final class DatagramSocket
 {
@@ -54,7 +56,9 @@ final class DatagramSocket
 
     private SocketAddress $address;
 
-    private ?Deferred $reader = null;
+    private ?Suspension $reader = null;
+
+    private \Closure $cancel;
 
     private int $chunkSize;
 
@@ -77,31 +81,33 @@ final class DatagramSocket
         \stream_set_blocking($this->socket, false);
 
         $reader = &$this->reader;
-        $this->watcher = EventLoop::onReadable($this->socket, static function ($watcher, $socket) use (
+        $this->watcher = EventLoop::onReadable($this->socket, static function (string $watcher, $socket) use (
             &$reader,
             &$chunkSize
         ): void {
-            $deferred = $reader;
-            $reader = null;
-
-            \assert($deferred !== null);
+            \assert($reader !== null);
 
             $data = @\stream_socket_recvfrom($socket, $chunkSize, 0, $address);
 
             /** @psalm-suppress TypeDoesNotContainType */
             if ($data === false) {
                 EventLoop::cancel($watcher);
-                $deferred->complete(null);
+                $reader->resume();
+                $reader = null;
                 return;
             }
 
-            $deferred->complete([SocketAddress::fromSocketName($address), $data]);
-
-            /** @psalm-suppress RedundantCondition Resuming of the fiber above might read immediately again */
-            if (!$reader) {
-                EventLoop::disable($watcher);
-            }
+            $reader->resume([SocketAddress::fromSocketName($address), $data]);
+            $reader = null;
+            EventLoop::disable($watcher);
         });
+
+        $watcher = &$this->watcher;
+        $this->cancel = static function (CancelledException $exception) use (&$reader, $watcher): void {
+            $reader?->throw($exception);
+            $reader = null;
+            EventLoop::disable($watcher);
+        };
 
         EventLoop::disable($this->watcher);
     }
@@ -119,11 +125,11 @@ final class DatagramSocket
     }
 
     /**
-     * @return array{0: SocketAddress, 1: string}|null Resolves with null if the socket is closed.
+     * @return array{SocketAddress, string}|null Resolves with null if the socket is closed.
      *
      * @throws PendingReceiveError If a receive request is already pending.
      */
-    public function receive(): ?array
+    public function receive(?CancellationToken $token = null): ?array
     {
         if ($this->reader) {
             throw new PendingReceiveError;
@@ -133,9 +139,16 @@ final class DatagramSocket
             return null; // Resolve with null when endpoint is closed.
         }
 
-        $this->reader = new Deferred;
         EventLoop::enable($this->watcher);
-        return $this->reader->getFuture()->await();
+        $this->reader = EventLoop::createSuspension();
+
+        $id = $token?->subscribe($this->cancel);
+
+        try {
+            return $this->reader->suspend();
+        } finally {
+            $token?->unsubscribe($id);
+        }
     }
 
     /**
@@ -189,6 +202,10 @@ final class DatagramSocket
      */
     public function reference(): void
     {
+        if ($this->socket === null) {
+            return;
+        }
+
         EventLoop::reference($this->watcher);
     }
 
@@ -199,6 +216,10 @@ final class DatagramSocket
      */
     public function unreference(): void
     {
+        if ($this->socket === null) {
+            return;
+        }
+
         EventLoop::unreference($this->watcher);
     }
 
@@ -245,9 +266,7 @@ final class DatagramSocket
 
         $this->socket = null;
 
-        if ($this->reader) {
-            $this->reader->complete(null);
-            $this->reader = null;
-        }
+        $this->reader?->resume();
+        $this->reader = null;
     }
 }

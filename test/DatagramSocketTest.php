@@ -2,12 +2,14 @@
 
 namespace Amp\Socket\Test;
 
+use Amp\CancelledException;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\DatagramSocket;
+use Amp\TimeoutCancellationToken;
 use Revolt\EventLoop;
-use function Amp\coroutine;
 use function Amp\delay;
+use function Amp\launch;
 
 class DatagramSocketTest extends AsyncTestCase
 {
@@ -106,7 +108,7 @@ class DatagramSocketTest extends AsyncTestCase
     {
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
 
-        $future = coroutine(fn () => $endpoint->receive());
+        $future = launch(fn () => $endpoint->receive());
 
         $endpoint->close();
 
@@ -128,8 +130,8 @@ class DatagramSocketTest extends AsyncTestCase
 
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
         try {
-            coroutine(fn () => $endpoint->receive());
-            coroutine(fn () => $endpoint->receive())->await();
+            launch(fn () => $endpoint->receive());
+            launch(fn () => $endpoint->receive())->await();
         } finally {
             $endpoint->close();
         }
@@ -156,5 +158,22 @@ class DatagramSocketTest extends AsyncTestCase
         } finally {
             $endpoint->close();
         }
+    }
+
+    public function testCancelThenAccept(): void
+    {
+        $datagram = DatagramSocket::bind('127.0.0.1:0');
+
+        try {
+            $datagram->receive(new TimeoutCancellationToken(0.01));
+            $this->fail('The receive should have been cancelled');
+        } catch (CancelledException) {
+        }
+
+        $client = Socket\connect('udp://' . $datagram->getAddress());
+
+        $data = 'test';
+        $client->write($data)->ignore();
+        self::assertEquals([$client->getLocalAddress(), $data], $datagram->receive());
     }
 }

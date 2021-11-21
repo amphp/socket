@@ -2,8 +2,10 @@
 
 namespace Amp\Socket;
 
-use Amp\Deferred;
+use Amp\CancellationToken;
+use Amp\CancelledException;
 use Revolt\EventLoop;
+use Revolt\EventLoop\Suspension;
 
 final class Server
 {
@@ -16,7 +18,9 @@ final class Server
 
     private int $chunkSize;
 
-    private ?Deferred $acceptor = null;
+    private ?Suspension $acceptor = null;
+
+    private \Closure $cancel;
 
     /**
      * Listen for client connections on the specified server address.
@@ -74,7 +78,7 @@ final class Server
         \stream_set_blocking($this->socket, false);
 
         $acceptor = &$this->acceptor;
-        $this->watcher = EventLoop::onReadable($this->socket, static function ($watcher, $socket) use (
+        $this->watcher = EventLoop::onReadable($this->socket, static function (string $watcher, $socket) use (
             &$acceptor,
             $chunkSize
         ): void {
@@ -83,18 +87,19 @@ final class Server
                 return; // Accepting client failed.
             }
 
-            $deferred = $acceptor;
+            \assert($acceptor !== null);
+
+            $acceptor->resume(ResourceSocket::fromServerSocket($client, $chunkSize));
             $acceptor = null;
-
-            \assert($deferred !== null);
-
-            $deferred->complete(ResourceSocket::fromServerSocket($client, $chunkSize));
-
-            /** @psalm-suppress RedundantCondition Resuming of the fiber above might accept immediately again */
-            if (!$acceptor) {
-                EventLoop::disable($watcher);
-            }
+            EventLoop::disable($watcher);
         });
+
+        $watcher = &$this->watcher;
+        $this->cancel = static function (CancelledException $exception) use (&$acceptor, $watcher): void {
+            $acceptor?->throw($exception);
+            $acceptor = null;
+            EventLoop::disable($watcher);
+        };
 
         EventLoop::disable($this->watcher);
     }
@@ -117,10 +122,8 @@ final class Server
 
         $this->socket = null;
 
-        if ($this->acceptor) {
-            $this->acceptor->complete(null);
-            $this->acceptor = null;
-        }
+        $this->acceptor?->resume();
+        $this->acceptor = null;
     }
 
     /**
@@ -128,7 +131,7 @@ final class Server
      *
      * @throws PendingAcceptError If another accept request is pending.
      */
-    public function accept(): ?ResourceSocket
+    public function accept(?CancellationToken $token = null): ?ResourceSocket
     {
         if ($this->acceptor) {
             throw new PendingAcceptError;
@@ -143,9 +146,16 @@ final class Server
             return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         }
 
-        $this->acceptor = new Deferred;
         EventLoop::enable($this->watcher);
-        return $this->acceptor->getFuture()->await();
+        $this->acceptor = EventLoop::createSuspension();
+
+        $id = $token?->subscribe($this->cancel);
+
+        try {
+            return $this->acceptor->suspend();
+        } finally {
+            $token?->unsubscribe($id);
+        }
     }
 
     /**

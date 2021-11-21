@@ -123,9 +123,9 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function read(): ?string
+    public function read(?CancellationToken $token = null): ?string
     {
-        return $this->reader->read();
+        return $this->reader->read($token);
     }
 
     /** @inheritDoc */
@@ -206,7 +206,7 @@ final class ResourceSocket implements EncryptableSocket
     /** @inheritDoc */
     public function isClosed(): bool
     {
-        return $this->getResource() === null;
+        return $this->reader->isClosed() && $this->writer->isClosed();
     }
 
     /**
