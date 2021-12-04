@@ -3,11 +3,11 @@
 namespace Amp\Socket;
 
 use Amp\ByteStream\ClosableStream;
-use Amp\ByteStream\InputStream;
-use Amp\ByteStream\OutputStream;
+use Amp\ByteStream\ReadableStream;
+use Amp\ByteStream\WritableStream;
 use Amp\ByteStream\ReferencedStream;
 
-interface Socket extends InputStream, OutputStream, ClosableStream, ReferencedStream
+interface Socket extends ReadableStream, WritableStream, ClosableStream, ReferencedStream
 {
     /**
      * @return SocketAddress

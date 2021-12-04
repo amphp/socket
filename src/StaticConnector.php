@@ -2,7 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\CancellationToken;
+use Amp\Cancellation;
 
 /**
  * Connector that connects to a statically defined URI instead of the URI passed to the connect() call.
@@ -18,7 +18,7 @@ final class StaticConnector implements Connector
         $this->connector = $connector;
     }
 
-    public function connect(string $uri, ?ConnectContext $context = null, ?CancellationToken $token = null): EncryptableSocket
+    public function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $token = null): EncryptableSocket
     {
         return $this->connector->connect($this->uri, $context, $token);
     }

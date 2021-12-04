@@ -2,7 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\CancellationToken;
+use Amp\Cancellation;
 use Amp\CancelledException;
 use Revolt\EventLoop;
 
@@ -52,14 +52,14 @@ function connector(?Connector $connector = null): Connector
  *
  * @param string                 $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ConnectContext|null    $context Socket connect context to use when connecting.
- * @param CancellationToken|null $token
+ * @param Cancellation|null $token
  *
  * @return EncryptableSocket
  *
  * @throws ConnectException
  * @throws CancelledException
  */
-function connect(string $uri, ?ConnectContext $context = null, ?CancellationToken $token = null): EncryptableSocket
+function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $token = null): EncryptableSocket
 {
     return connector()->connect($uri, $context, $token);
 }

@@ -9,7 +9,7 @@ use Amp\Socket\ConnectContext;
 use Amp\Socket\ConnectException;
 use Amp\Socket\EncryptableSocket;
 use Amp\Socket\TlsInfo;
-use Amp\TimeoutCancellationToken;
+use Amp\TimeoutCancellation;
 
 class IntegrationTest extends AsyncTestCase
 {
@@ -42,7 +42,7 @@ class IntegrationTest extends AsyncTestCase
     public function testConnectCancellation(): void
     {
         $this->expectException(ConnectException::class);
-        $token = new TimeoutCancellationToken(1000);
+        $token = new TimeoutCancellation(1000);
         Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(2), $token);
     }
 

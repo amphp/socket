@@ -2,7 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\CancellationToken;
+use Amp\Cancellation;
 use Amp\CancelledException;
 
 /**
@@ -23,7 +23,7 @@ interface SocketPool
      *     Connections to the same host with a different ConnectContext must use separate socket groups internally to
      *     prevent TLS negotiation with the wrong peer name or other TLS settings.
      * @param ConnectContext|null    $context Socket connect context to use when connecting.
-     * @param CancellationToken|null $token Optional cancellation token to cancel the checkout request.
+     * @param Cancellation|null $token Optional cancellation token to cancel the checkout request.
      *
      * @return EncryptableSocket Resolves to an EncryptableSocket instance once a connection is available.
      *
@@ -33,7 +33,7 @@ interface SocketPool
     public function checkout(
         string $uri,
         ConnectContext $context = null,
-        CancellationToken $token = null
+        Cancellation $token = null
     ): EncryptableSocket;
 
     /**

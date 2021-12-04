@@ -6,11 +6,11 @@ use Amp\CancelledException;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\Server;
-use Amp\TimeoutCancellationToken;
+use Amp\TimeoutCancellation;
 use Revolt\EventLoop;
 use function Amp\delay;
 use function Amp\ByteStream\buffer;
-use function Amp\launch;
+use function Amp\async;
 
 class ServerTest extends AsyncTestCase
 {
@@ -230,12 +230,12 @@ class ServerTest extends AsyncTestCase
         $server = Server::listen('127.0.0.1:0');
 
         try {
-            $server->accept(new TimeoutCancellationToken(0.01));
+            $server->accept(new TimeoutCancellation(0.01));
             $this->fail('The accept should have been cancelled');
         } catch (CancelledException) {
         }
 
-        $future = launch(fn () => Socket\connect($server->getAddress()));
+        $future = async(fn () => Socket\connect($server->getAddress()));
 
         $serverSocket = $server->accept();
         $clientSocket = $future->await();

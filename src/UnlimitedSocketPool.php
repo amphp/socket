@@ -2,7 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\CancellationToken;
+use Amp\Cancellation;
 use League\Uri;
 use Revolt\EventLoop;
 
@@ -39,7 +39,7 @@ final class UnlimitedSocketPool implements SocketPool
     public function checkout(
         string $uri,
         ConnectContext $context = null,
-        CancellationToken $token = null
+        Cancellation $token = null
     ): EncryptableSocket {
         // A request might already be cancelled before we reach the checkout, so do not even attempt to checkout in that
         // case. The weird logic is required to throw the token's exception instead of creating a new one.
@@ -196,7 +196,7 @@ final class UnlimitedSocketPool implements SocketPool
         string $uri,
         string $cacheKey,
         ConnectContext $connectContext = null,
-        CancellationToken $token = null
+        Cancellation $token = null
     ): EncryptableSocket {
         $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 

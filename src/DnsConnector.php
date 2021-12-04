@@ -2,12 +2,12 @@
 
 namespace Amp\Socket;
 
-use Amp\CancellationToken;
+use Amp\Cancellation;
 use Amp\CancelledException;
-use Amp\Deferred;
+use Amp\DeferredFuture;
 use Amp\Dns;
-use Amp\NullCancellationToken;
-use Amp\TimeoutCancellationToken;
+use Amp\NullCancellation;
+use Amp\TimeoutCancellation;
 use Revolt\EventLoop;
 
 final class DnsConnector implements Connector
@@ -22,10 +22,10 @@ final class DnsConnector implements Connector
     public function connect(
         string $uri,
         ?ConnectContext $context = null,
-        ?CancellationToken $token = null
+        ?Cancellation $token = null
     ): EncryptableSocket {
         $context ??= new ConnectContext;
-        $token ??= new NullCancellationToken;
+        $token ??= new NullCancellation;
         $attempt = 0;
         $uris = [];
         $failures = [];
@@ -78,8 +78,8 @@ final class DnsConnector implements Connector
 
                 \stream_set_blocking($socket, false);
 
-                $deferred = new Deferred;
-                $id = $token->subscribe([$deferred, 'error']);
+                $deferred = new DeferredFuture;
+                $id = $token->subscribe(\Closure::fromCallable([$deferred, 'error']));
                 $watcher = EventLoop::onWritable(
                     $socket,
                     static function (string $watcher) use ($deferred, $id, $token): void {
@@ -90,7 +90,7 @@ final class DnsConnector implements Connector
                 );
 
                 try {
-                    $deferred->getFuture()->await(new TimeoutCancellationToken($timeout));
+                    $deferred->getFuture()->await(new TimeoutCancellation($timeout));
                 } catch (CancelledException) {
                     $token->throwIfRequested(); // Rethrow if cancelled from user-provided token.
 

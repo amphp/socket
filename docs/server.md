@@ -37,7 +37,7 @@ $server = Server::listen("tcp://127.0.0.1:1337");
 
 while ($client = yield $server->accept()) {
     // do something with $client, which is a ResourceSocket instance
-    
+
     // you shouldn't yield here, because that will wait for the yielded promise
     // before accepting another client, see below.
 }
@@ -65,7 +65,7 @@ Loop::run(function () {
 
         yield $socket->end("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}");
     };
-    
+
     $server = Server::listen("127.0.0.1:0");
 
     echo "Listening for new connections on " . $server->getAddress() . " ..." . PHP_EOL;
@@ -87,11 +87,11 @@ Sometimes you don't know the address the server is listening on, e.g. because yo
 
 ## Sending Data
 
-`ResourceSocket` implements `OutputStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#outputstream) applies.
+`ResourceSocket` implements `WritableStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#outputstream) applies.
 
 ## Receiving Data
 
-`ResourceSocket` implements `InputStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#inputstream) applies.
+`ResourceSocket` implements `ReadableStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#inputstream) applies.
 
 ## Server Shutdown
 

@@ -6,10 +6,10 @@ use Amp\CancelledException;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\Socket\DatagramSocket;
-use Amp\TimeoutCancellationToken;
+use Amp\TimeoutCancellation;
 use Revolt\EventLoop;
 use function Amp\delay;
-use function Amp\launch;
+use function Amp\async;
 
 class DatagramSocketTest extends AsyncTestCase
 {
@@ -108,7 +108,7 @@ class DatagramSocketTest extends AsyncTestCase
     {
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
 
-        $future = launch(fn () => $endpoint->receive());
+        $future = async(fn () => $endpoint->receive());
 
         $endpoint->close();
 
@@ -130,8 +130,8 @@ class DatagramSocketTest extends AsyncTestCase
 
         $endpoint = DatagramSocket::bind('127.0.0.1:0');
         try {
-            launch(fn () => $endpoint->receive());
-            launch(fn () => $endpoint->receive())->await();
+            async(fn () => $endpoint->receive());
+            async(fn () => $endpoint->receive())->await();
         } finally {
             $endpoint->close();
         }
@@ -165,7 +165,7 @@ class DatagramSocketTest extends AsyncTestCase
         $datagram = DatagramSocket::bind('127.0.0.1:0');
 
         try {
-            $datagram->receive(new TimeoutCancellationToken(0.01));
+            $datagram->receive(new TimeoutCancellation(0.01));
             $this->fail('The receive should have been cancelled');
         } catch (CancelledException) {
         }

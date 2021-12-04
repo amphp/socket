@@ -3,14 +3,14 @@
 namespace Amp\Socket;
 
 use Amp\ByteStream\ClosedException;
-use Amp\ByteStream\ResourceInputStream;
-use Amp\ByteStream\ResourceOutputStream;
-use Amp\CancellationToken;
+use Amp\ByteStream\ReadableResourceStream;
+use Amp\ByteStream\WritableResourceStream;
+use Amp\Cancellation;
 use Amp\Future;
 
 final class ResourceSocket implements EncryptableSocket
 {
-    public const DEFAULT_CHUNK_SIZE = ResourceInputStream::DEFAULT_CHUNK_SIZE;
+    public const DEFAULT_CHUNK_SIZE = ReadableResourceStream::DEFAULT_CHUNK_SIZE;
 
     /**
      * @param resource $resource  Stream resource.
@@ -42,9 +42,9 @@ final class ResourceSocket implements EncryptableSocket
 
     private int $tlsState;
 
-    private ResourceInputStream $reader;
+    private ReadableResourceStream $reader;
 
-    private ResourceOutputStream $writer;
+    private WritableResourceStream $writer;
 
     private SocketAddress $localAddress;
 
@@ -63,15 +63,15 @@ final class ResourceSocket implements EncryptableSocket
         ?ClientTlsContext $tlsContext = null
     ) {
         $this->tlsContext = $tlsContext;
-        $this->reader = new ResourceInputStream($resource, $chunkSize);
-        $this->writer = new ResourceOutputStream($resource, $chunkSize);
+        $this->reader = new ReadableResourceStream($resource, $chunkSize);
+        $this->writer = new WritableResourceStream($resource, $chunkSize);
         $this->remoteAddress = SocketAddress::fromPeerResource($resource);
         $this->localAddress = SocketAddress::fromLocalResource($resource);
         $this->tlsState = self::TLS_STATE_DISABLED;
     }
 
     /** @inheritDoc */
-    public function setupTls(?CancellationToken $cancellationToken = null): void
+    public function setupTls(?Cancellation $cancellationToken = null): void
     {
         $resource = $this->getResource();
 
@@ -107,7 +107,7 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function shutdownTls(?CancellationToken $cancellationToken = null): void
+    public function shutdownTls(?Cancellation $cancellationToken = null): void
     {
         if (($resource = $this->reader->getResource()) === null) {
             throw new ClosedException("Can't shutdown TLS, because the socket has already been closed");
@@ -123,7 +123,7 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /** @inheritDoc */
-    public function read(?CancellationToken $token = null): ?string
+    public function read(?Cancellation $token = null): ?string
     {
         return $this->reader->read($token);
     }
@@ -216,5 +216,13 @@ final class ResourceSocket implements EncryptableSocket
     {
         $this->reader->setChunkSize($chunkSize);
         $this->writer->setChunkSize($chunkSize);
+    }
+
+    public function isReadable(): bool {
+        return $this->reader->isReadable();
+    }
+
+    public function isWritable(): bool {
+        return $this->writer->isWritable();
     }
 }

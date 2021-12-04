@@ -2,9 +2,9 @@
 
 namespace Amp\Socket\Internal;
 
-use Amp\CancellationToken;
-use Amp\Deferred;
-use Amp\NullCancellationToken;
+use Amp\Cancellation;
+use Amp\DeferredFuture;
+use Amp\NullCancellation;
 use Amp\Socket\TlsException;
 use League\Uri;
 use Revolt\EventLoop;
@@ -66,15 +66,15 @@ function parseUri(string $uri): array
  *
  * @param resource $socket
  * @param array $options
- * @param CancellationToken|null $cancellationToken
+ * @param Cancellation|null $cancellationToken
  *
  * @return void
  *
  * @internal
  */
-function setupTls($socket, array $options, ?CancellationToken $cancellationToken): void
+function setupTls($socket, array $options, ?Cancellation $cancellationToken): void
 {
-    $cancellationToken = $cancellationToken ?? new NullCancellationToken;
+    $cancellationToken = $cancellationToken ?? new NullCancellation;
 
     if (isset(\stream_get_meta_data($socket)['crypto'])) {
         throw new TlsException("Can't setup TLS, because it has already been set up");
@@ -104,7 +104,7 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
 
     $cancellationToken->throwIfRequested();
 
-    $deferred = new Deferred;
+    $deferred = new DeferredFuture;
 
     // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
     $id = $cancellationToken->subscribe(static function ($e) use ($deferred, &$watcher) {

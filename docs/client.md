@@ -33,8 +33,8 @@ If you want to connect via TLS, you need use `Amp\Socket\connect()` and then cal
 
 ## Sending Data
 
-`EncryptableSocket` implements `OutputStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#outputstream) applies.
+`EncryptableSocket` implements `WritableStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#outputstream) applies.
 
 ## Receiving Data
 
-`EncryptableSocket` implements `InputStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#inputstream) applies.
+`EncryptableSocket` implements `ReadableStream`, so everything from [`amphp/byte-stream`](https://amphp.org/byte-stream/#inputstream) applies.

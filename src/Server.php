@@ -2,7 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\CancellationToken;
+use Amp\Cancellation;
 use Amp\CancelledException;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
@@ -131,7 +131,7 @@ final class Server
      *
      * @throws PendingAcceptError If another accept request is pending.
      */
-    public function accept(?CancellationToken $token = null): ?ResourceSocket
+    public function accept(?Cancellation $token = null): ?ResourceSocket
     {
         if ($this->acceptor) {
             throw new PendingAcceptError;

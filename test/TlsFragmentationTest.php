@@ -71,7 +71,7 @@ class TlsFragmentationTest extends AsyncTestCase
         $server->close();
     }
 
-    private function pipe(ByteStream\InputStream $source, ByteStream\OutputStream $destination): void
+    private function pipe(ByteStream\ReadableStream $source, ByteStream\WritableStream $destination): void
     {
         EventLoop::queue(static function () use ($source, $destination): void {
             while (($chunk = $source->read()) !== null) {
@@ -85,7 +85,7 @@ class TlsFragmentationTest extends AsyncTestCase
         });
     }
 
-    private function read(ByteStream\InputStream $source, int $minLength): string
+    private function read(ByteStream\ReadableStream $source, int $minLength): string
     {
         $buffer = '';
 

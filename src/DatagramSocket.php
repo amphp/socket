@@ -2,7 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\CancellationToken;
+use Amp\Cancellation;
 use Amp\CancelledException;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
@@ -129,7 +129,7 @@ final class DatagramSocket
      *
      * @throws PendingReceiveError If a receive request is already pending.
      */
-    public function receive(?CancellationToken $token = null): ?array
+    public function receive(?Cancellation $token = null): ?array
     {
         if ($this->reader) {
             throw new PendingReceiveError;
