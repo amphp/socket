@@ -16,7 +16,8 @@ class SocketTest extends AsyncTestCase
 
         [$serverSock, $clientSock] = Socket\createPair();
 
-        $serverSock->end($data);
+        $serverSock->write($data);
+        $serverSock->end();
 
         self::assertSame($data, buffer($clientSock));
     }

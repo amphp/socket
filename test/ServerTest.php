@@ -74,7 +74,7 @@ class ServerTest extends AsyncTestCase
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
-                    $socket->write('test')->await();
+                    $socket->write('test');
                     $socket->close();
                 });
             }
@@ -88,7 +88,7 @@ class ServerTest extends AsyncTestCase
         try {
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World')->await();
+            $client->write('Hello World');
 
             self::assertSame('test', buffer($client));
         } finally {
@@ -109,7 +109,7 @@ class ServerTest extends AsyncTestCase
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
-                    $socket->write('test')->await();
+                    $socket->write('test');
                 });
             }
         });
@@ -122,7 +122,7 @@ class ServerTest extends AsyncTestCase
         try {
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World')->await();
+            $client->write('Hello World');
 
             self::assertSame('test', $client->read());
         } finally {
@@ -146,7 +146,7 @@ class ServerTest extends AsyncTestCase
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
-                    $socket->write('test')->await();
+                    $socket->write('test');
                 });
             }
         });
@@ -159,7 +159,7 @@ class ServerTest extends AsyncTestCase
 
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World')->await();
+            $client->write('Hello World');
             self::assertSame('test', $client->read());
 
             $context = (new Socket\ConnectContext)->withTlsContext(
@@ -169,7 +169,7 @@ class ServerTest extends AsyncTestCase
 
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World')->await();
+            $client->write('Hello World');
             self::assertSame('test', $client->read());
         } finally {
             $server->close();
@@ -195,7 +195,7 @@ class ServerTest extends AsyncTestCase
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
-                    $socket->write('test')->await();
+                    $socket->write('test');
                 });
             }
         });
@@ -208,7 +208,7 @@ class ServerTest extends AsyncTestCase
 
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World')->await();
+            $client->write('Hello World');
             self::assertSame('test', $client->read());
 
             $context = (new Socket\ConnectContext)->withTlsContext(
@@ -218,7 +218,7 @@ class ServerTest extends AsyncTestCase
 
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
-            $client->write('Hello World')->await();
+            $client->write('Hello World');
             self::assertSame('test', $client->read());
         } finally {
             $server->close();
@@ -241,7 +241,7 @@ class ServerTest extends AsyncTestCase
         $clientSocket = $future->await();
 
         $data = 'test';
-        $serverSocket->write($data)->ignore();
+        $serverSocket->write($data);
         self::assertSame($data, $clientSocket->read());
     }
 }

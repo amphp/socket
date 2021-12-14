@@ -173,7 +173,7 @@ class DatagramSocketTest extends AsyncTestCase
         $client = Socket\connect('udp://' . $datagram->getAddress());
 
         $data = 'test';
-        $client->write($data)->ignore();
+        $client->write($data);
         self::assertEquals([$client->getLocalAddress(), $data], $datagram->receive());
     }
 }

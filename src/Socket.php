@@ -2,13 +2,21 @@
 
 namespace Amp\Socket;
 
-use Amp\ByteStream\ClosableStream;
 use Amp\ByteStream\ReadableStream;
+use Amp\ByteStream\ResourceStream;
 use Amp\ByteStream\WritableStream;
-use Amp\ByteStream\ReferencedStream;
+use Amp\Cancellation;
 
-interface Socket extends ReadableStream, WritableStream, ClosableStream, ReferencedStream
+interface Socket extends ReadableStream, WritableStream, ResourceStream
 {
+    /**
+     * @param Cancellation|null $cancellation
+     * @param int|null $length Read at most $length bytes from the socket.
+     *
+     * @return string|null
+     */
+    public function read(?Cancellation $cancellation = null, ?int $length = null): ?string;
+
     /**
      * @return SocketAddress
      */

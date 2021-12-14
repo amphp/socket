@@ -6,7 +6,6 @@ use Amp\ByteStream\ClosedException;
 use Amp\ByteStream\ReadableResourceStream;
 use Amp\ByteStream\WritableResourceStream;
 use Amp\Cancellation;
-use Amp\Future;
 
 final class ResourceSocket implements EncryptableSocket
 {
@@ -70,8 +69,7 @@ final class ResourceSocket implements EncryptableSocket
         $this->tlsState = self::TLS_STATE_DISABLED;
     }
 
-    /** @inheritDoc */
-    public function setupTls(?Cancellation $cancellationToken = null): void
+    public function setupTls(?Cancellation $cancellation = null): void
     {
         $resource = $this->getResource();
 
@@ -96,7 +94,7 @@ final class ResourceSocket implements EncryptableSocket
         }
 
         try {
-            Internal\setupTls($resource, $context, $cancellationToken);
+            Internal\setupTls($resource, $context, $cancellation);
 
             $this->tlsState = self::TLS_STATE_ENABLED;
         } catch (\Throwable $exception) {
@@ -106,8 +104,7 @@ final class ResourceSocket implements EncryptableSocket
         }
     }
 
-    /** @inheritDoc */
-    public function shutdownTls(?Cancellation $cancellationToken = null): void
+    public function shutdownTls(?Cancellation $cancellation = null): void
     {
         if (($resource = $this->reader->getResource()) === null) {
             throw new ClosedException("Can't shutdown TLS, because the socket has already been closed");
@@ -122,52 +119,43 @@ final class ResourceSocket implements EncryptableSocket
         }
     }
 
-    /** @inheritDoc */
-    public function read(?Cancellation $token = null): ?string
+    public function read(?Cancellation $cancellation = null, ?int $length = null): ?string
     {
-        return $this->reader->read($token);
+        return $this->reader->read($cancellation, $length);
     }
 
-    /** @inheritDoc */
-    public function write(string $data): Future
+    public function write(string $bytes): void
     {
-        return $this->writer->write($data);
+        $this->writer->write($bytes);
     }
 
-    /** @inheritDoc */
-    public function end(string $finalData = ''): Future
+    public function end(): void
     {
-        return $this->writer->end($finalData);
+        $this->writer->end();
     }
 
-    /** @inheritDoc */
     public function close(): void
     {
         $this->reader->close();
         $this->writer->close();
     }
 
-    /** @inheritDoc */
     public function reference(): void
     {
         $this->reader->reference();
     }
 
-    /** @inheritDoc */
     public function unreference(): void
     {
         $this->reader->unreference();
     }
 
-    /** @inheritDoc */
     public function getLocalAddress(): SocketAddress
     {
         return $this->localAddress;
     }
 
     /**
-     * @inheritDoc
-     *
      * @return resource|null
      */
     public function getResource()
@@ -175,19 +163,16 @@ final class ResourceSocket implements EncryptableSocket
         return $this->reader->getResource();
     }
 
-    /** @inheritDoc */
     public function getRemoteAddress(): SocketAddress
     {
         return $this->remoteAddress;
     }
 
-    /** @inheritDoc */
     public function getTlsState(): int
     {
         return $this->tlsState;
     }
 
-    /** @inheritDoc */
     public function getTlsInfo(): ?TlsInfo
     {
         if (null !== $this->tlsInfo) {
@@ -203,7 +188,6 @@ final class ResourceSocket implements EncryptableSocket
         return $this->tlsInfo = TlsInfo::fromStreamResource($resource);
     }
 
-    /** @inheritDoc */
     public function isClosed(): bool
     {
         return $this->reader->isClosed() && $this->writer->isClosed();
