@@ -11,11 +11,11 @@ interface Socket extends ReadableStream, WritableStream, ResourceStream
 {
     /**
      * @param Cancellation|null $cancellation
-     * @param int|null $length Read at most $length bytes from the socket.
+     * @param positive-int|null $maxLength Read at most $length bytes from the socket.
      *
      * @return string|null
      */
-    public function read(?Cancellation $cancellation = null, ?int $length = null): ?string;
+    public function read(?Cancellation $cancellation = null, ?int $maxLength = null): ?string;
 
     /**
      * @return SocketAddress
