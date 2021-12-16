@@ -18,12 +18,12 @@ interface SocketPool
      * leaks and socket queue blockage. Instead of checking the socket in again, it can also be cleared to prevent
      * re-use.
      *
-     * @param string                 $uri URI in scheme://host:port format. TCP is assumed if no scheme is present. An
+     * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present. An
      *     optional fragment component can be used to differentiate different socket groups connected to the same URI.
      *     Connections to the same host with a different ConnectContext must use separate socket groups internally to
      *     prevent TLS negotiation with the wrong peer name or other TLS settings.
-     * @param ConnectContext|null    $context Socket connect context to use when connecting.
-     * @param Cancellation|null $token Optional cancellation token to cancel the checkout request.
+     * @param ConnectContext|null $context Socket connect context to use when connecting.
+     * @param Cancellation|null $cancellation Optional cancellation token to cancel the checkout request.
      *
      * @return EncryptableSocket Resolves to an EncryptableSocket instance once a connection is available.
      *
@@ -33,7 +33,7 @@ interface SocketPool
     public function checkout(
         string $uri,
         ConnectContext $context = null,
-        Cancellation $token = null
+        Cancellation $cancellation = null
     ): EncryptableSocket;
 
     /**

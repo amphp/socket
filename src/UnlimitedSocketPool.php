@@ -39,12 +39,12 @@ final class UnlimitedSocketPool implements SocketPool
     public function checkout(
         string $uri,
         ConnectContext $context = null,
-        Cancellation $token = null
+        Cancellation $cancellation = null
     ): EncryptableSocket {
         // A request might already be cancelled before we reach the checkout, so do not even attempt to checkout in that
         // case. The weird logic is required to throw the token's exception instead of creating a new one.
-        if ($token && $token->isRequested()) {
-            $token->throwIfRequested();
+        if ($cancellation && $cancellation->isRequested()) {
+            $cancellation->throwIfRequested();
         }
 
         [$uri, $fragment] = $this->normalizeUri($uri);
@@ -60,7 +60,7 @@ final class UnlimitedSocketPool implements SocketPool
         }
 
         if (empty($this->sockets[$cacheKey])) {
-            return $this->checkoutNewSocket($uri, $cacheKey, $context, $token);
+            return $this->checkoutNewSocket($uri, $cacheKey, $context, $cancellation);
         }
 
         foreach ($this->sockets[$cacheKey] as $socketId => $socket) {
@@ -89,7 +89,7 @@ final class UnlimitedSocketPool implements SocketPool
             return $socket->object;
         }
 
-        return $this->checkoutNewSocket($uri, $cacheKey, $context, $token);
+        return $this->checkoutNewSocket($uri, $cacheKey, $context, $cancellation);
     }
 
     /** @inheritdoc */
@@ -196,12 +196,12 @@ final class UnlimitedSocketPool implements SocketPool
         string $uri,
         string $cacheKey,
         ConnectContext $connectContext = null,
-        Cancellation $token = null
+        Cancellation $cancellation = null
     ): EncryptableSocket {
         $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
         try {
-            $socket = $this->connector->connect($uri, $connectContext, $token);
+            $socket = $this->connector->connect($uri, $connectContext, $cancellation);
         } finally {
             if (--$this->pendingCount[$uri] === 0) {
                 unset($this->pendingCount[$uri]);

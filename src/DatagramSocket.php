@@ -14,7 +14,7 @@ final class DatagramSocket
     /**
      * Create a new Datagram (UDP server) on the specified server address.
      *
-     * @param string           $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
+     * @param string $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
      * @param BindContext|null $context Context options for listening.
      *
      * @return DatagramSocket
@@ -64,7 +64,7 @@ final class DatagramSocket
 
     /**
      * @param resource $socket A bound udp socket resource
-     * @param int      $chunkSize Maximum chunk size for the
+     * @param int $chunkSize Maximum chunk size for the
      *
      * @throws \Error If a stream resource is not given for $socket.
      */
@@ -129,7 +129,7 @@ final class DatagramSocket
      *
      * @throws PendingReceiveError If a receive request is already pending.
      */
-    public function receive(?Cancellation $token = null): ?array
+    public function receive(?Cancellation $cancellation = null): ?array
     {
         if ($this->reader) {
             throw new PendingReceiveError;
@@ -142,18 +142,18 @@ final class DatagramSocket
         EventLoop::enable($this->watcher);
         $this->reader = EventLoop::createSuspension();
 
-        $id = $token?->subscribe($this->cancel);
+        $id = $cancellation?->subscribe($this->cancel);
 
         try {
             return $this->reader->suspend();
         } finally {
-            $token?->unsubscribe($id);
+            $cancellation?->unsubscribe($id);
         }
     }
 
     /**
      * @param SocketAddress $address
-     * @param string        $data
+     * @param string $data
      *
      * @return int Returns with the number of bytes written to the socket.
      *

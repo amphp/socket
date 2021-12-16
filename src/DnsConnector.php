@@ -22,10 +22,10 @@ final class DnsConnector implements Connector
     public function connect(
         string $uri,
         ?ConnectContext $context = null,
-        ?Cancellation $token = null
+        ?Cancellation $cancellation = null
     ): EncryptableSocket {
         $context ??= new ConnectContext;
-        $token ??= new NullCancellation;
+        $cancellation ??= new NullCancellation;
         $attempt = 0;
         $uris = [];
         $failures = [];
@@ -79,12 +79,12 @@ final class DnsConnector implements Connector
                 \stream_set_blocking($socket, false);
 
                 $deferred = new DeferredFuture;
-                $id = $token->subscribe(\Closure::fromCallable([$deferred, 'error']));
+                $id = $cancellation->subscribe(\Closure::fromCallable([$deferred, 'error']));
                 $watcher = EventLoop::onWritable(
                     $socket,
-                    static function (string $watcher) use ($deferred, $id, $token): void {
+                    static function (string $watcher) use ($deferred, $id, $cancellation): void {
                         EventLoop::cancel($watcher);
-                        $token->unsubscribe($id);
+                        $cancellation->unsubscribe($id);
                         $deferred->complete(null);
                     }
                 );
@@ -92,7 +92,7 @@ final class DnsConnector implements Connector
                 try {
                     $deferred->getFuture()->await(new TimeoutCancellation($timeout));
                 } catch (CancelledException) {
-                    $token->throwIfRequested(); // Rethrow if cancelled from user-provided token.
+                    $cancellation->throwIfRequested(); // Rethrow if cancelled from user-provided token.
 
                     throw new ConnectException(\sprintf(
                         'Connecting to %s failed: timeout exceeded (%0.3f s)%s',
@@ -102,7 +102,7 @@ final class DnsConnector implements Connector
                     ), 110); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
                 } finally {
                     EventLoop::cancel($watcher);
-                    $token->unsubscribe($id);
+                    $cancellation->unsubscribe($id);
                 }
 
                 // The following hack looks like the only way to detect connection refused errors with PHP's stream sockets.

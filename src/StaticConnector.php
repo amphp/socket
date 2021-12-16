@@ -18,8 +18,11 @@ final class StaticConnector implements Connector
         $this->connector = $connector;
     }
 
-    public function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $token = null): EncryptableSocket
-    {
-        return $this->connector->connect($this->uri, $context, $token);
+    public function connect(
+        string $uri,
+        ?ConnectContext $context = null,
+        ?Cancellation $cancellation = null
+    ): EncryptableSocket {
+        return $this->connector->connect($this->uri, $context, $cancellation);
     }
 }

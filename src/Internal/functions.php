@@ -66,15 +66,15 @@ function parseUri(string $uri): array
  *
  * @param resource $socket
  * @param array $options
- * @param Cancellation|null $cancellationToken
+ * @param Cancellation|null $cancellation
  *
  * @return void
  *
  * @internal
  */
-function setupTls($socket, array $options, ?Cancellation $cancellationToken): void
+function setupTls($socket, array $options, ?Cancellation $cancellation): void
 {
-    $cancellationToken = $cancellationToken ?? new NullCancellation;
+    $cancellation ??= new NullCancellation;
 
     if (isset(\stream_get_meta_data($socket)['crypto'])) {
         throw new TlsException("Can't setup TLS, because it has already been set up");
@@ -102,19 +102,19 @@ function setupTls($socket, array $options, ?Cancellation $cancellationToken): vo
         return;
     }
 
-    $cancellationToken->throwIfRequested();
+    $cancellation->throwIfRequested();
 
     $deferred = new DeferredFuture;
 
     // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
-    $id = $cancellationToken->subscribe(static function ($e) use ($deferred, &$watcher) {
+    $id = $cancellation->subscribe(static function ($e) use ($deferred, &$watcher) {
         EventLoop::cancel($watcher);
         $deferred->error($e);
     });
 
     $watcher = EventLoop::onReadable($socket, static function (string $watcher, $socket) use (
         $deferred,
-        $cancellationToken,
+        $cancellation,
         $id,
     ): void {
         try {
@@ -137,7 +137,7 @@ function setupTls($socket, array $options, ?Cancellation $cancellationToken): vo
             }
         } catch (TlsException $e) {
             EventLoop::cancel($watcher);
-            $cancellationToken->unsubscribe($id);
+            $cancellation->unsubscribe($id);
             $deferred->error($e);
 
             return;
@@ -146,7 +146,7 @@ function setupTls($socket, array $options, ?Cancellation $cancellationToken): vo
         // If $result is 0, just wait for the next invocation
         if ($result === true) {
             EventLoop::cancel($watcher);
-            $cancellationToken->unsubscribe($id);
+            $cancellation->unsubscribe($id);
             $deferred->complete(null);
         }
     });

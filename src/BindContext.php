@@ -152,7 +152,7 @@ final class BindContext
                 'backlog' => $this->backlog,
                 'ipv6_v6only' => true,
                 // SO_REUSEADDR has SO_REUSEPORT semantics on Windows
-                'so_reuseaddr' => $this->reusePort && \stripos(\PHP_OS, 'WIN') === 0,
+                'so_reuseaddr' => $this->reusePort && \PHP_OS_FAMILY === 'Windows',
                 'so_reuseport' => $this->reusePort,
                 'so_broadcast' => $this->broadcast,
                 'tcp_nodelay' => $this->tcpNoDelay,

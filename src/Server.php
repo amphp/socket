@@ -131,7 +131,7 @@ final class Server
      *
      * @throws PendingAcceptError If another accept request is pending.
      */
-    public function accept(?Cancellation $token = null): ?ResourceSocket
+    public function accept(?Cancellation $cancellation = null): ?ResourceSocket
     {
         if ($this->acceptor) {
             throw new PendingAcceptError;
@@ -149,12 +149,12 @@ final class Server
         EventLoop::enable($this->watcher);
         $this->acceptor = EventLoop::createSuspension();
 
-        $id = $token?->subscribe($this->cancel);
+        $id = $cancellation?->subscribe($this->cancel);
 
         try {
             return $this->acceptor->suspend();
         } finally {
-            $token?->unsubscribe($id);
+            $cancellation?->unsubscribe($id);
         }
     }
 
