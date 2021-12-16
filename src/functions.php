@@ -71,14 +71,18 @@ function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $to
  *
  * @throws SocketException If creating the sockets fails.
  */
-function createPair(): array
+function createPair(int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE): array
 {
     try {
         \set_error_handler(static function (int $errno, string $errstr): void {
             throw new SocketException(\sprintf('Failed to create socket pair.  Errno: %d; %s', $errno, $errstr));
         });
 
-        $sockets = \stream_socket_pair(\stripos(PHP_OS, 'win') === 0 ? STREAM_PF_INET : STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $sockets = \stream_socket_pair(
+            \PHP_OS_FAMILY === 'Windows' ? STREAM_PF_INET : STREAM_PF_UNIX,
+            STREAM_SOCK_STREAM,
+            STREAM_IPPROTO_IP,
+        );
         if ($sockets === false) {
             throw new SocketException('Failed to create socket pair.');
         }
@@ -86,7 +90,10 @@ function createPair(): array
         \restore_error_handler();
     }
 
-    return [ResourceSocket::fromClientSocket($sockets[0]), ResourceSocket::fromClientSocket($sockets[1])];
+    return [
+        ResourceSocket::fromClientSocket($sockets[0], chunkSize: $chunkSize),
+        ResourceSocket::fromClientSocket($sockets[1], chunkSize: $chunkSize),
+    ];
 }
 
 /**
