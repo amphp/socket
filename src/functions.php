@@ -14,12 +14,12 @@ use Revolt\EventLoop;
  * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param BindContext|null $context Context options for listening.
  *
- * @return SocketServer
+ * @return ResourceSocketServer
  *
  * @throws SocketException If binding to the specified URI failed.
  * @throws \Error If an invalid scheme is given.
  */
-function listen(string $uri, ?BindContext $context = null): SocketServer
+function listen(string $uri, ?BindContext $context = null): ResourceSocketServer
 {
     $context = $context ?? new BindContext;
 
@@ -49,12 +49,12 @@ function listen(string $uri, ?BindContext $context = null): SocketServer
  * @param string $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
  * @param BindContext|null $context Context options for listening.
  *
- * @return DatagramSocket
+ * @return ResourceDatagramSocket
  *
  * @throws SocketException If binding to the specified URI failed.
  * @throws \Error If an invalid scheme is given.
  */
-function bind(string $uri, ?BindContext $context = null): DatagramSocket
+function bind(string $uri, ?BindContext $context = null): ResourceDatagramSocket
 {
     $context = $context ?? new BindContext;
 
