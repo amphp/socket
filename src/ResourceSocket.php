@@ -119,9 +119,9 @@ final class ResourceSocket implements EncryptableSocket
         }
     }
 
-    public function read(?Cancellation $cancellation = null, ?int $maxLength = null): ?string
+    public function read(?Cancellation $cancellation = null, ?int $limit = null): ?string
     {
-        return $this->reader->read($cancellation, $maxLength);
+        return $this->reader->read($cancellation, $limit);
     }
 
     public function write(string $bytes): void
