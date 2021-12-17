@@ -12,11 +12,11 @@ use Revolt\EventLoop;
 
 final class DnsConnector implements Connector
 {
-    private Dns\Resolver $resolver;
+    private ?Dns\Resolver $resolver;
 
     public function __construct(?Dns\Resolver $resolver = null)
     {
-        $this->resolver = $resolver ?? Dns\resolver();
+        $this->resolver = $resolver;
     }
 
     public function connect(
@@ -40,8 +40,10 @@ final class DnsConnector implements Connector
             // Host is already an IP address or file path.
             $uris = [$uri];
         } else {
+            $resolver = $this->resolver ?? Dns\resolver();
+
             // Host is not an IP address, so resolve the domain name.
-            $records = $this->resolver->resolve($host, $context->getDnsTypeRestriction());
+            $records = $resolver->resolve($host, $context->getDnsTypeRestriction());
 
             // Usually the faster response should be preferred, but we don't have a reliable way of determining IPv6
             // support, so we always prefer IPv4 here.
