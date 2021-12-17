@@ -24,6 +24,8 @@ final class ResourceDatagramSocket implements DatagramSocket
 
     private int $chunkSize;
 
+    private int $defaultChunkSize;
+
     /**
      * @param resource $socket A bound udp socket resource
      * @param int $chunkSize Maximum chunk size for the
@@ -38,7 +40,7 @@ final class ResourceDatagramSocket implements DatagramSocket
 
         $this->socket = $socket;
         $this->address = SocketAddress::fromLocalResource($socket);
-        $this->chunkSize = &$chunkSize;
+        $this->defaultChunkSize = $this->chunkSize = &$chunkSize;
 
         \stream_set_blocking($this->socket, false);
 
@@ -87,20 +89,25 @@ final class ResourceDatagramSocket implements DatagramSocket
     }
 
     /**
-     * @return array{SocketAddress, string}|null Resolves with null if the socket is closed.
-     *
-     * @throws PendingReceiveError If a receive request is already pending.
+     * @param int|null $limit If null, the default chunk size is used.
      */
-    public function receive(?Cancellation $cancellation = null): ?array
+    public function receive(?Cancellation $cancellation = null, ?int $limit = null): ?array
     {
         if ($this->reader) {
             throw new PendingReceiveError;
+        }
+
+        $limit ??= $this->defaultChunkSize;
+
+        if ($limit <= 0) {
+            throw new \ValueError('The length limit must be a positive integer, got ' . $limit);
         }
 
         if (!$this->socket) {
             return null; // Resolve with null when endpoint is closed.
         }
 
+        $this->chunkSize = $limit;
         EventLoop::enable($this->watcher);
         $this->reader = EventLoop::createSuspension();
 

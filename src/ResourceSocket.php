@@ -119,6 +119,9 @@ final class ResourceSocket implements EncryptableSocket
         }
     }
 
+    /**
+     * @param int|null $limit If null, the default chunk size is used.
+     */
     public function read(?Cancellation $cancellation = null, ?int $limit = null): ?string
     {
         return $this->reader->read($cancellation, $limit);
