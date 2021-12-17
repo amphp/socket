@@ -222,11 +222,15 @@ final class ResourceDatagramSocket implements DatagramSocket
     }
 
     /**
-     * @param int $chunkSize The new maximum packet size to receive.
+     * @param positive-int $chunkSize The new default maximum packet size to receive.
      */
     public function setChunkSize(int $chunkSize): void
     {
-        $this->chunkSize = $chunkSize;
+        if ($chunkSize <= 0) {
+            throw new \ValueError('The chunk length must be a positive integer');
+        }
+
+        $this->defaultChunkSize = $chunkSize;
     }
 
     private function free(): void
