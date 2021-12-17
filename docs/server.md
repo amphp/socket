@@ -6,7 +6,7 @@ permalink: /server
 
 ## Listening
 
-To listen on a port or unix domain socket, you can use `Amp\Socket\Server::listen()`. It's a wrapper around `stream_socket_server` that gives useful error message on failures via exceptions.
+To listen on a port or unix domain socket, you can use `Amp\Socket\Socket\listen()`. It's a wrapper around `stream_socket_server` that gives useful error message on failures via exceptions.
 
 ```php
 /**
@@ -33,7 +33,7 @@ function listen(string $uri, BindContext $socketContext = null): Server {
 Once you're listening, you can accept clients using `Server::accept()`. It returns a `Promise` that returns once a new client has been accepted. It's usually called within a `while` loop:
 
 ```php
-$server = Server::listen("tcp://127.0.0.1:1337");
+$server = Socket\listen("tcp://127.0.0.1:1337");
 
 while ($client = yield $server->accept()) {
     // do something with $client, which is a ResourceSocket instance
@@ -49,8 +49,8 @@ It's best to handle clients in their own coroutine, while letting the server acc
 
 ```php
 use Amp\Loop;
+use Amp\Socket;
 use Amp\Socket\EncryptableSocket;
-use Amp\Socket\Server;
 
 Loop::run(function () {
     $clientHandler = function (EncryptableSocket $socket) {
@@ -66,7 +66,7 @@ Loop::run(function () {
         yield $socket->end("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}");
     };
 
-    $server = Server::listen("127.0.0.1:0");
+    $server = Socket\listen("127.0.0.1:0");
 
     echo "Listening for new connections on " . $server->getAddress() . " ..." . PHP_EOL;
     echo "Open your browser and visit http://" . $server->getAddress() . "/" . PHP_EOL;
@@ -99,6 +99,6 @@ Once you're done with the server socket, you should close the socket. That means
 
 ## TLS
 
-As already mentioned in the documentation for `Amp\Socket\Server::listen()`, you need to enable TLS manually after accepting connections. For a TLS server socket, you listen on the `tcp://` protocol on a specified address. After accepting clients you call `$socket->setupTls()` where `$socket` is the socket returned from `Server::accept()`.
+As already mentioned in the documentation for `Amp\Socket\Socket\listen()`, you need to enable TLS manually after accepting connections. For a TLS server socket, you listen on the `tcp://` protocol on a specified address. After accepting clients you call `$socket->setupTls()` where `$socket` is the socket returned from `Server::accept()`.
 
 Any data transmitted before `Socket::setupTls()` resolves successfully will be transmitted in clear text. Don't attempt to read from the socket or write to it manually. Doing so will read the raw TLS handshake data that's supposed to be read by OpenSSL.

@@ -70,8 +70,8 @@ require __DIR__ . '/../vendor/autoload.php';
 // You might notice that your browser opens several connections instead of just one, even when only making one request.
 
 use Amp\Loop;
+use Amp\Socket;
 use Amp\Socket\ResourceSocket;
-use Amp\Socket\Server;
 use function Amp\asyncCoroutine;
 
 Loop::run(static function () {
@@ -88,7 +88,7 @@ Loop::run(static function () {
         yield $socket->end("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}");
     });
 
-    $server = Server::listen('127.0.0.1:0');
+    $server = Socket\listen('127.0.0.1:0');
 
     echo 'Listening for new connections on ' . $server->getAddress() . ' ...' . PHP_EOL;
     echo 'Open your browser and visit http://' . $server->getAddress() . '/' . PHP_EOL;

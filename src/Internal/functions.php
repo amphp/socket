@@ -147,7 +147,7 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
         if ($result === true) {
             EventLoop::cancel($watcher);
             $cancellation->unsubscribe($id);
-            $deferred->complete(null);
+            $deferred->complete();
         }
     });
 

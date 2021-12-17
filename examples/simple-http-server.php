@@ -8,17 +8,17 @@ require __DIR__ . '/../vendor/autoload.php';
 
 // You might notice that your browser opens several connections instead of just one, even when only making one request.
 
-use Amp\Socket\Server;
-use function Amp\defer;
+use Amp\Socket;
+use function Amp\async;
 
-$server = Server::listen('127.0.0.1:0');
+$server = Socket\listen('127.0.0.1:0');
 
 echo 'Listening for new connections on ' . $server->getAddress() . ' ...' . PHP_EOL;
 echo 'Open your browser and visit http://' . $server->getAddress() . '/' . PHP_EOL;
 
 while ($socket = $server->accept()) {
     // Handle client within a separate green-thread using queue() to not block accepting additional clients.
-    queue(static function () use ($socket) {
+    async(static function () use ($socket) {
         try {
             $address = $socket->getRemoteAddress();
             [$ip, $port] = \explode(':', (string) $address);

@@ -4,11 +4,10 @@ namespace Amp\Socket\Test;
 
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
-use Amp\Socket\Server;
 use Revolt\EventLoop;
 use function Amp\ByteStream\buffer;
 
-class SocketTest extends AsyncTestCase
+class ResourceSocketTest extends AsyncTestCase
 {
     public function testReadAndClose(): void
     {
@@ -43,7 +42,7 @@ class SocketTest extends AsyncTestCase
 
     public function testEnableCryptoWithoutTlsContext(): void
     {
-        $server = Server::listen('127.0.0.1:0');
+        $server = Socket\listen('127.0.0.1:0');
 
         EventLoop::queue(function () use ($server): void {
             $socket = Socket\connect($server->getAddress());

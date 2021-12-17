@@ -5,21 +5,20 @@ namespace Amp\Socket\Test;
 use Amp\CancelledException;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
-use Amp\Socket\Server;
 use Amp\TimeoutCancellation;
 use Revolt\EventLoop;
 use function Amp\delay;
 use function Amp\ByteStream\buffer;
 use function Amp\async;
 
-class ServerTest extends AsyncTestCase
+class ResourceSocketServerTest extends AsyncTestCase
 {
     public function testListenInvalidScheme(): void
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Only tcp and unix schemes allowed for server creation');
 
-        Server::listen("invalid://127.0.0.1:0");
+        Socket\listen("invalid://127.0.0.1:0");
     }
 
     public function testListenStreamSocketServerError(): void
@@ -27,13 +26,13 @@ class ServerTest extends AsyncTestCase
         $this->expectException(Socket\SocketException::class);
         $this->expectExceptionMessageMatches('/Could not create server .*: \[Error: #.*\] .*$/');
 
-        Server::listen('error');
+        Socket\listen('error');
     }
 
     public function testListenIPv6(): void
     {
         try {
-            $socket = Server::listen('[::1]:0');
+            $socket = Socket\listen('[::1]:0');
             self::assertMatchesRegularExpression('(\[::1\]:\d+)', (string) $socket->getAddress());
         } catch (Socket\SocketException $e) {
             if ($e->getMessage() === 'Could not create server tcp://[::1]:0: [Error: #0] Cannot assign requested address') {
@@ -46,7 +45,7 @@ class ServerTest extends AsyncTestCase
 
     public function testAccept(): void
     {
-        $server = Server::listen('127.0.0.1:0');
+        $server = Socket\listen('127.0.0.1:0');
 
         EventLoop::queue(function () use ($server): void {
             while ($socket = $server->accept()) {
@@ -66,7 +65,7 @@ class ServerTest extends AsyncTestCase
     {
         $tlsContext = (new Socket\ServerTlsContext)
             ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
-        $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+        $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
         EventLoop::queue(function () use ($server): void {
             while ($socket = $server->accept()) {
@@ -100,7 +99,7 @@ class ServerTest extends AsyncTestCase
     {
         $tlsContext = (new Socket\ServerTlsContext)
             ->withCertificates(['amphp.org' => new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem')]);
-        $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+        $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
         EventLoop::queue(function () use ($server): void {
             /** @var Socket\EncryptableSocket $socket */
@@ -137,7 +136,7 @@ class ServerTest extends AsyncTestCase
             'www.amphp.org' => new Socket\Certificate(__DIR__ . '/tls/www.amphp.org.pem'),
         ]);
 
-        $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+        $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
         EventLoop::queue(function () use ($server): void {
             /** @var Socket\ResourceSocket $socket */
@@ -186,7 +185,7 @@ class ServerTest extends AsyncTestCase
             ),
         ]);
 
-        $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+        $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
         EventLoop::queue(function () use ($server): void {
             /** @var Socket\ResourceSocket $socket */
@@ -227,7 +226,7 @@ class ServerTest extends AsyncTestCase
 
     public function testCancelThenAccept(): void
     {
-        $server = Server::listen('127.0.0.1:0');
+        $server = Socket\listen('127.0.0.1:0');
 
         try {
             $server->accept(new TimeoutCancellation(0.01));

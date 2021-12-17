@@ -5,7 +5,6 @@ namespace Amp\Socket\Test;
 use Amp\ByteStream;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
-use Amp\Socket\Server;
 use Revolt\EventLoop;
 use function Amp\delay;
 
@@ -21,11 +20,11 @@ class TlsFragmentationTest extends AsyncTestCase
             self::markTestSkipped('Your PHP version is affected by PHP bug 77390');
         }
 
-        $proxyServer = Server::listen('127.0.0.1:0');
+        $proxyServer = Socket\listen('127.0.0.1:0');
 
         $tlsContext = (new Socket\ServerTlsContext)
             ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
-        $server = Server::listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+        $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
         // Proxy to apply chunking of single bytes
         EventLoop::queue(function () use ($proxyServer, $server): void {

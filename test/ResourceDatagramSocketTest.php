@@ -5,20 +5,19 @@ namespace Amp\Socket\Test;
 use Amp\CancelledException;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
-use Amp\Socket\DatagramSocket;
 use Amp\TimeoutCancellation;
 use Revolt\EventLoop;
 use function Amp\delay;
 use function Amp\async;
 
-class DatagramSocketTest extends AsyncTestCase
+class ResourceDatagramSocketTest extends AsyncTestCase
 {
     public function testBindEndpointInvalidScheme(): void
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Only udp scheme allowed for datagram creation');
 
-        DatagramSocket::bind("invalid://127.0.0.1:0");
+        Socket\bind("invalid://127.0.0.1:0");
     }
 
     public function testBindEndpointError(): void
@@ -26,12 +25,12 @@ class DatagramSocketTest extends AsyncTestCase
         $this->expectException(Socket\SocketException::class);
         $this->expectExceptionMessageMatches('/Could not create datagram .*: \[Error: #.*\] .*$/');
 
-        DatagramSocket::bind('error');
+        Socket\bind('error');
     }
 
     public function testReceive()
     {
-        $endpoint = DatagramSocket::bind('127.0.0.1:0');
+        $endpoint = Socket\bind('127.0.0.1:0');
 
         self::assertIsResource($endpoint->getResource());
 
@@ -57,7 +56,7 @@ class DatagramSocketTest extends AsyncTestCase
 
     public function testSend()
     {
-        $endpoint = DatagramSocket::bind('127.0.0.1:0');
+        $endpoint = Socket\bind('127.0.0.1:0');
         self::assertIsResource($endpoint->getResource());
 
         $socket = Socket\connect('udp://' . $endpoint->getAddress());
@@ -89,7 +88,7 @@ class DatagramSocketTest extends AsyncTestCase
         $this->expectException(Socket\SocketException::class);
         $this->expectExceptionMessage('Could not send packet on endpoint: stream_socket_sendto(): Message too long');
 
-        $endpoint = DatagramSocket::bind('127.0.0.1:0');
+        $endpoint = Socket\bind('127.0.0.1:0');
 
         $socket = Socket\connect('udp://' . $endpoint->getAddress());
         \assert($socket instanceof Socket\EncryptableSocket);
@@ -106,7 +105,7 @@ class DatagramSocketTest extends AsyncTestCase
 
     public function testReceiveThenClose()
     {
-        $endpoint = DatagramSocket::bind('127.0.0.1:0');
+        $endpoint = Socket\bind('127.0.0.1:0');
 
         $future = async(fn () => $endpoint->receive());
 
@@ -117,7 +116,7 @@ class DatagramSocketTest extends AsyncTestCase
 
     public function testReceiveAfterClose()
     {
-        $endpoint = DatagramSocket::bind('127.0.0.1:0');
+        $endpoint = Socket\bind('127.0.0.1:0');
 
         $endpoint->close();
 
@@ -128,7 +127,7 @@ class DatagramSocketTest extends AsyncTestCase
     {
         $this->expectException(Socket\PendingReceiveError::class);
 
-        $endpoint = DatagramSocket::bind('127.0.0.1:0');
+        $endpoint = Socket\bind('127.0.0.1:0');
         try {
             async(fn () => $endpoint->receive());
             async(fn () => $endpoint->receive())->await();
@@ -141,7 +140,7 @@ class DatagramSocketTest extends AsyncTestCase
     {
         $context = (new Socket\BindContext())->withChunkSize(1);
 
-        $endpoint = DatagramSocket::bind('127.0.0.1:0', $context);
+        $endpoint = Socket\bind('127.0.0.1:0', $context);
 
         try {
             $socket = Socket\connect('udp://' . $endpoint->getAddress());
@@ -162,7 +161,7 @@ class DatagramSocketTest extends AsyncTestCase
 
     public function testCancelThenAccept(): void
     {
-        $datagram = DatagramSocket::bind('127.0.0.1:0');
+        $datagram = Socket\bind('127.0.0.1:0');
 
         try {
             $datagram->receive(new TimeoutCancellation(0.01));
