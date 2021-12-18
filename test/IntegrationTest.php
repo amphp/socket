@@ -22,7 +22,7 @@ class IntegrationTest extends AsyncTestCase
     public function provideConnectArgs(): array
     {
         return [
-            ['amphp.org:80'],
+            ['stackoverflow.com:80'],
             ['github.com:80'],
         ];
     }
