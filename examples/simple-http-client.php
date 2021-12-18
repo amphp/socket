@@ -11,6 +11,7 @@ use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
 use League\Uri\Http;
 use function Amp\Socket\connect;
+use function Amp\Socket\connectTls;
 
 $stdout = ByteStream\getStdout();
 
@@ -25,13 +26,11 @@ $port = $uri->getPort() ?? ($uri->getScheme() === 'https' ? 443 : 80);
 $path = $uri->getPath() ?: '/';
 
 $connectContext = (new ConnectContext)
-    ->withTlsContext(new ClientTlsContext($host));
+        ->withTlsContext(new ClientTlsContext($host));
 
-$socket = connect($host . ':' . $port, $connectContext);
-
-if ($uri->getScheme() === 'https') {
-    $socket->setupTls();
-}
+$socket = $uri->getScheme() === 'http'
+        ? connect($host . ':' . $port, $connectContext)
+        : connectTls($host . ':' . $port, $connectContext);
 
 $socket->write("GET {$path} HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n");
 

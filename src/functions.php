@@ -113,7 +113,7 @@ function socketConnector(?SocketConnector $connector = null): SocketConnector
 }
 
 /**
- * Asynchronously establish a socket connection to the specified URI.
+ * Establish a socket connection to the specified URI.
  *
  * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ConnectContext|null $context Socket connect context to use when connecting.
@@ -127,6 +127,27 @@ function socketConnector(?SocketConnector $connector = null): SocketConnector
 function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): EncryptableSocket
 {
     return socketConnector()->connect($uri, $context, $cancellation);
+}
+
+/**
+ * Establish a socket connection to the specified URI and enable TLS.
+ *
+ * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param ConnectContext|null $context Socket connect context to use when connecting.
+ * @param Cancellation|null $cancellation
+ *
+ * @return EncryptableSocket
+ *
+ * @throws ConnectException
+ * @throws TlsException
+ * @throws CancelledException
+ */
+function connectTls(string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): EncryptableSocket
+{
+    $socket = socketConnector()->connect($uri, $context, $cancellation);
+    $socket->setupTls($cancellation);
+
+    return $socket;
 }
 
 /**
