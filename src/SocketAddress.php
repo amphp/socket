@@ -7,7 +7,7 @@ final class SocketAddress
     /** @var string */
     private string $host;
 
-    /** @var int|null */
+    /** @var positive-int|null */
     private ?int $port;
 
     /**
@@ -58,6 +58,8 @@ final class SocketAddress
         if ($portStartPos = \strrpos($name, ':')) {
             $host = \substr($name, 0, $portStartPos);
             $port = (int) \substr($name, $portStartPos + 1);
+
+            /** @psalm-suppress ArgumentTypeCoercion $port is checked in constructor for < 1 */
             return new self($host, $port);
         }
 
@@ -66,7 +68,7 @@ final class SocketAddress
 
     /**
      * @param string   $host
-     * @param int|null $port
+     * @param positive-int|null $port
      */
     public function __construct(string $host, ?int $port = null)
     {
