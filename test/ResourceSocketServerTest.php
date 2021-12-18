@@ -7,9 +7,9 @@ use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\TimeoutCancellation;
 use Revolt\EventLoop;
-use function Amp\delay;
-use function Amp\ByteStream\buffer;
 use function Amp\async;
+use function Amp\ByteStream\buffer;
+use function Amp\delay;
 
 class ResourceSocketServerTest extends AsyncTestCase
 {

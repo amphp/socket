@@ -137,6 +137,7 @@ final class DnsConnector implements Connector
                 continue; // Could not connect to host, try next host in the list.
             }
 
+            /** @psalm-suppress PossiblyUndefinedVariable */
             return ResourceSocket::fromClientSocket($socket, $context->getTlsContext());
         }
 

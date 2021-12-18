@@ -121,6 +121,8 @@ function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $ca
 /**
  * Returns a pair of connected stream socket resources.
  *
+ * @param positive-int $chunkSize
+ *
  * @return array{ResourceSocket, ResourceSocket} Pair of socket resources.
  *
  * @throws SocketException If creating the sockets fails.

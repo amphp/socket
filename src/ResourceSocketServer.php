@@ -16,6 +16,7 @@ final class ResourceSocketServer implements SocketServer
 
     private SocketAddress $address;
 
+    /** @var positive-int */
     private int $chunkSize;
 
     private ?Suspension $acceptor = null;
@@ -23,8 +24,8 @@ final class ResourceSocketServer implements SocketServer
     private \Closure $cancel;
 
     /**
-     * @param resource $socket    A bound socket server resource
-     * @param int      $chunkSize Chunk size for the input and output stream.
+     * @param resource $socket A bound socket server resource
+     * @param positive-int $chunkSize Chunk size for the input and output stream.
      *
      * @throws \Error If a stream resource is not given for $socket.
      */
@@ -117,6 +118,7 @@ final class ResourceSocketServer implements SocketServer
         try {
             return $this->acceptor->suspend();
         } finally {
+            /** @psalm-suppress PossiblyNullArgument $id is always defined if $cancellation is non-null */
             $cancellation?->unsubscribe($id);
         }
     }

@@ -91,6 +91,8 @@ final class ResourceDatagramSocket implements DatagramSocket
 
     /**
      * @param int|null $limit If null, the default chunk size is used.
+     *
+     * @return null|array{0: SocketAddress, 1: string}
      */
     public function receive(?Cancellation $cancellation = null, ?int $limit = null): ?array
     {
@@ -117,6 +119,7 @@ final class ResourceDatagramSocket implements DatagramSocket
         try {
             return $this->reader->suspend();
         } finally {
+            /** @psalm-suppress PossiblyNullArgument $id is always defined if $cancellation is present */
             $cancellation?->unsubscribe($id);
         }
     }

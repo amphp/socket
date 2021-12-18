@@ -8,7 +8,10 @@ final class BindContext
 {
     private ?string $bindTo = null;
 
+    /** @var positive-int */
     private int $backlog = 128;
+
+    /** @var positive-int */
     private int $chunkSize = 8192;
 
     private bool $reusePort = false;
@@ -42,6 +45,9 @@ final class BindContext
         return $this->backlog;
     }
 
+    /**
+     * @param positive-int $backlog
+     */
     public function withBacklog(int $backlog): self
     {
         $clone = clone $this;
@@ -131,11 +137,17 @@ final class BindContext
         return $clone;
     }
 
+    /**
+     * @return positive-int
+     */
     public function getChunkSize(): int
     {
         return $this->chunkSize;
     }
 
+    /**
+     * @param positive-int $chunkSize
+     */
     public function withChunkSize(int $chunkSize): self
     {
         $clone = clone $this;

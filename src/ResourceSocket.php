@@ -82,6 +82,7 @@ final class ResourceSocket implements EncryptableSocket
         if ($this->tlsContext) {
             $context = $this->tlsContext->toStreamContextArray();
         } else {
+            /** @psalm-suppress PossiblyInvalidArgument */
             $context = @\stream_context_get_options($resource);
 
             if (empty($context['ssl'])) {
@@ -94,6 +95,7 @@ final class ResourceSocket implements EncryptableSocket
         }
 
         try {
+            /** @psalm-suppress PossiblyInvalidArgument */
             Internal\setupTls($resource, $context, $cancellation);
 
             $this->tlsState = self::TLS_STATE_ENABLED;
@@ -113,6 +115,7 @@ final class ResourceSocket implements EncryptableSocket
         $this->tlsState = self::TLS_STATE_SHUTDOWN_PENDING;
 
         try {
+            /** @psalm-suppress PossiblyInvalidArgument */
             Internal\shutdownTls($resource);
         } finally {
             $this->tlsState = self::TLS_STATE_DISABLED;
@@ -120,7 +123,7 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /**
-     * @param int|null $limit If null, the default chunk size is used.
+     * @param positive-int|null $limit If null, the default chunk size is used.
      */
     public function read(?Cancellation $cancellation = null, ?int $limit = null): ?string
     {
@@ -159,7 +162,7 @@ final class ResourceSocket implements EncryptableSocket
     }
 
     /**
-     * @return resource|null
+     * @return resource|object|null
      */
     public function getResource()
     {

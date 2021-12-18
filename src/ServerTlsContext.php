@@ -57,7 +57,7 @@ final class ServerTlsContext
         if (!\in_array($version, self::TLS_VERSIONS, true)) {
             throw new \Error(\sprintf(
                 'Invalid minimum version, only %s allowed',
-                implode(', ', \array_keys(self::TLS_VERSIONS))
+                \implode(', ', \array_keys(self::TLS_VERSIONS))
             ));
         }
 
