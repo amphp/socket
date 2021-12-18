@@ -1,7 +1,7 @@
 {
     "name": "amphp/socket",
     "homepage": "https://github.com/amphp/socket",
-    "description": "Async socket connection / server tools for Amp.",
+    "description": "Non-blocking socket connection / server implementations based on Amp and Revolt.",
     "support": {
         "issues": "https://github.com/amphp/socket/issues"
     },
