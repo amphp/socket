@@ -16,7 +16,7 @@ final class ClientTlsContext
         'TLSv1.3' => self::TLSv1_3,
     ];
 
-    private int $minVersion = self::TLSv1_0;
+    private int $minVersion = self::TLSv1_2;
 
     private string $peerName;
 
@@ -49,7 +49,7 @@ final class ClientTlsContext
     /**
      * Minimum TLS version to negotiate.
      *
-     * Defaults to TLS 1.0.
+     * Defaults to TLS 1.2.
      *
      * @param int $version One of the `ClientTlsContext::TLSv*` constants.
      *
