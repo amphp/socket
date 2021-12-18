@@ -90,7 +90,10 @@ final class ResourceDatagramSocket implements DatagramSocket
     }
 
     /**
-     * @param int|null $limit If null, the default chunk size is used.
+     * @param Cancellation|null $cancellation
+     * @param positive-int|null $limit If null, the default chunk size is used.
+     *
+     * @return null|array{SocketAddress, string}
      */
     public function receive(?Cancellation $cancellation = null, ?int $limit = null): ?array
     {

@@ -72,8 +72,10 @@ class IntegrationTest extends AsyncTestCase
 
     public function testConnectTls10(): void
     {
-        $socket = Socket\connect('tls-v1-0.badssl.com:1010',
-            (new ConnectContext)->withTlsContext(new ClientTlsContext('tls-v1-0.badssl.com')));
+        $socket = Socket\connect(
+            'tls-v1-0.badssl.com:1010',
+            (new ConnectContext)->withTlsContext(new ClientTlsContext('tls-v1-0.badssl.com'))
+        );
 
         $this->expectException(TlsException::class);
         $this->expectExceptionMessage('unsupported protocol');
@@ -97,8 +99,10 @@ class IntegrationTest extends AsyncTestCase
 
     public function testConnectTls11(): void
     {
-        $socket = Socket\connect('tls-v1-1.badssl.com:1011',
-            (new ConnectContext)->withTlsContext(new ClientTlsContext('tls-v1-1.badssl.com')));
+        $socket = Socket\connect(
+            'tls-v1-1.badssl.com:1011',
+            (new ConnectContext)->withTlsContext(new ClientTlsContext('tls-v1-1.badssl.com'))
+        );
 
         $this->expectException(TlsException::class);
         $this->expectExceptionMessage('unsupported protocol');

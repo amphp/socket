@@ -3,7 +3,6 @@
 namespace Amp\Socket\Internal;
 
 use Amp\Cancellation;
-use Amp\DeferredFuture;
 use Amp\NullCancellation;
 use Amp\Socket\TlsException;
 use League\Uri\UriString;
