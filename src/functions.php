@@ -82,13 +82,13 @@ function bindDatagram(string $uri, ?BindContext $context = null): ResourceDatagr
 }
 
 /**
- * Set or access the global socket Connector instance.
+ * Set or access the global SocketConnector instance.
  *
- * @param Connector|null $connector
+ * @param SocketConnector|null $connector
  *
- * @return Connector
+ * @return SocketConnector
  */
-function connector(?Connector $connector = null): Connector
+function connector(?SocketConnector $connector = null): SocketConnector
 {
     static $map;
     $map ??= new \WeakMap();
@@ -98,7 +98,7 @@ function connector(?Connector $connector = null): Connector
         return $map[$driver] = $connector;
     }
 
-    return $map[$driver] ??= new DnsConnector();
+    return $map[$driver] ??= new DnsSocketConnector();
 }
 
 /**

@@ -10,7 +10,7 @@ use Amp\NullCancellation;
 use Amp\TimeoutCancellation;
 use Revolt\EventLoop;
 
-final class DnsConnector implements Connector
+final class DnsSocketConnector implements SocketConnector
 {
     private ?Dns\Resolver $resolver;
 

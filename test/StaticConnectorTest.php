@@ -8,8 +8,8 @@ class StaticConnectorTest extends AsyncTestCase
 {
     public function testConnect(): void
     {
-        $underlyingConnector = $this->createMock(Connector::class);
-        $staticSocketPool = new StaticConnector('override-uri', $underlyingConnector);
+        $underlyingConnector = $this->createMock(SocketConnector::class);
+        $staticSocketPool = new StaticSocketConnector('override-uri', $underlyingConnector);
 
         $expected = $this->createMock(EncryptableSocket::class);
 

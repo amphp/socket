@@ -7,12 +7,12 @@ use Amp\Cancellation;
 /**
  * Connector that connects to a statically defined URI instead of the URI passed to the {@code connect()} call.
  */
-final class StaticConnector implements Connector
+final class StaticSocketConnector implements SocketConnector
 {
     private string $uri;
-    private Connector $connector;
+    private SocketConnector $connector;
 
-    public function __construct(string $uri, Connector $connector)
+    public function __construct(string $uri, SocketConnector $connector)
     {
         $this->uri = $uri;
         $this->connector = $connector;

@@ -5,7 +5,7 @@ namespace Amp\Socket;
 use Amp\Cancellation;
 use Amp\CancelledException;
 
-interface Connector
+interface SocketConnector
 {
     /**
      * Establish a socket connection to the specified URI.
