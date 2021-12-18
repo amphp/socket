@@ -9,12 +9,12 @@ use Revolt\EventLoop\Suspension;
 
 final class ResourceDatagramSocket implements DatagramSocket
 {
-    public const DEFAULT_CHUNK_SIZE = 8192;
+    public const DEFAULT_LIMIT = 8192;
 
     /** @var resource|null UDP socket resource. */
     private $socket;
 
-    private string $watcher;
+    private string $callbackId;
 
     private SocketAddress $address;
 
@@ -22,17 +22,17 @@ final class ResourceDatagramSocket implements DatagramSocket
 
     private \Closure $cancel;
 
-    private int $chunkSize;
+    private int $limit;
 
-    private int $defaultChunkSize;
+    private int $defaultLimit;
 
     /**
-     * @param resource $socket A bound udp socket resource
-     * @param int $chunkSize Maximum chunk size for the
+     * @param resource $socket A bound udp socket resource.
+     * @param int $limit Maximum size for received messages.
      *
-     * @throws \Error If a stream resource is not given for $socket.
+     * @throws \Error If a stream resource is not given for {@code $socket}.
      */
-    public function __construct($socket, int $chunkSize = self::DEFAULT_CHUNK_SIZE)
+    public function __construct($socket, int $limit = self::DEFAULT_LIMIT)
     {
         if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
@@ -40,41 +40,43 @@ final class ResourceDatagramSocket implements DatagramSocket
 
         $this->socket = $socket;
         $this->address = SocketAddress::fromLocalResource($socket);
-        $this->defaultChunkSize = $this->chunkSize = &$chunkSize;
+        $this->defaultLimit = $this->limit = &$limit;
 
         \stream_set_blocking($this->socket, false);
         \stream_set_read_buffer($this->socket, 0);
 
         $reader = &$this->reader;
-        $this->watcher = EventLoop::onReadable($this->socket, static function (string $watcher, $socket) use (
+        $this->callbackId = EventLoop::onReadable($this->socket, static function (string $callbackId, $socket) use (
             &$reader,
-            &$chunkSize
+            &$limit
         ): void {
             \assert($reader !== null);
 
-            $data = @\stream_socket_recvfrom($socket, $chunkSize, 0, $address);
+            $data = @\stream_socket_recvfrom($socket, $limit, 0, $address);
 
             /** @psalm-suppress TypeDoesNotContainType */
             if ($data === false) {
-                EventLoop::cancel($watcher);
+                EventLoop::cancel($callbackId);
+
                 $reader->resume();
-                $reader = null;
-                return;
+            } else {
+                EventLoop::disable($callbackId);
+
+                $reader->resume([SocketAddress::fromSocketName($address), $data]);
             }
 
-            $reader->resume([SocketAddress::fromSocketName($address), $data]);
             $reader = null;
-            EventLoop::disable($watcher);
         });
 
-        $watcher = &$this->watcher;
-        $this->cancel = static function (CancelledException $exception) use (&$reader, $watcher): void {
+        $callbackId = &$this->callbackId;
+        $this->cancel = static function (CancelledException $exception) use (&$reader, $callbackId): void {
+            EventLoop::disable($callbackId);
+
             $reader?->throw($exception);
             $reader = null;
-            EventLoop::disable($watcher);
         };
 
-        EventLoop::disable($this->watcher);
+        EventLoop::disable($this->callbackId);
     }
 
     /**
@@ -101,7 +103,7 @@ final class ResourceDatagramSocket implements DatagramSocket
             throw new PendingReceiveError;
         }
 
-        $limit ??= $this->defaultChunkSize;
+        $limit ??= $this->defaultLimit;
 
         if ($limit <= 0) {
             throw new \ValueError('The length limit must be a positive integer, got ' . $limit);
@@ -111,9 +113,10 @@ final class ResourceDatagramSocket implements DatagramSocket
             return null; // Resolve with null when endpoint is closed.
         }
 
-        $this->chunkSize = $limit;
-        EventLoop::enable($this->watcher);
+        $this->limit = $limit;
         $this->reader = EventLoop::createSuspension();
+
+        EventLoop::enable($this->callbackId);
 
         $id = $cancellation?->subscribe($this->cancel);
 
@@ -129,11 +132,11 @@ final class ResourceDatagramSocket implements DatagramSocket
     {
         static $errorHandler;
         $errorHandler ??= static function (int $errno, string $errstr): void {
-            throw new SocketException(\sprintf('Could not send packet on endpoint: %s', $errstr));
+            throw new SocketException(\sprintf('Could not send datagram packet: %s', $errstr));
         };
 
         if (!$this->socket) {
-            throw new SocketException('The endpoint is not writable');
+            throw new SocketException('The datagram socket is not writable');
         }
 
         try {
@@ -142,7 +145,7 @@ final class ResourceDatagramSocket implements DatagramSocket
             $result = \stream_socket_sendto($this->socket, $data, 0, $address->toString());
             /** @psalm-suppress TypeDoesNotContainType */
             if ($result < 0 || $result === false) {
-                throw new SocketException('Could not send packet on endpoint: Unknown error');
+                throw new SocketException('Could not send datagram packet: Unknown error');
             }
         } finally {
             \restore_error_handler();
@@ -160,7 +163,7 @@ final class ResourceDatagramSocket implements DatagramSocket
     }
 
     /**
-     * References the receive watcher.
+     * References the event loop callback used for being notified about available packets.
      *
      * @see EventLoop::reference()
      */
@@ -170,11 +173,11 @@ final class ResourceDatagramSocket implements DatagramSocket
             return;
         }
 
-        EventLoop::reference($this->watcher);
+        EventLoop::reference($this->callbackId);
     }
 
     /**
-     * Unreferences the receive watcher.
+     * Unreferences the event loop callback used for being notified about available packets.
      *
      * @see EventLoop::unreference()
      */
@@ -184,11 +187,11 @@ final class ResourceDatagramSocket implements DatagramSocket
             return;
         }
 
-        EventLoop::unreference($this->watcher);
+        EventLoop::unreference($this->callbackId);
     }
 
     /**
-     * Closes the datagram socket and stops receiving data. Any pending read is resolved with null.
+     * Closes the datagram socket and stops receiving data. A pending {@code receive()} will return {@code null}.
      */
     public function close(): void
     {
@@ -217,20 +220,20 @@ final class ResourceDatagramSocket implements DatagramSocket
     }
 
     /**
-     * @param positive-int $chunkSize The new default maximum packet size to receive.
+     * @param positive-int $limit The new default maximum packet size to receive.
      */
-    public function setChunkSize(int $chunkSize): void
+    public function setLimit(int $limit): void
     {
-        if ($chunkSize <= 0) {
-            throw new \ValueError('The chunk length must be a positive integer, got ' . $chunkSize);
+        if ($limit <= 0) {
+            throw new \ValueError('The chunk length must be a positive integer, got ' . $limit);
         }
 
-        $this->defaultChunkSize = $chunkSize;
+        $this->defaultLimit = $limit;
     }
 
     private function free(): void
     {
-        EventLoop::cancel($this->watcher);
+        EventLoop::cancel($this->callbackId);
 
         $this->socket = null;
 

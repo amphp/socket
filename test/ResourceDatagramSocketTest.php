@@ -89,22 +89,22 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         $this->expectException(Socket\SocketException::class);
 
         if (IS_WINDOWS) {
-            $this->expectExceptionMessage('Could not send packet on endpoint: stream_socket_sendto(): A message sent on a datagram socket was larger than the internal message buffer or some other network limit, or the buffer used to receive a datagram into was smaller than the datagram itself');
+            $this->expectExceptionMessage('Could not send datagram packet: stream_socket_sendto(): A message sent on a datagram socket was larger than the internal message buffer or some other network limit, or the buffer used to receive a datagram into was smaller than the datagram itself');
         } else {
-            $this->expectExceptionMessage('Could not send packet on endpoint: stream_socket_sendto(): Message too long');
+            $this->expectExceptionMessage('Could not send datagram packet: stream_socket_sendto(): Message too long');
         }
 
-        $endpoint = Socket\bind('127.0.0.1:0');
+        $datagramSocket = Socket\bind('127.0.0.1:0');
 
-        $socket = Socket\connect('udp://' . $endpoint->getAddress());
+        $socket = Socket\connect('udp://' . $datagramSocket->getAddress());
         $socket->write('Hello!');
 
         try {
-            while ([$address] = $endpoint->receive()) {
-                $endpoint->send($address, \str_repeat('-', 2 ** 20));
+            while ([$address] = $datagramSocket->receive()) {
+                $datagramSocket->send($address, \str_repeat('-', 2 ** 20));
             }
         } finally {
-            $endpoint->close();
+            $datagramSocket->close();
         }
     }
 
@@ -154,7 +154,7 @@ class ResourceDatagramSocketTest extends AsyncTestCase
             [, $data] = $endpoint->receive();
             self::assertSame('H', $data);
 
-            $endpoint->setChunkSize(5);
+            $endpoint->setLimit(5);
             $socket->write('Hello!');
 
             [, $data] = $endpoint->receive();
