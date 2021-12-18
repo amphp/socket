@@ -16,7 +16,7 @@
         "mixed",
         "void",
         "object",
-        "connector",
+        "socketConnector",
         "hasTlsAlpnSupport",
         "hasTlsSecurityLevelSupport"
     ],
