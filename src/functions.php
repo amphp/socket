@@ -99,7 +99,7 @@ function bindDatagram(
  *
  * @return SocketConnector
  */
-function connector(?SocketConnector $connector = null): SocketConnector
+function socketConnector(?SocketConnector $connector = null): SocketConnector
 {
     static $map;
     $map ??= new \WeakMap();
@@ -126,7 +126,7 @@ function connector(?SocketConnector $connector = null): SocketConnector
  */
 function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): EncryptableSocket
 {
-    return connector()->connect($uri, $context, $cancellation);
+    return socketConnector()->connect($uri, $context, $cancellation);
 }
 
 /**

@@ -32,7 +32,7 @@ final class UnlimitedSocketPool implements SocketPool
     public function __construct(float $idleTimeout = 10, ?SocketConnector $connector = null)
     {
         $this->idleTimeout = $idleTimeout;
-        $this->connector = $connector ?? connector();
+        $this->connector = $connector ?? socketConnector();
     }
 
     public function checkout(
