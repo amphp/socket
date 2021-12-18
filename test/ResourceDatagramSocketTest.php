@@ -143,9 +143,9 @@ class ResourceDatagramSocketTest extends AsyncTestCase
 
     public function testSetChunkSize(): void
     {
-        $context = (new Socket\BindContext())->withChunkSize(1);
+        $context = new Socket\BindContext();
 
-        $endpoint = Socket\bindDatagram('127.0.0.1:0', $context);
+        $endpoint = Socket\bindDatagram('127.0.0.1:0', $context, 1);
 
         try {
             $socket = Socket\connect('udp://' . $endpoint->getAddress());

@@ -11,9 +11,6 @@ final class BindContext
     /** @var positive-int */
     private int $backlog = 128;
 
-    /** @var positive-int */
-    private int $chunkSize = 8192;
-
     private bool $reusePort = false;
     private bool $broadcast = false;
     private bool $tcpNoDelay = false;
@@ -133,25 +130,6 @@ final class BindContext
     {
         $clone = clone $this;
         $clone->tlsContext = $tlsContext;
-
-        return $clone;
-    }
-
-    /**
-     * @return positive-int
-     */
-    public function getChunkSize(): int
-    {
-        return $this->chunkSize;
-    }
-
-    /**
-     * @param positive-int $chunkSize
-     */
-    public function withChunkSize(int $chunkSize): self
-    {
-        $clone = clone $this;
-        $clone->chunkSize = $chunkSize;
 
         return $clone;
     }

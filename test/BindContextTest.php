@@ -54,17 +54,6 @@ class BindContextTest extends TestCase
         self::assertNull($contextC->getTlsContext());
     }
 
-    public function testWithChunkSize(): void
-    {
-        $chunkSize = 123;
-
-        $contextA = new BindContext;
-        $contextB = $contextA->withChunkSize($chunkSize);
-
-        self::assertSame(8192, $contextA->getChunkSize());
-        self::assertSame($chunkSize, $contextB->getChunkSize());
-    }
-
     public function backlogDataProvider(): array
     {
         return [

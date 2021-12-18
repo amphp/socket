@@ -13,14 +13,17 @@ use Revolt\EventLoop;
  *
  * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param BindContext|null $context Context options for listening.
+ * @param int $chunkSize Chunk size for the accepted sockets.
  *
  * @return ResourceSocketServer
  *
  * @throws SocketException If binding to the specified URI failed.
- * @throws \Error If an invalid scheme is given.
  */
-function listen(string $uri, ?BindContext $context = null): ResourceSocketServer
-{
+function listen(
+    string $uri,
+    ?BindContext $context = null,
+    int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE
+): ResourceSocketServer {
     $context = $context ?? new BindContext;
 
     $scheme = \strstr($uri, '://', true);
@@ -37,10 +40,15 @@ function listen(string $uri, ?BindContext $context = null): ResourceSocketServer
     $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $streamContext);
 
     if (!$server || $errno) {
-        throw new SocketException(\sprintf('Could not create server %s: [Error: #%d] %s', $uri, $errno, $errstr), $errno);
+        throw new SocketException(\sprintf(
+            'Could not create server %s: [Error: #%d] %s',
+            $uri,
+            $errno,
+            $errstr
+        ), $errno);
     }
 
-    return new ResourceSocketServer($server, $context->getChunkSize());
+    return new ResourceSocketServer($server, $chunkSize);
 }
 
 /**
@@ -48,14 +56,17 @@ function listen(string $uri, ?BindContext $context = null): ResourceSocketServer
  *
  * @param string $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
  * @param BindContext|null $context Context options for listening.
+ * @param int $limit
  *
  * @return ResourceDatagramSocket
  *
  * @throws SocketException If binding to the specified URI failed.
- * @throws \Error If an invalid scheme is given.
  */
-function bindDatagram(string $uri, ?BindContext $context = null): ResourceDatagramSocket
-{
+function bindDatagram(
+    string $uri,
+    ?BindContext $context = null,
+    int $limit = ResourceDatagramSocket::DEFAULT_LIMIT
+): ResourceDatagramSocket {
     $context = $context ?? new BindContext;
 
     $scheme = \strstr($uri, '://', true);
@@ -78,7 +89,7 @@ function bindDatagram(string $uri, ?BindContext $context = null): ResourceDatagr
         );
     }
 
-    return new ResourceDatagramSocket($server, $context->getChunkSize());
+    return new ResourceDatagramSocket($server, $limit);
 }
 
 /**
