@@ -151,9 +151,9 @@ function connectTls(string $uri, ?ConnectContext $context = null, ?Cancellation 
     if ($tlsContext->getPeerName() === '') {
         $hostname = '';
         if (\str_contains($uri, 'tcp://')) {
-            $hostname = UriString::parse($uri)['host'];
+            $hostname = UriString::parse($uri)['host'] ?? '';
         } elseif (!\str_contains($uri, '://')) {
-            $hostname = UriString::parse('tcp://' . $uri)['host'];
+            $hostname = UriString::parse('tcp://' . $uri)['host'] ?? '';
         }
 
         $tlsContext = $tlsContext->withPeerName($hostname);
