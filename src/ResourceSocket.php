@@ -19,13 +19,13 @@ final class ResourceSocket implements EncryptableSocket
      */
     public static function fromServerSocket($resource, int $chunkSize = self::DEFAULT_CHUNK_SIZE): self
     {
-        return new self($resource, $chunkSize);
+        return new self($resource, null, $chunkSize);
     }
 
     /**
      * @param resource $resource Stream resource.
-     * @param positive-int $chunkSize Read and write chunk size.
      * @param ClientTlsContext|null $tlsContext
+     * @param positive-int $chunkSize Read and write chunk size.
      *
      * @return self
      */
@@ -34,7 +34,7 @@ final class ResourceSocket implements EncryptableSocket
         ?ClientTlsContext $tlsContext = null,
         int $chunkSize = self::DEFAULT_CHUNK_SIZE
     ): self {
-        return new self($resource, $chunkSize, $tlsContext);
+        return new self($resource, $tlsContext, $chunkSize);
     }
 
     private ?ClientTlsContext $tlsContext;
@@ -53,13 +53,13 @@ final class ResourceSocket implements EncryptableSocket
 
     /**
      * @param resource $resource Stream resource.
-     * @param positive-int $chunkSize Read and write chunk size.
      * @param ClientTlsContext|null $tlsContext
+     * @param positive-int $chunkSize Read and write chunk size.
      */
     private function __construct(
         $resource,
-        int $chunkSize = self::DEFAULT_CHUNK_SIZE,
-        ?ClientTlsContext $tlsContext = null
+        ?ClientTlsContext $tlsContext = null,
+        int $chunkSize = self::DEFAULT_CHUNK_SIZE
     ) {
         $this->tlsContext = $tlsContext;
         $this->reader = new ReadableResourceStream($resource, $chunkSize);
@@ -87,7 +87,7 @@ final class ResourceSocket implements EncryptableSocket
 
             if (empty($context['ssl'])) {
                 throw new TlsException(
-                    "Can't enable TLS without configuration. If you used Amp\\Socket\\Socket\listen(), " .
+                    "Can't enable TLS without configuration. If you used Amp\\Socket\\listen(), " .
                     "be sure to pass a ServerTlsContext within the BindContext in the second argument, " .
                     "otherwise set the 'ssl' context option to the PHP stream resource."
                 );
@@ -122,9 +122,6 @@ final class ResourceSocket implements EncryptableSocket
         }
     }
 
-    /**
-     * @param positive-int|null $limit If null, the default chunk size is used.
-     */
     public function read(?Cancellation $cancellation = null, ?int $limit = null): ?string
     {
         return $this->reader->read($cancellation, $limit);
