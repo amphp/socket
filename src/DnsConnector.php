@@ -87,7 +87,7 @@ final class DnsConnector implements Connector
                     static function (string $watcher) use ($deferred, $id, $cancellation): void {
                         EventLoop::cancel($watcher);
                         $cancellation->unsubscribe($id);
-                        $deferred->complete(null);
+                        $deferred->complete();
                     }
                 );
 

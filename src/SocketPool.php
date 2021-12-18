@@ -37,7 +37,7 @@ interface SocketPool
     ): EncryptableSocket;
 
     /**
-     * Return a previously checked-out socket to the pool so it can be reused.
+     * Return a previously checked-out socket to the pool, so it can be reused.
      *
      * @param EncryptableSocket $socket Socket instance.
      *

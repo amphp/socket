@@ -12,7 +12,7 @@ final class ResourceSocketServer implements SocketServer
     /** @var resource|null Stream socket server resource. */
     private $socket;
 
-    private string $watcher;
+    private string $callbackId;
 
     private SocketAddress $address;
 
@@ -42,7 +42,7 @@ final class ResourceSocketServer implements SocketServer
         \stream_set_blocking($this->socket, false);
 
         $acceptor = &$this->acceptor;
-        $this->watcher = EventLoop::onReadable($this->socket, static function (string $watcher, $socket) use (
+        $this->callbackId = EventLoop::onReadable($this->socket, static function (string $watcher, $socket) use (
             &$acceptor,
             $chunkSize
         ): void {
@@ -51,21 +51,23 @@ final class ResourceSocketServer implements SocketServer
                 return; // Accepting client failed.
             }
 
+            EventLoop::disable($watcher);
+
             \assert($acceptor !== null);
 
             $acceptor->resume(ResourceSocket::fromServerSocket($client, $chunkSize));
             $acceptor = null;
-            EventLoop::disable($watcher);
         });
 
-        $watcher = &$this->watcher;
-        $this->cancel = static function (CancelledException $exception) use (&$acceptor, $watcher): void {
+        $callbackId = &$this->callbackId;
+        $this->cancel = static function (CancelledException $exception) use (&$acceptor, $callbackId): void {
+            EventLoop::disable($callbackId);
+
             $acceptor?->throw($exception);
             $acceptor = null;
-            EventLoop::disable($watcher);
         };
 
-        EventLoop::disable($this->watcher);
+        EventLoop::disable($this->callbackId);
     }
 
     /**
@@ -82,7 +84,7 @@ final class ResourceSocketServer implements SocketServer
 
     private function free(): void
     {
-        EventLoop::cancel($this->watcher);
+        EventLoop::cancel($this->callbackId);
 
         $this->socket = null;
 
@@ -110,7 +112,7 @@ final class ResourceSocketServer implements SocketServer
             return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         }
 
-        EventLoop::enable($this->watcher);
+        EventLoop::enable($this->callbackId);
         $this->acceptor = EventLoop::createSuspension();
 
         $id = $cancellation?->subscribe($this->cancel);
@@ -145,23 +147,31 @@ final class ResourceSocketServer implements SocketServer
     }
 
     /**
-     * References the accept watcher.
+     * References the readability callback used for detecting new connection attempts in {@code accept()}.
      *
      * @see EventLoop::reference()
      */
     public function reference(): void
     {
-        EventLoop::reference($this->watcher);
+        if ($this->socket === null) {
+            return;
+        }
+
+        EventLoop::reference($this->callbackId);
     }
 
     /**
-     * Unreferences the accept watcher.
+     * Unreferences the readability callback used for detecting new connection attempts in {@code accept()}.
      *
      * @see EventLoop::unreference()
      */
     public function unreference(): void
     {
-        EventLoop::unreference($this->watcher);
+        if ($this->socket === null) {
+            return;
+        }
+
+        EventLoop::unreference($this->callbackId);
     }
 
     /**

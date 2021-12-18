@@ -5,7 +5,7 @@ namespace Amp\Socket;
 use Amp\Cancellation;
 
 /**
- * Connector that connects to a statically defined URI instead of the URI passed to the connect() call.
+ * Connector that connects to a statically defined URI instead of the URI passed to the {@code connect()} call.
  */
 final class StaticConnector implements Connector
 {

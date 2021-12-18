@@ -91,7 +91,7 @@ final class SocketAddress
     }
 
     /**
-     * @return int
+     * @return positive-int|null
      */
     public function getPort(): ?int
     {

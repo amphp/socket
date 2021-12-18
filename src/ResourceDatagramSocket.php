@@ -222,7 +222,7 @@ final class ResourceDatagramSocket implements DatagramSocket
     public function setChunkSize(int $chunkSize): void
     {
         if ($chunkSize <= 0) {
-            throw new \ValueError('The chunk length must be a positive integer');
+            throw new \ValueError('The chunk length must be a positive integer, got ' . $chunkSize);
         }
 
         $this->defaultChunkSize = $chunkSize;

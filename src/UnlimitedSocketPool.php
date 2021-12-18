@@ -25,17 +25,16 @@ final class UnlimitedSocketPool implements SocketPool
     /** @var int[] */
     private array $pendingCount = [];
 
-    private int $idleTimeout;
+    private float $idleTimeout;
 
     private Connector $connector;
 
-    public function __construct(int $idleTimeout = 10000, ?Connector $connector = null)
+    public function __construct(float $idleTimeout = 10, ?Connector $connector = null)
     {
         $this->idleTimeout = $idleTimeout;
         $this->connector = $connector ?? connector();
     }
 
-    /** @inheritdoc */
     public function checkout(
         string $uri,
         ConnectContext $context = null,
@@ -63,7 +62,7 @@ final class UnlimitedSocketPool implements SocketPool
             return $this->checkoutNewSocket($uri, $cacheKey, $context, $cancellation);
         }
 
-        foreach ($this->sockets[$cacheKey] as $socketId => $socket) {
+        foreach ($this->sockets[$cacheKey] as $socket) {
             if (!$socket->isAvailable) {
                 continue;
             }
@@ -92,13 +91,11 @@ final class UnlimitedSocketPool implements SocketPool
         return $this->checkoutNewSocket($uri, $cacheKey, $context, $cancellation);
     }
 
-    /** @inheritdoc */
     public function clear(EncryptableSocket $socket): void
     {
         $this->clearFromId(\spl_object_hash($socket));
     }
 
-    /** @inheritdoc */
     public function checkin(EncryptableSocket $socket): void
     {
         $objectId = \spl_object_hash($socket);
