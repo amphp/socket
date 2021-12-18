@@ -14,7 +14,7 @@ class ResourceSocketTest extends AsyncTestCase
     {
         $data = "Testing\n";
 
-        [$serverSock, $clientSock] = Socket\createPair();
+        [$serverSock, $clientSock] = Socket\createSocketPair();
 
         $serverSock->write($data);
         $serverSock->end();

@@ -138,7 +138,7 @@ function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $ca
  *
  * @throws SocketException If creating the sockets fails.
  */
-function createPair(int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE): array
+function createSocketPair(int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE): array
 {
     try {
         \set_error_handler(static function (int $errno, string $errstr): void {
