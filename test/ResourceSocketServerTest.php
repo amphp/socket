@@ -33,7 +33,7 @@ class ResourceSocketServerTest extends AsyncTestCase
     {
         try {
             $socket = Socket\listen('[::1]:0');
-            self::assertMatchesRegularExpression('(\[::1\]:\d+)', (string) $socket->getAddress());
+            self::assertMatchesRegularExpression('(\[::1]:\d+)', (string) $socket->getAddress());
         } catch (Socket\SocketException $e) {
             if ($e->getMessage() === 'Could not create server tcp://[::1]:0: [Error: #0] Cannot assign requested address') {
                 self::markTestSkipped('Missing IPv6 support');
@@ -47,7 +47,7 @@ class ResourceSocketServerTest extends AsyncTestCase
     {
         $server = Socket\listen('127.0.0.1:0');
 
-        EventLoop::queue(function () use ($server): void {
+        async(function () use ($server): void {
             while ($socket = $server->accept()) {
                 $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
             }
@@ -67,9 +67,9 @@ class ResourceSocketServerTest extends AsyncTestCase
             ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
         $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        EventLoop::queue(function () use ($server): void {
+        async(function () use ($server): void {
             while ($socket = $server->accept()) {
-                EventLoop::queue(function () use ($socket): void {
+                async(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
@@ -101,10 +101,10 @@ class ResourceSocketServerTest extends AsyncTestCase
             ->withCertificates(['amphp.org' => new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem')]);
         $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        EventLoop::queue(function () use ($server): void {
+        async(function () use ($server): void {
             /** @var Socket\EncryptableSocket $socket */
             while ($socket = $server->accept()) {
-                EventLoop::queue(function () use ($socket): void {
+                async(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
@@ -138,10 +138,10 @@ class ResourceSocketServerTest extends AsyncTestCase
 
         $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        EventLoop::queue(function () use ($server): void {
+        async(function () use ($server): void {
             /** @var Socket\ResourceSocket $socket */
             while ($socket = $server->accept()) {
-                EventLoop::queue(function () use ($socket): void {
+                async(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
@@ -189,10 +189,10 @@ class ResourceSocketServerTest extends AsyncTestCase
 
         $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
-        EventLoop::queue(function () use ($server): void {
+        async(function () use ($server): void {
             /** @var Socket\ResourceSocket $socket */
             while ($socket = $server->accept()) {
-                EventLoop::queue(function () use ($socket): void {
+                async(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());

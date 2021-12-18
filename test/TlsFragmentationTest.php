@@ -5,21 +5,13 @@ namespace Amp\Socket;
 use Amp\ByteStream;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
-use Revolt\EventLoop;
+use function Amp\async;
 use function Amp\delay;
 
 class TlsFragmentationTest extends AsyncTestCase
 {
     public function testTls(): void
     {
-        if (\PHP_VERSION_ID < 70215) {
-            self::markTestSkipped('Your PHP version is affected by PHP bug 77390');
-        }
-
-        if (\PHP_VERSION_ID >= 70300 && \PHP_VERSION_ID < 70303) {
-            self::markTestSkipped('Your PHP version is affected by PHP bug 77390');
-        }
-
         $proxyServer = Socket\listen('127.0.0.1:0');
 
         $tlsContext = (new Socket\ServerTlsContext)
@@ -27,10 +19,10 @@ class TlsFragmentationTest extends AsyncTestCase
         $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
         // Proxy to apply chunking of single bytes
-        EventLoop::queue(function () use ($proxyServer, $server): void {
+        async(function () use ($proxyServer, $server): void {
             /** @var Socket\ResourceSocket $proxyClient */
             while ($proxyClient = $proxyServer->accept()) {
-                EventLoop::queue(function () use ($proxyClient, $server): void {
+                async(function () use ($proxyClient, $server): void {
                     $proxyUpstream = Socket\connect($server->getAddress());
 
                     $this->pipe($proxyClient, $proxyUpstream);
@@ -39,10 +31,10 @@ class TlsFragmentationTest extends AsyncTestCase
             }
         });
 
-        EventLoop::queue(function () use ($server): void {
+        async(function () use ($server): void {
             /** @var Socket\ResourceSocket $client */
             while ($client = $server->accept()) {
-                EventLoop::queue(function () use ($client): void {
+                async(function () use ($client): void {
                     $client->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $client);
                     $this->assertSame('Hello World', $this->read($client, 11));
@@ -72,7 +64,7 @@ class TlsFragmentationTest extends AsyncTestCase
 
     private function pipe(ByteStream\ReadableStream $source, ByteStream\WritableStream $destination): void
     {
-        EventLoop::queue(static function () use ($source, $destination): void {
+        async(static function () use ($source, $destination): void {
             while (($chunk = $source->read()) !== null) {
                 foreach (\str_split($chunk) as $byte) {
                     $destination->write($byte);

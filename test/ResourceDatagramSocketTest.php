@@ -29,7 +29,7 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         Socket\bind('error');
     }
 
-    public function testReceive()
+    public function testReceive(): void
     {
         $endpoint = Socket\bind('127.0.0.1:0');
 
@@ -55,23 +55,23 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         $socket->close();
     }
 
-    public function testSend()
+    public function testSend(): void
     {
         $endpoint = Socket\bind('127.0.0.1:0');
         self::assertIsResource($endpoint->getResource());
 
         $socket = Socket\connect('udp://' . $endpoint->getAddress());
-        \assert($socket instanceof Socket\EncryptableSocket);
         $remote = $socket->getLocalAddress();
 
         $socket->write('a');
 
-        EventLoop::queue(function () use ($endpoint, $remote) {
+        async(function () use ($endpoint, $remote) {
             while ([$address, $data] = $endpoint->receive()) {
-                \assert($address instanceof Socket\SocketAddress);
-                $this->assertSame('a', $data);
-                $this->assertSame($remote->getHost(), $address->getHost());
-                $this->assertSame($remote->getPort(), $address->getPort());
+                self::assertInstanceOf(Socket\SocketAddress::class, $address);
+                self::assertSame('a', $data);
+                self::assertSame($remote->getHost(), $address->getHost());
+                self::assertSame($remote->getPort(), $address->getPort());
+
                 $endpoint->send($address, 'b');
             }
         });
@@ -84,7 +84,7 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         $endpoint->close();
     }
 
-    public function testSendPacketTooLarge()
+    public function testSendPacketTooLarge(): void
     {
         $this->expectException(Socket\SocketException::class);
 
@@ -97,7 +97,6 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         $endpoint = Socket\bind('127.0.0.1:0');
 
         $socket = Socket\connect('udp://' . $endpoint->getAddress());
-        \assert($socket instanceof Socket\EncryptableSocket);
         $socket->write('Hello!');
 
         try {
@@ -109,7 +108,7 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         }
     }
 
-    public function testReceiveThenClose()
+    public function testReceiveThenClose(): void
     {
         $endpoint = Socket\bind('127.0.0.1:0');
 
@@ -120,7 +119,7 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         self::assertNull($future->await());
     }
 
-    public function testReceiveAfterClose()
+    public function testReceiveAfterClose(): void
     {
         $endpoint = Socket\bind('127.0.0.1:0');
 
@@ -129,7 +128,7 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         self::assertNull($endpoint->receive());
     }
 
-    public function testSimultaneousReceive()
+    public function testSimultaneousReceive(): void
     {
         $this->expectException(Socket\PendingReceiveError::class);
 
@@ -142,7 +141,7 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         }
     }
 
-    public function testSetChunkSize()
+    public function testSetChunkSize(): void
     {
         $context = (new Socket\BindContext())->withChunkSize(1);
 
@@ -150,14 +149,14 @@ class ResourceDatagramSocketTest extends AsyncTestCase
 
         try {
             $socket = Socket\connect('udp://' . $endpoint->getAddress());
-            \assert($socket instanceof Socket\EncryptableSocket);
-
             $socket->write('Hello!');
+
             [, $data] = $endpoint->receive();
             self::assertSame('H', $data);
 
             $endpoint->setChunkSize(5);
             $socket->write('Hello!');
+
             [, $data] = $endpoint->receive();
             self::assertSame('Hello', $data);
         } finally {
@@ -165,7 +164,7 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         }
     }
 
-    public function testLimit()
+    public function testLimit(): void
     {
         $endpoint = Socket\bind('127.0.0.1:0');
 
