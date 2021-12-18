@@ -146,6 +146,8 @@ class ResourceSocketServerTest extends AsyncTestCase
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
                     $socket->write('test');
+                    $socket->shutdownTls();
+                    $socket->end();
                 });
             }
         });
