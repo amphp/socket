@@ -159,6 +159,26 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         }
     }
 
+    public function testLimit()
+    {
+        $endpoint = Socket\bind('127.0.0.1:0');
+
+        try {
+            $socket = Socket\connect('udp://' . $endpoint->getAddress());
+            \assert($socket instanceof Socket\EncryptableSocket);
+
+            $socket->write('Hello!');
+            [, $data] = $endpoint->receive(limit: 1);
+            self::assertSame('H', $data);
+
+            $socket->write('Hello!');
+            [, $data] = $endpoint->receive(limit: 5);
+            self::assertSame('Hello', $data);
+        } finally {
+            $endpoint->close();
+        }
+    }
+
     public function testCancelThenAccept(): void
     {
         $datagram = Socket\bind('127.0.0.1:0');

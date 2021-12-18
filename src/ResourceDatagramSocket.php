@@ -43,6 +43,7 @@ final class ResourceDatagramSocket implements DatagramSocket
         $this->defaultChunkSize = $this->chunkSize = &$chunkSize;
 
         \stream_set_blocking($this->socket, false);
+        \stream_set_read_buffer($this->socket, 0);
 
         $reader = &$this->reader;
         $this->watcher = EventLoop::onReadable($this->socket, static function (string $watcher, $socket) use (
