@@ -52,6 +52,18 @@ class IntegrationTest extends AsyncTestCase
     {
         $name = \explode(':', $uri)[0];
 
+        $socket = Socket\connectTls($uri, (new ConnectContext)->withTlsContext(new ClientTlsContext($name)));
+
+        self::assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
+    }
+
+    /**
+     * @dataProvider provideConnectTlsArgs
+     */
+    public function testConnectTlsManually($uri): void
+    {
+        $name = \explode(':', $uri)[0];
+
         $socket = Socket\connect($uri, (new ConnectContext)->withTlsContext(new ClientTlsContext($name)));
 
         self::assertNull($socket->getTlsInfo());
