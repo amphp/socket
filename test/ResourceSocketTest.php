@@ -5,6 +5,7 @@ namespace Amp\Socket\Test;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Revolt\EventLoop;
+use const Amp\Process\IS_WINDOWS;
 use function Amp\ByteStream\buffer;
 
 class ResourceSocketTest extends AsyncTestCase
@@ -23,6 +24,10 @@ class ResourceSocketTest extends AsyncTestCase
 
     public function testSocketAddress(): void
     {
+        if (IS_WINDOWS) {
+            $this->markTestSkipped('Not supported on Windows');
+        }
+
         try {
             $s = \stream_socket_server('unix://' . __DIR__ . '/socket.sock');
             $c = \stream_socket_client('unix://' . __DIR__ . '/socket.sock');

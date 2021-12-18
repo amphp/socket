@@ -7,6 +7,7 @@ use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\TimeoutCancellation;
 use Revolt\EventLoop;
+use const Amp\Process\IS_WINDOWS;
 use function Amp\async;
 use function Amp\delay;
 
@@ -86,7 +87,12 @@ class ResourceDatagramSocketTest extends AsyncTestCase
     public function testSendPacketTooLarge()
     {
         $this->expectException(Socket\SocketException::class);
-        $this->expectExceptionMessage('Could not send packet on endpoint: stream_socket_sendto(): Message too long');
+
+        if (IS_WINDOWS) {
+            $this->expectExceptionMessage('Could not send packet on endpoint: stream_socket_sendto(): A message sent on a datagram socket was larger than the internal message buffer or some other network limit, or the buffer used to receive a datagram into was smaller than the datagram itself');
+        } else {
+            $this->expectExceptionMessage('Could not send packet on endpoint: stream_socket_sendto(): Message too long');
+        }
 
         $endpoint = Socket\bind('127.0.0.1:0');
 
