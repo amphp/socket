@@ -1,6 +1,6 @@
 # socket ![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)
 
-`amphp/socket` is a socket library for establishing and encrypting non-blocking sockets PHP based on [Amp](https://github.com/amphp/amp).
+`amphp/socket` is a socket library for establishing and encrypting non-blocking sockets PHP based on [Amp](https://github.com/amphp/amp) and [Revolt](https://revolt.run).
 
 ## Installation
 
@@ -29,51 +29,41 @@ require __DIR__ . '/../vendor/autoload.php';
 // league/uri-schemes required for this example.
 
 use Amp\ByteStream;
-use Amp\Loop;
 use Amp\Socket\ClientTlsContext;
 use Amp\Socket\ConnectContext;
-use Amp\Socket\EncryptableSocket;
-use League\Uri;
+use League\Uri\Http;
 use function Amp\Socket\connect;
 
-Loop::run(static function () use ($argv) {
-    $stdout = ByteStream\getStdout();
+$stdout = ByteStream\getStdout();
 
-    if (\count($argv) !== 2) {
-        yield $stdout->write('Usage: examples/simple-http-client.php <url>' . PHP_EOL);
-        exit(1);
-    }
+if (\count($argv) !== 2) {
+    $stdout->write('Usage: examples/simple-http-client.php <url>' . PHP_EOL);
+    exit(1);
+}
 
-    $uri = Uri\Http::createFromString($argv[1]);
-    $host = $uri->getHost();
-    $port = $uri->getPort() ?? ($uri->getScheme() === 'https' ? 443 : 80);
-    $path = $uri->getPath() ?: '/';
+$uri = Http::createFromString($argv[1]);
+$host = $uri->getHost();
+$port = $uri->getPort() ?? ($uri->getScheme() === 'https' ? 443 : 80);
+$path = $uri->getPath() ?: '/';
 
-    $connectContext = (new ConnectContext)
-        ->withTlsContext(new ClientTlsContext($host));
+$connectContext = (new ConnectContext)
+    ->withTlsContext(new ClientTlsContext($host));
 
-    /** @var EncryptableSocket $socket */
-    $socket = yield connect($host . ':' . $port, $connectContext);
+$socket = connect($host . ':' . $port, $connectContext);
 
-    if ($uri->getScheme() === 'https') {
-        yield $socket->setupTls();
-    }
+if ($uri->getScheme() === 'https') {
+    $socket->setupTls();
+}
 
-    yield $socket->write("GET {$path} HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n");
+$socket->write("GET {$path} HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n");
 
-    while (null !== $chunk = yield $socket->read()) {
-        yield $stdout->write($chunk);
-    }
-
-    // If the promise returned from `read()` resolves to `null`, the socket closed and we're done.
-    // In this case you can also use `yield Amp\ByteStream\pipe($socket, $stdout)` instead,
-    // but we want to demonstrate the `read()` method here.
-});
+ByteStream\pipe($socket, $stdout);
 ```
 
 #### Server Example
 
 ```php
+#!/usr/bin/env php
 <?php // basic (and dumb) HTTP server
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -84,13 +74,16 @@ require __DIR__ . '/../vendor/autoload.php';
 // You might notice that your browser opens several connections instead of just one,
 // even when only making one request.
 
-use Amp\Loop;
 use Amp\Socket;
-use Amp\Socket\ResourceSocket;
-use function Amp\asyncCoroutine;
+use function Amp\async;
 
-Loop::run(static function () {
-    $clientHandler = asyncCoroutine(static function (ResourceSocket $socket) {
+$server = Socket\listen('127.0.0.1:0');
+
+echo 'Listening for new connections on ' . $server->getAddress() . ' ...' . PHP_EOL;
+echo 'Open your browser and visit http://' . $server->getAddress() . '/' . PHP_EOL;
+
+while ($socket = $server->accept()) {
+    async(function () use ($socket) {
         $address = $socket->getRemoteAddress();
         $ip = $address->getHost();
         $port = $address->getPort();
@@ -100,19 +93,10 @@ Loop::run(static function () {
         $body = "Hey, your IP is {$ip} and your local port used is {$port}.";
         $bodyLength = \strlen($body);
 
-        $req = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}";
-        yield $socket->end($req);
+        $socket->write("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}");
+        $socket->end();
     });
-
-    $server = Socket\listen('127.0.0.1:0');
-
-    echo 'Listening for new connections on ' . $server->getAddress() . ' ...' . PHP_EOL;
-    echo 'Open your browser and visit http://' . $server->getAddress() . '/' . PHP_EOL;
-
-    while ($socket = yield $server->accept()) {
-        $clientHandler($socket);
-    }
-});
+}
 ```
 
 ## Security

@@ -3,7 +3,7 @@
 namespace Amp\Socket;
 
 use Amp\Cancellation;
-use League\Uri;
+use League\Uri\UriString;
 use Revolt\EventLoop;
 
 /**
@@ -151,7 +151,7 @@ final class UnlimitedSocketPool implements SocketPool
         }
 
         try {
-            $parts = Uri\parse($uri);
+            $parts = UriString::parse($uri);
         } catch (\Exception $exception) {
             throw new SocketException('Could not parse URI', 0, $exception);
         }

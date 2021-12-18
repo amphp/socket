@@ -6,7 +6,7 @@ use Amp\Cancellation;
 use Amp\DeferredFuture;
 use Amp\NullCancellation;
 use Amp\Socket\TlsException;
-use League\Uri;
+use League\Uri\UriString;
 use Revolt\EventLoop;
 
 /**
@@ -33,7 +33,7 @@ function parseUri(string $uri): array
     }
 
     try {
-        $uriParts = Uri\parse($uri);
+        $uriParts = UriString::parse($uri);
     } catch (\Exception $exception) {
         throw new \Error("Invalid URI: {$uri}", 0, $exception);
     }
