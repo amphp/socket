@@ -21,11 +21,9 @@ interface DatagramSocket extends ClosableStream, ResourceStream
      * @param SocketAddress $address
      * @param string $data
      *
-     * @return int Returns with the number of bytes written to the socket.
-     *
      * @throws SocketException If the UDP socket closes before the data can be sent.
      */
-    public function send(SocketAddress $address, string $data): int;
+    public function send(SocketAddress $address, string $data): void;
 
     /**
      * @return SocketAddress

@@ -91,8 +91,6 @@ final class ResourceDatagramSocket implements DatagramSocket
 
     /**
      * @param int|null $limit If null, the default chunk size is used.
-     *
-     * @return null|array{0: SocketAddress, 1: string}
      */
     public function receive(?Cancellation $cancellation = null, ?int $limit = null): ?array
     {
@@ -124,15 +122,7 @@ final class ResourceDatagramSocket implements DatagramSocket
         }
     }
 
-    /**
-     * @param SocketAddress $address
-     * @param string $data
-     *
-     * @return int Returns with the number of bytes written to the socket.
-     *
-     * @throws SocketException If the UDP socket closes before the data can be sent.
-     */
-    public function send(SocketAddress $address, string $data): int
+    public function send(SocketAddress $address, string $data): void
     {
         static $errorHandler;
         $errorHandler ??= static function (int $errno, string $errstr): void {
@@ -154,8 +144,6 @@ final class ResourceDatagramSocket implements DatagramSocket
         } finally {
             \restore_error_handler();
         }
-
-        return $result;
     }
 
     /**
