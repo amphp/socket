@@ -159,7 +159,7 @@ class ResourceSocketServerTest extends AsyncTestCase
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World');
-            self::assertSame('test', $client->read());
+            self::assertSame('test', buffer($client));
 
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
@@ -169,7 +169,7 @@ class ResourceSocketServerTest extends AsyncTestCase
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World');
-            self::assertSame('test', $client->read());
+            self::assertSame('test', buffer($client));
         } finally {
             $server->close();
         }
