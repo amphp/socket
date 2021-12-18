@@ -1,6 +1,6 @@
 <?php
 
-namespace Amp\Socket\Test;
+namespace Amp\Socket;
 
 use Amp\CancelledException;
 use Amp\PHPUnit\AsyncTestCase;

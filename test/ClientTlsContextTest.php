@@ -1,10 +1,8 @@
 <?php
 
-namespace Amp\Socket\Test;
+namespace Amp\Socket;
 
 use Amp\Socket;
-use Amp\Socket\Certificate;
-use Amp\Socket\ClientTlsContext;
 use PHPUnit\Framework\TestCase;
 
 class ClientTlsContextTest extends TestCase

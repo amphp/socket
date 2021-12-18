@@ -1,8 +1,7 @@
 <?php
 
-namespace Amp\Socket\Test;
+namespace Amp\Socket;
 
-use Amp\Socket\PendingAcceptError;
 use PHPUnit\Framework\TestCase;
 
 class PendingAcceptErrorTest extends TestCase

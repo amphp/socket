@@ -1,6 +1,6 @@
 <?php
 
-namespace Amp\Socket\Test;
+namespace Amp\Socket;
 
 use Amp\ByteStream;
 use Amp\PHPUnit\AsyncTestCase;
@@ -54,7 +54,7 @@ class TlsFragmentationTest extends AsyncTestCase
 
         $context = (new Socket\ConnectContext())->withTlsContext(
             (new Socket\ClientTlsContext('amphp.org'))
-            ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
+                ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
         );
 
         /** @var Socket\ResourceSocket $client */

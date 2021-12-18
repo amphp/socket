@@ -1,11 +1,11 @@
 <?php
 
-namespace Amp\Socket\Test\Internal;
+namespace Amp\Socket\Internal;
 
 use Amp\Socket\Internal;
 use PHPUnit\Framework\TestCase;
 
-class functionsTest extends TestCase
+class FunctionsTest extends TestCase
 {
     public function parseUriDataProvider(): array
     {

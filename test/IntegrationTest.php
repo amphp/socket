@@ -1,14 +1,9 @@
 <?php
 
-namespace Amp\Socket\Test;
+namespace Amp\Socket;
 
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
-use Amp\Socket\ClientTlsContext;
-use Amp\Socket\ConnectContext;
-use Amp\Socket\ConnectException;
-use Amp\Socket\EncryptableSocket;
-use Amp\Socket\TlsInfo;
 use Amp\TimeoutCancellation;
 
 class IntegrationTest extends AsyncTestCase

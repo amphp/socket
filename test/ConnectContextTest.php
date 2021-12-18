@@ -1,11 +1,9 @@
 <?php
 
-namespace Amp\Socket\Test;
+namespace Amp\Socket;
 
 use Amp\Dns\Record;
 use Amp\Socket;
-use Amp\Socket\ClientTlsContext;
-use Amp\Socket\ConnectContext;
 use PHPUnit\Framework\TestCase;
 
 class ConnectContextTest extends TestCase
@@ -174,23 +172,26 @@ class ConnectContextTest extends TestCase
 
         self::assertSame(['socket' => ['tcp_nodelay' => false]], $context->toStreamContextArray());
 
-        $expected = ['socket' => [
-            'tcp_nodelay' => false,
-            'bindto' => '127.0.0.1:12345',
-        ], 'ssl' => [
-            'crypto_method' => ClientTlsContext::TLSv1_0
-                | ClientTlsContext::TLSv1_1
-                | ClientTlsContext::TLSv1_2
-                | ClientTlsContext::TLSv1_3,
-            'peer_name' => 'amphp.org',
-            'verify_peer' => true,
-            'verify_peer_name' => true,
-            'verify_depth' => 10,
-            'ciphers' => \OPENSSL_DEFAULT_STREAM_CIPHERS,
-            'capture_peer_cert' => false,
-            'capture_peer_cert_chain' => false,
-            'SNI_enabled' => true,
-        ]];
+        $expected = [
+            'socket' => [
+                'tcp_nodelay' => false,
+                'bindto' => '127.0.0.1:12345',
+            ],
+            'ssl' => [
+                'crypto_method' => ClientTlsContext::TLSv1_0
+                    | ClientTlsContext::TLSv1_1
+                    | ClientTlsContext::TLSv1_2
+                    | ClientTlsContext::TLSv1_3,
+                'peer_name' => 'amphp.org',
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+                'verify_depth' => 10,
+                'ciphers' => \OPENSSL_DEFAULT_STREAM_CIPHERS,
+                'capture_peer_cert' => false,
+                'capture_peer_cert_chain' => false,
+                'SNI_enabled' => true,
+            ],
+        ];
 
         if (Socket\hasTlsSecurityLevelSupport()) {
             $expected['ssl']['security_level'] = 2;

@@ -1,11 +1,8 @@
 <?php
 
-namespace Amp\Socket\Test;
+namespace Amp\Socket;
 
 use Amp\PHPUnit\AsyncTestCase;
-use Amp\Socket\Connector;
-use Amp\Socket\EncryptableSocket;
-use Amp\Socket\StaticConnector;
 
 class StaticConnectorTest extends AsyncTestCase
 {

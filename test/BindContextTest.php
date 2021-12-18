@@ -1,9 +1,7 @@
 <?php
 
-namespace Amp\Socket\Test;
+namespace Amp\Socket;
 
-use Amp\Socket\BindContext;
-use Amp\Socket\ServerTlsContext;
 use PHPUnit\Framework\TestCase;
 
 class BindContextTest extends TestCase

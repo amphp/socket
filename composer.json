@@ -58,7 +58,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Amp\\Socket\\Test\\": "test"
+            "Amp\\Socket\\": "test"
         }
     },
     "scripts": {
