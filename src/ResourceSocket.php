@@ -146,11 +146,13 @@ final class ResourceSocket implements EncryptableSocket
     public function reference(): void
     {
         $this->reader->reference();
+        $this->writer->reference();
     }
 
     public function unreference(): void
     {
         $this->reader->unreference();
+        $this->writer->unreference();
     }
 
     public function getLocalAddress(): SocketAddress
