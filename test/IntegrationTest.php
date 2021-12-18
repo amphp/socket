@@ -2,6 +2,7 @@
 
 namespace Amp\Socket;
 
+use Amp\CancelledException;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Socket;
 use Amp\TimeoutCancellation;
@@ -13,8 +14,9 @@ class IntegrationTest extends AsyncTestCase
      */
     public function testConnect($uri): void
     {
-        $socket = Socket\connect($uri);
-        self::assertInstanceOf(EncryptableSocket::class, $socket);
+        Socket\connect($uri);
+
+        $this->expectNotToPerformAssertions();
     }
 
     public function provideConnectArgs(): array
@@ -28,6 +30,7 @@ class IntegrationTest extends AsyncTestCase
     public function testConnectFailure(): void
     {
         $this->expectException(ConnectException::class);
+
         Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(1));
     }
 
@@ -36,30 +39,29 @@ class IntegrationTest extends AsyncTestCase
      */
     public function testConnectCancellation(): void
     {
-        $this->expectException(ConnectException::class);
-        $token = new TimeoutCancellation(1000);
-        Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(2), $token);
+        $this->expectException(CancelledException::class);
+
+        $cancellation = new TimeoutCancellation(1);
+        Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(2), $cancellation);
     }
 
     /**
-     * @dataProvider provideCryptoConnectArgs
+     * @dataProvider provideConnectTlsArgs
      */
-    public function testCryptoConnect($uri): void
+    public function testConnectTls($uri): void
     {
         $name = \explode(':', $uri)[0];
 
         $socket = Socket\connect($uri, (new ConnectContext)->withTlsContext(new ClientTlsContext($name)));
-        self::assertInstanceOf(EncryptableSocket::class, $socket);
 
         self::assertNull($socket->getTlsInfo());
 
-        // For this case renegotiation not needed because options is equals
         $socket->setupTls();
 
         self::assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
     }
 
-    public function provideCryptoConnectArgs(): array
+    public function provideConnectTlsArgs(): array
     {
         return [
             ['stackoverflow.com:443'],
@@ -68,18 +70,53 @@ class IntegrationTest extends AsyncTestCase
         ];
     }
 
-    public function testNoRenegotiationForEqualOptions(): void
+    public function testConnectTls10(): void
     {
-        $context = (new ConnectContext)
-            ->withTlsContext(new ClientTlsContext('www.google.com'));
+        $socket = Socket\connect('tls-v1-0.badssl.com:1010',
+            (new ConnectContext)->withTlsContext(new ClientTlsContext('tls-v1-0.badssl.com')));
 
-        $socket = Socket\connect('www.google.com:443', $context);
+        $this->expectException(TlsException::class);
+        $this->expectExceptionMessage('unsupported protocol');
 
-        self::assertNull($socket->getTlsInfo());
+        $socket->setupTls();
+    }
 
-        // For this case renegotiation not needed because options is equals
+    public function testConnectTls10Allow(): void
+    {
+        $connectContext = (new ConnectContext)->withTlsContext(
+            (new ClientTlsContext('tls-v1-0.badssl.com'))
+                ->withMinimumVersion(ClientTlsContext::TLSv1_0)
+                ->withSecurityLevel(1)
+        );
+
+        $socket = Socket\connect('tls-v1-0.badssl.com:1010', $connectContext);
         $socket->setupTls();
 
-        self::assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function testConnectTls11(): void
+    {
+        $socket = Socket\connect('tls-v1-1.badssl.com:1011',
+            (new ConnectContext)->withTlsContext(new ClientTlsContext('tls-v1-1.badssl.com')));
+
+        $this->expectException(TlsException::class);
+        $this->expectExceptionMessage('unsupported protocol');
+
+        $socket->setupTls();
+    }
+
+    public function testConnectTls11Allow(): void
+    {
+        $connectContext = (new ConnectContext)->withTlsContext(
+            (new ClientTlsContext('tls-v1-1.badssl.com'))
+                ->withMinimumVersion(ClientTlsContext::TLSv1_0)
+                ->withSecurityLevel(1)
+        );
+
+        $socket = Socket\connect('tls-v1-1.badssl.com:1011', $connectContext);
+        $socket->setupTls();
+
+        $this->expectNotToPerformAssertions();
     }
 }

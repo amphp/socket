@@ -102,56 +102,57 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
         return;
     }
 
-    $cancellation->throwIfRequested();
+    while (true) {
+        $cancellation->throwIfRequested();
 
-    $deferred = new DeferredFuture;
+        $suspension = EventLoop::createSuspension();
 
-    // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
-    $id = $cancellation->subscribe(static function ($e) use ($deferred, &$watcher) {
-        EventLoop::cancel($watcher);
-        $deferred->error($e);
-    });
+        // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
+        $cancellationId = $cancellation->subscribe(static function ($e) use ($suspension, &$callbackId) {
+            EventLoop::cancel($callbackId);
 
-    $watcher = EventLoop::onReadable($socket, static function (string $watcher, $socket) use (
-        $deferred,
-        $cancellation,
-        $id,
-    ): void {
+            $suspension->throw($e);
+        });
+
+        $callbackId = EventLoop::onReadable($socket, static function () use (
+            $suspension,
+            $cancellation,
+            $cancellationId,
+        ): void {
+            $cancellation->unsubscribe($cancellationId);
+
+            $suspension->resume();
+        });
+
         try {
-            try {
-                \set_error_handler(static function (int $errno, string $errstr) use ($socket) {
-                    if (\feof($socket)) {
-                        $errstr = 'Connection reset by peer';
-                    }
+            $suspension->suspend();
+        } finally {
+            EventLoop::cancel($callbackId);
+        }
 
-                    throw new TlsException('TLS negotiation failed: ' . $errstr);
-                });
-
-                $result = \stream_socket_enable_crypto($socket, enable: true);
-                if ($result === false) {
-                    $message = \feof($socket) ? 'Connection reset by peer' : 'Unknown error';
-                    throw new TlsException('TLS negotiation failed: ' . $message);
+        try {
+            \set_error_handler(static function (int $errno, string $errstr) use ($socket) {
+                if (\feof($socket)) {
+                    $errstr = 'Connection reset by peer';
                 }
-            } finally {
-                \restore_error_handler();
-            }
-        } catch (TlsException $e) {
-            EventLoop::cancel($watcher);
-            $cancellation->unsubscribe($id);
-            $deferred->error($e);
 
-            return;
+                throw new TlsException('TLS negotiation failed: ' . $errstr);
+            });
+
+            $result = \stream_socket_enable_crypto($socket, enable: true);
+            if ($result === false) {
+                $message = \feof($socket) ? 'Connection reset by peer' : 'Unknown error';
+                throw new TlsException('TLS negotiation failed: ' . $message);
+            }
+        } finally {
+            \restore_error_handler();
         }
 
         // If $result is 0, just wait for the next invocation
         if ($result === true) {
-            EventLoop::cancel($watcher);
-            $cancellation->unsubscribe($id);
-            $deferred->complete();
+            break;
         }
-    });
-
-    $deferred->getFuture()->await();
+    }
 }
 
 /**
