@@ -7,7 +7,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Amp\Socket;
 
-$datagram = Socket\bind('127.0.0.1:1337');
+$datagram = Socket\bindDatagram('127.0.0.1:1337');
 
 echo "Datagram active on {$datagram->getAddress()}" . PHP_EOL;
 

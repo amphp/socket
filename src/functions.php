@@ -54,7 +54,7 @@ function listen(string $uri, ?BindContext $context = null): ResourceSocketServer
  * @throws SocketException If binding to the specified URI failed.
  * @throws \Error If an invalid scheme is given.
  */
-function bind(string $uri, ?BindContext $context = null): ResourceDatagramSocket
+function bindDatagram(string $uri, ?BindContext $context = null): ResourceDatagramSocket
 {
     $context = $context ?? new BindContext;
 
