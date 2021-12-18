@@ -13,7 +13,7 @@ use Revolt\EventLoop;
  *
  * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param BindContext|null $context Context options for listening.
- * @param int $chunkSize Chunk size for the accepted sockets.
+ * @param positive-int $chunkSize Chunk size for the accepted sockets.
  *
  * @return ResourceSocketServer
  *
@@ -56,7 +56,7 @@ function listen(
  *
  * @param string $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
  * @param BindContext|null $context Context options for listening.
- * @param int $limit
+ * @param positive-int $limit Maximum size for received messages.
  *
  * @return ResourceDatagramSocket
  *

@@ -28,7 +28,7 @@ final class ResourceDatagramSocket implements DatagramSocket
 
     /**
      * @param resource $socket A bound udp socket resource.
-     * @param int $limit Maximum size for received messages.
+     * @param positive-int $limit Maximum size for received messages.
      *
      * @throws \Error If a stream resource is not given for {@code $socket}.
      */
@@ -36,6 +36,10 @@ final class ResourceDatagramSocket implements DatagramSocket
     {
         if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
+        }
+
+        if ($limit < 1) {
+            throw new \ValueError('Invalid length limit of ' . $limit . ', must be greater than 0');
         }
 
         $this->socket = $socket;
