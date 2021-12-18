@@ -50,9 +50,7 @@ class IntegrationTest extends AsyncTestCase
      */
     public function testConnectTls($uri): void
     {
-        $name = \explode(':', $uri)[0];
-
-        $socket = Socket\connectTls($uri, (new ConnectContext)->withTlsContext(new ClientTlsContext($name)));
+        $socket = Socket\connectTls($uri);
 
         self::assertInstanceOf(TlsInfo::class, $socket->getTlsInfo());
     }
@@ -62,7 +60,12 @@ class IntegrationTest extends AsyncTestCase
      */
     public function testConnectTlsManually($uri): void
     {
-        $name = \explode(':', $uri)[0];
+        $name = $uri;
+        if (\str_starts_with($name, 'tcp://')) {
+            $name = \substr($name, 6);
+        }
+
+        $name = \explode(':', $name)[0];
 
         $socket = Socket\connect($uri, (new ConnectContext)->withTlsContext(new ClientTlsContext($name)));
 
@@ -79,6 +82,7 @@ class IntegrationTest extends AsyncTestCase
             ['stackoverflow.com:443'],
             ['github.com:443'],
             ['raw.githubusercontent.com:443'],
+            ['tcp://github.com:443']
         ];
     }
 

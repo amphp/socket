@@ -4,6 +4,7 @@ namespace Amp\Socket;
 
 use Amp\Cancellation;
 use Amp\CancelledException;
+use League\Uri\UriString;
 use Revolt\EventLoop;
 
 /**
@@ -144,7 +145,21 @@ function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $ca
  */
 function connectTls(string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): EncryptableSocket
 {
-    $socket = socketConnector()->connect($uri, $context, $cancellation);
+    $context ??= new ConnectContext();
+    $tlsContext = $context->getTlsContext() ?? new ClientTlsContext('');
+
+    if ($tlsContext->getPeerName() === '') {
+        $hostname = '';
+        if (\str_contains($uri, 'tcp://')) {
+            $hostname = UriString::parse($uri)['host'];
+        } elseif (!\str_contains($uri, '://')) {
+            $hostname = UriString::parse('tcp://' . $uri)['host'];
+        }
+
+        $tlsContext = $tlsContext->withPeerName($hostname);
+    }
+
+    $socket = socketConnector()->connect($uri, $context->withTlsContext($tlsContext), $cancellation);
     $socket->setupTls($cancellation);
 
     return $socket;
