@@ -26,7 +26,7 @@ class IntegrationTest extends AsyncTestCase
     {
         return [
             ['www.google.com:80'],
-            ['www.yahoo.com:80'],
+            ['github.com:80'],
         ];
     }
 
