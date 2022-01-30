@@ -39,7 +39,7 @@
         "amphp/byte-stream": "^2",
         "kelunik/certificate": "^1.1",
         "league/uri": "^6.5",
-        "revolt/event-loop": "^0.1.1"
+        "revolt/event-loop": "^0.2"
     },
     "require-dev": {
         "phpunit/phpunit": "^9",
