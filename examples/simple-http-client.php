@@ -15,7 +15,7 @@ use function Amp\Socket\connectTls;
 
 $stdout = ByteStream\getStdout();
 
-if (\count($argv) !== 2) {
+if (count($argv) !== 2) {
     $stdout->write('Usage: examples/simple-http-client.php <url>' . PHP_EOL);
     exit(1);
 }

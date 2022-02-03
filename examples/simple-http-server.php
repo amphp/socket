@@ -26,7 +26,7 @@ while ($socket = $server->accept()) {
         echo "Accepted connection from {$address}." . PHP_EOL;
 
         $body = "Hey, your IP is {$ip} and your local port used is {$port}.";
-        $bodyLength = \strlen($body);
+        $bodyLength = strlen($body);
 
         $socket->write("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {$bodyLength}\r\n\r\n{$body}");
         $socket->end();
