@@ -34,7 +34,7 @@ function parseUri(string $uri): array
     try {
         $uriParts = UriString::parse($uri);
     } catch (\Exception $exception) {
-        throw new \Error("Invalid URI: {$uri}", 0, $exception);
+        throw new \Error("Invalid URI: $uri", 0, $exception);
     }
 
     $scheme = $uriParts['scheme'];
@@ -43,13 +43,13 @@ function parseUri(string $uri): array
 
     if (!\in_array($scheme, ['tcp', 'udp', 'unix', 'udg'], true)) {
         throw new \Error(
-            "Invalid URI scheme ({$scheme}); tcp, udp, unix or udg scheme expected"
+            "Invalid URI scheme ($scheme); tcp, udp, unix or udg scheme expected"
         );
     }
 
     if ($host === '' || $port === 0) {
         throw new \Error(
-            "Invalid URI: {$uri}; host and port components required"
+            "Invalid URI: $uri; host and port components required"
         );
     }
 
@@ -104,7 +104,7 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
     while (true) {
         $cancellation->throwIfRequested();
 
-        $suspension = EventLoop::createSuspension();
+        $suspension = EventLoop::getSuspension();
 
         // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
         $cancellationId = $cancellation->subscribe(static function ($e) use ($suspension, &$callbackId) {
@@ -186,19 +186,19 @@ function normalizeBindToOption(string $bindTo = null): ?string
         return null;
     }
 
-    if (\preg_match("/\\[(?P<ip>[0-9a-f:]+)\\](:(?P<port>\\d+))?$/", $bindTo, $match)) {
+    if (\preg_match("/\\[(?P<ip>[0-9a-f:]+)](:(?P<port>\\d+))?$/", $bindTo, $match)) {
         $ip = $match['ip'];
         $port = $match['port'] ?? 0;
 
         if (@\inet_pton($ip) === false) {
-            throw new \Error("Invalid IPv6 address: {$ip}");
+            throw new \Error("Invalid IPv6 address: $ip");
         }
 
         if ($port < 0 || $port > 65535) {
-            throw new \Error("Invalid port: {$port}");
+            throw new \Error("Invalid port: $port");
         }
 
-        return "[{$ip}]:{$port}";
+        return "[$ip]:$port";
     }
 
     if (\preg_match("/(?P<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)(:(?P<port>\\d+))?$/", $bindTo, $match)) {
@@ -206,42 +206,15 @@ function normalizeBindToOption(string $bindTo = null): ?string
         $port = $match['port'] ?? 0;
 
         if (@\inet_pton($ip) === false) {
-            throw new \Error("Invalid IPv4 address: {$ip}");
+            throw new \Error("Invalid IPv4 address: $ip");
         }
 
         if ($port < 0 || $port > 65535) {
-            throw new \Error("Invalid port: {$port}");
+            throw new \Error("Invalid port: $port");
         }
 
-        return "{$ip}:{$port}";
+        return "$ip:$port";
     }
 
-    throw new \Error("Invalid bindTo value: {$bindTo}");
-}
-
-/**
- * Cleans up return values of stream_socket_get_name.
- *
- * @param string|false $address
- *
- * @return string|null
- */
-function cleanupSocketName(string|false $address): ?string
-{
-    // https://3v4l.org/5C1lo
-    if ($address === false || $address === "\0") {
-        return null;
-    }
-
-    // Check if this is an IPv6 address which includes multiple colons but no square brackets
-    // @see https://github.com/reactphp/socket/blob/v0.8.10/src/TcpServer.php#L179-L184
-    // @license https://github.com/reactphp/socket/blob/v0.8.10/LICENSE
-    $pos = \strrpos($address, ':');
-    if ($pos !== false && \strpos($address, ':') < $pos && $address[0] !== '[') {
-        $port = \substr($address, $pos + 1);
-        $address = '[' . \substr($address, 0, $pos) . ']:' . $port;
-    }
-    // -- End of imported code ----- //
-
-    return $address;
+    throw new \Error("Invalid bindTo value: $bindTo");
 }

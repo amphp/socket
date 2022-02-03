@@ -21,6 +21,7 @@ final class ResourceSocketServer implements SocketServer
 
     private ?Suspension $acceptor = null;
 
+    /** @var \Closure(CancelledException) */
     private \Closure $cancel;
 
     /**
@@ -113,7 +114,7 @@ final class ResourceSocketServer implements SocketServer
         }
 
         EventLoop::enable($this->callbackId);
-        $this->acceptor = EventLoop::createSuspension();
+        $this->acceptor = EventLoop::getSuspension();
 
         $id = $cancellation?->subscribe($this->cancel);
 

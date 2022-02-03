@@ -20,6 +20,7 @@ final class ResourceDatagramSocket implements DatagramSocket
 
     private ?Suspension $reader = null;
 
+    /** @var \Closure(CancelledException) */
     private \Closure $cancel;
 
     private int $limit;
@@ -38,6 +39,7 @@ final class ResourceDatagramSocket implements DatagramSocket
             throw new \Error('Invalid resource given to constructor!');
         }
 
+        /** @psalm-suppress TypeDoesNotContainType */
         if ($limit < 1) {
             throw new \ValueError('Invalid length limit of ' . $limit . ', must be greater than 0');
         }
@@ -118,7 +120,7 @@ final class ResourceDatagramSocket implements DatagramSocket
         }
 
         $this->limit = $limit;
-        $this->reader = EventLoop::createSuspension();
+        $this->reader = EventLoop::getSuspension();
 
         EventLoop::enable($this->callbackId);
 
@@ -228,6 +230,7 @@ final class ResourceDatagramSocket implements DatagramSocket
      */
     public function setLimit(int $limit): void
     {
+        /** @psalm-suppress TypeDoesNotContainType */
         if ($limit <= 0) {
             throw new \ValueError('The chunk length must be a positive integer, got ' . $limit);
         }
