@@ -16,6 +16,8 @@ final class ResourceSocketServer implements SocketServer
 
     private SocketAddress $address;
 
+    private ?ServerTlsContext $tlsContext;
+
     /** @var positive-int */
     private int $chunkSize;
 
@@ -39,6 +41,7 @@ final class ResourceSocketServer implements SocketServer
         $this->socket = $socket;
         $this->chunkSize = $chunkSize;
         $this->address = SocketAddress::fromLocalResource($socket);
+        $this->tlsContext = ServerTlsContext::fromServerResource($this->socket);
 
         \stream_set_blocking($this->socket, false);
 
@@ -175,12 +178,14 @@ final class ResourceSocketServer implements SocketServer
         EventLoop::unreference($this->callbackId);
     }
 
-    /**
-     * @return SocketAddress
-     */
     public function getAddress(): SocketAddress
     {
         return $this->address;
+    }
+
+    public function getTlsContext(): ?ServerTlsContext
+    {
+        return $this->tlsContext;
     }
 
     /**

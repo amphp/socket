@@ -17,8 +17,7 @@ interface SocketServer extends ClosableStream, ResourceStream
      */
     public function accept(?Cancellation $cancellation = null): ?EncryptableSocket;
 
-    /**
-     * @return SocketAddress
-     */
     public function getAddress(): SocketAddress;
+
+    public function getTlsContext(): ?ServerTlsContext;
 }

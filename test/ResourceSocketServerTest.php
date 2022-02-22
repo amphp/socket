@@ -66,6 +66,11 @@ class ResourceSocketServerTest extends AsyncTestCase
             ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
         $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
+        self::assertEquals(
+            $tlsContext->toStreamContextArray(),
+            ServerTlsContext::fromServerResource($server->getResource())->toStreamContextArray()
+        );
+
         async(function () use ($server): void {
             while ($socket = $server->accept()) {
                 async(function () use ($socket): void {

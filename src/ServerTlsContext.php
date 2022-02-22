@@ -16,6 +16,39 @@ final class ServerTlsContext
         'TLSv1.3' => self::TLSv1_3,
     ];
 
+    public static function fromServerResource($socket): ?self
+    {
+        $tls = \stream_context_get_options($socket)['ssl'] ?? [];
+
+        if (!$tls) {
+            return null;
+        }
+
+        $context = (new self)
+            ->withPeerName($tls['peer_name'])
+            ->withVerificationDepth($tls['verify_depth'])
+            ->withCiphers($tls['ciphers'])
+            ->withSecurityLevel($tls['security_level'])
+            ->withDefaultCertificate(new Certificate($tls['local_cert'], $tls['local_pk'] ?? null));
+
+        if ($tls['verify_peer'] || $tls['verify_peer_name']) {
+            $context = $context->withPeerVerification();
+        }
+
+        if ($tls['capture_peer_cert'] || $tls['capture_peer_chain']) {
+            $context = $context->withPeerCapturing();
+        }
+
+        $minVersion = self::TLSv1_3;
+        foreach ([self::TLSv1_2, self::TLSv1_1, self::TLSv1_0] as $tlsVersion) {
+            if ($tls['crypto_method'] & $tlsVersion) {
+                $minVersion = $tlsVersion;
+            }
+        }
+
+        return $context->withMinimumVersion($minVersion);
+    }
+
     private int $minVersion = self::TLSv1_2;
 
     private ?string $peerName = null;
@@ -457,7 +490,7 @@ final class ServerTlsContext
             $options['capath'] = $this->caPath;
         }
 
-        if (\OPENSSL_VERSION_NUMBER >= 0x10100000) {
+        if (hasTlsSecurityLevelSupport()) {
             $options['security_level'] = $this->securityLevel;
         }
 
@@ -469,21 +502,12 @@ final class ServerTlsContext
      */
     public function toStreamCryptoMethod(): int
     {
-        switch ($this->minVersion) {
-            case self::TLSv1_0:
-                return self::TLSv1_0 | self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3;
-
-            case self::TLSv1_1:
-                return self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3;
-
-            case self::TLSv1_2:
-                return self::TLSv1_2 | self::TLSv1_3;
-
-            case self::TLSv1_3:
-                return self::TLSv1_3;
-
-            default:
-                throw new \RuntimeException('Unknown minimum TLS version: ' . $this->minVersion);
-        }
+        return match ($this->minVersion) {
+            self::TLSv1_0 => self::TLSv1_0 | self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3,
+            self::TLSv1_1 => self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3,
+            self::TLSv1_2 => self::TLSv1_2 | self::TLSv1_3,
+            self::TLSv1_3 => self::TLSv1_3,
+            default => throw new \Error('Unknown minimum TLS version: ' . $this->minVersion),
+        };
     }
 }
