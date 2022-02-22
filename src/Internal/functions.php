@@ -3,6 +3,7 @@
 namespace Amp\Socket\Internal;
 
 use Amp\Cancellation;
+use Amp\CancelledException;
 use Amp\NullCancellation;
 use Amp\Socket\TlsException;
 use League\Uri\UriString;
@@ -60,6 +61,9 @@ function parseUri(string $uri): array
  * Enable encryption on an existing socket stream.
  *
  * @param resource $socket
+ *
+ * @throws TlsException
+ * @throws CancelledException
  *
  * @internal
  */

@@ -8,8 +8,8 @@ namespace Amp\Socket;
  */
 final class Certificate
 {
-    private string $certFile;
-    private string $keyFile;
+    private readonly string $certFile;
+    private readonly string $keyFile;
 
     /**
      * @param string      $certFile Certificate file with the certificate + intermediaries.
