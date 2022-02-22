@@ -43,7 +43,10 @@ final class DnsSocketConnector implements SocketConnector
             $resolver = $this->resolver ?? Dns\resolver();
 
             // Host is not an IP address, so resolve the domain name.
-            $records = $resolver->resolve($host, $context->getDnsTypeRestriction());
+            $records = $resolver->resolve(
+                $host,
+                $context->getDnsTypeRestriction() ?? $this->getDnsTypeRestrictionFromBindTo($context)
+            );
 
             // Usually the faster response should be preferred, but we don't have a reliable way of determining IPv6
             // support, so we always prefer IPv4 here.
@@ -151,5 +154,19 @@ final class DnsSocketConnector implements SocketConnector
          * @psalm-suppress PossiblyUndefinedVariable
          */
         throw $e;
+    }
+
+    private function getDnsTypeRestrictionFromBindTo(ConnectContext $context): ?int
+    {
+        $bindTo = $context->getBindTo();
+        if ($bindTo === null) {
+            return null;
+        }
+
+        if (\str_starts_with($bindTo, '[')) {
+            return Dns\Record::AAAA;
+        }
+
+        return Dns\Record::A;
     }
 }
