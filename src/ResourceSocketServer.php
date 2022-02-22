@@ -16,7 +16,7 @@ final class ResourceSocketServer implements SocketServer
 
     private SocketAddress $address;
 
-    private ?ServerTlsContext $tlsContext;
+    private BindContext $bindContext;
 
     /** @var positive-int */
     private int $chunkSize;
@@ -34,8 +34,8 @@ final class ResourceSocketServer implements SocketServer
      */
     public function __construct(
         $socket,
+        BindContext $bindContext,
         int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE,
-        ?ServerTlsContext $tlsContext = null,
     ) {
         if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
@@ -43,8 +43,8 @@ final class ResourceSocketServer implements SocketServer
 
         $this->socket = $socket;
         $this->chunkSize = $chunkSize;
+        $this->bindContext = $bindContext;
         $this->address = SocketAddress::fromLocalResource($socket);
-        $this->tlsContext = $tlsContext ?? ServerTlsContext::fromServerResource($this->socket);
 
         \stream_set_blocking($this->socket, false);
 
@@ -181,9 +181,9 @@ final class ResourceSocketServer implements SocketServer
         return $this->address;
     }
 
-    public function getTlsContext(): ?ServerTlsContext
+    public function getBindContext(): BindContext
     {
-        return $this->tlsContext;
+        return $this->bindContext;
     }
 
     /**

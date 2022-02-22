@@ -15,5 +15,5 @@ interface SocketServer extends ClosableStream, ResourceStream
 
     public function getAddress(): SocketAddress;
 
-    public function getTlsContext(): ?ServerTlsContext;
+    public function getBindContext(): ?BindContext;
 }
