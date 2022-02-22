@@ -100,8 +100,6 @@ final class ResourceSocketServer implements SocketServer
     }
 
     /**
-     * @return ResourceSocket|null
-     *
      * @throws PendingAcceptError If another accept request is pending.
      */
     public function accept(?Cancellation $cancellation = null): ?ResourceSocket
@@ -145,9 +143,6 @@ final class ResourceSocketServer implements SocketServer
         $this->free();
     }
 
-    /**
-     * @return bool
-     */
     public function isClosed(): bool
     {
         return $this->socket === null;

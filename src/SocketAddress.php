@@ -4,7 +4,6 @@ namespace Amp\Socket;
 
 final class SocketAddress
 {
-    /** @var string */
     private string $host;
 
     /** @var positive-int|null */
@@ -12,8 +11,6 @@ final class SocketAddress
 
     /**
      * @param resource $resource
-     *
-     * @return self
      */
     public static function fromPeerResource($resource): self
     {
@@ -29,8 +26,6 @@ final class SocketAddress
 
     /**
      * @param resource $resource
-     *
-     * @return self
      */
     public static function fromLocalResource($resource): self
     {
@@ -48,11 +43,6 @@ final class SocketAddress
         return new self('');
     }
 
-    /**
-     * @param string $name
-     *
-     * @return self
-     */
     public static function fromSocketName(string $name): self
     {
         if ($portStartPos = \strrpos($name, ':')) {
@@ -67,7 +57,6 @@ final class SocketAddress
     }
 
     /**
-     * @param string   $host
      * @param positive-int|null $port
      */
     public function __construct(string $host, ?int $port = null)
@@ -85,9 +74,6 @@ final class SocketAddress
         $this->port = $port;
     }
 
-    /**
-     * @return string
-     */
     public function getHost(): string
     {
         return $this->host;
@@ -121,8 +107,6 @@ final class SocketAddress
 
     /**
      * @see toString
-     *
-     * @return string
      */
     public function __toString(): string
     {

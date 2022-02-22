@@ -19,8 +19,6 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider minimumVersionDataProvider
-     *
-     * @param int $version
      */
     public function testWithMinimumVersion(int $version): void
     {
@@ -40,8 +38,6 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider minimumVersionInvalidDataProvider
-     *
-     * @param int $version
      */
     public function testWithMinimumVersionInvalid(int $version): void
     {
@@ -61,8 +57,6 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider peerNameDataProvider
-     *
-     * @param string $peerName
      */
     public function testWithPeerName(string $peerName): void
     {
@@ -101,8 +95,6 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider certificateDataProvider
-     *
-     * @param Certificate|null $certificate
      */
     public function testWithCertificate(?Certificate $certificate): void
     {
@@ -123,8 +115,6 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider verifyDepthDataProvider
-     *
-     * @param int $verifyDepth
      */
     public function testWithVerificationDepth(int $verifyDepth): void
     {
@@ -145,8 +135,6 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider verifyDepthInvalidDataProvider
-     *
-     * @param int $verifyDepth
      */
     public function testWithVerificationDepthInvalid(int $verifyDepth): void
     {
@@ -166,8 +154,6 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider ciphersDataProvider
-     *
-     * @param string $ciphers
      */
     public function testWithCiphers(string $ciphers): void
     {
@@ -188,8 +174,6 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider caFileDataProvider
-     *
-     * @param string|null $caFile
      */
     public function testWithCaFile(?string $caFile): void
     {
@@ -210,8 +194,6 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider caPathDataProvider
-     *
-     * @param string|null $caPath
      */
     public function testWithCaPath(?string $caPath): void
     {
@@ -268,8 +250,6 @@ class ClientTlsContextTest extends TestCase
 
     /**
      * @dataProvider invalidSecurityLevelDataProvider
-     *
-     * @param int $level
      */
     public function testWithSecurityLevelInvalid(int $level): void
     {

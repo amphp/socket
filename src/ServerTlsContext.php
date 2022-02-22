@@ -102,8 +102,6 @@ final class ServerTlsContext
 
     /**
      * Returns the minimum TLS version to negotiate.
-     *
-     * @return int
      */
     public function getMinimumVersion(): int
     {
@@ -112,8 +110,6 @@ final class ServerTlsContext
 
     /**
      * Expected name of the peer.
-     *
-     * @param string|null $peerName
      *
      * @return self Cloned, modified instance.
      */
@@ -301,8 +297,6 @@ final class ServerTlsContext
 
     /**
      * Default certificate to use in case no SNI certificate matches.
-     *
-     * @param Certificate|null $defaultCertificate
      *
      * @return self Cloned, modified instance.
      */

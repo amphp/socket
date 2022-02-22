@@ -12,8 +12,6 @@ interface EncryptableSocket extends Socket
     public const TLS_STATE_SHUTDOWN_PENDING = 3;
 
     /**
-     * @param Cancellation|null $cancellation
-     *
      * @return void Returns when TLS is successfully set up on the socket.
      *
      * @throws SocketException Promise fails and the socket is closed if setting up TLS fails.
@@ -21,8 +19,6 @@ interface EncryptableSocket extends Socket
     public function setupTls(?Cancellation $cancellation = null): void;
 
     /**
-     * @param Cancellation|null $cancellation
-     *
      * @return void Returns when TLS is successfully shutdown.
      *
      * @throws SocketException Promise fails and the socket is closed if shutting down TLS fails.

@@ -8,9 +8,7 @@ namespace Amp\Socket;
  */
 final class Certificate
 {
-    /** @var string */
     private string $certFile;
-    /** @var string */
     private string $keyFile;
 
     /**
@@ -23,17 +21,11 @@ final class Certificate
         $this->keyFile = $keyFile ?? $certFile;
     }
 
-    /**
-     * @return string
-     */
     public function getCertFile(): string
     {
         return $this->certFile;
     }
 
-    /**
-     * @return string
-     */
     public function getKeyFile(): string
     {
         return $this->keyFile;

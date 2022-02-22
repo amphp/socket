@@ -73,8 +73,6 @@ final class ClientTlsContext
 
     /**
      * Returns the minimum TLS version to negotiate.
-     *
-     * @return int
      */
     public function getMinimumVersion(): int
     {
@@ -83,8 +81,6 @@ final class ClientTlsContext
 
     /**
      * Expected name of the peer.
-     *
-     * @param string $peerName
      *
      * @return self Cloned, modified instance.
      */

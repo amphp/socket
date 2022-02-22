@@ -11,10 +11,6 @@ use Revolt\EventLoop;
 /**
  * Parse an URI into [scheme, host, port].
  *
- * @param string $uri
- *
- * @return array
- *
  * @throws \Error If an invalid URI has been passed.
  *
  * @internal
@@ -64,10 +60,6 @@ function parseUri(string $uri): array
  * Enable encryption on an existing socket stream.
  *
  * @param resource $socket
- * @param array $options
- * @param Cancellation|null $cancellation
- *
- * @return void
  *
  * @internal
  */
@@ -159,8 +151,6 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
  *
  * @param resource $socket
  *
- * @return void
- *
  * @internal
  * @psalm-suppress InvalidReturnType
  */
@@ -173,10 +163,6 @@ function shutdownTls($socket): void
 
 /**
  * Normalizes "bindto" options to add a ":0" in case no port is present, otherwise PHP will silently ignore those.
- *
- * @param string|null $bindTo
- *
- * @return string|null
  *
  * @throws \Error If an invalid option has been passed.
  */

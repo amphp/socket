@@ -50,8 +50,6 @@ final class TlsInfo
      *
      * @param array $cryptoInfo Crypto info obtained via `stream_get_meta_data($socket->getResource())["crypto"]`.
      * @param array $tlsContext Context obtained via `stream_context_get_options($socket->getResource())["ssl"])`.
-     *
-     * @return self
      */
     public static function fromMetaData(array $cryptoInfo, array $tlsContext): self
     {

@@ -14,8 +14,6 @@ final class ResourceSocket implements EncryptableSocket
     /**
      * @param resource $resource Stream resource.
      * @param positive-int $chunkSize Read and write chunk size.
-     *
-     * @return self
      */
     public static function fromServerSocket($resource, int $chunkSize = self::DEFAULT_CHUNK_SIZE): self
     {
@@ -24,10 +22,7 @@ final class ResourceSocket implements EncryptableSocket
 
     /**
      * @param resource $resource Stream resource.
-     * @param ClientTlsContext|null $tlsContext
      * @param positive-int $chunkSize Read and write chunk size.
-     *
-     * @return self
      */
     public static function fromClientSocket(
         $resource,
@@ -53,7 +48,6 @@ final class ResourceSocket implements EncryptableSocket
 
     /**
      * @param resource $resource Stream resource.
-     * @param ClientTlsContext|null $tlsContext
      * @param positive-int $chunkSize Read and write chunk size.
      */
     private function __construct(

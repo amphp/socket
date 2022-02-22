@@ -16,8 +16,6 @@ use Revolt\EventLoop;
  * @param BindContext|null $context Context options for listening.
  * @param positive-int $chunkSize Chunk size for the accepted sockets.
  *
- * @return ResourceSocketServer
- *
  * @throws SocketException If binding to the specified URI failed.
  */
 function listen(
@@ -59,8 +57,6 @@ function listen(
  * @param BindContext|null $context Context options for listening.
  * @param positive-int $limit Maximum size for received messages.
  *
- * @return ResourceDatagramSocket
- *
  * @throws SocketException If binding to the specified URI failed.
  */
 function bindDatagram(
@@ -95,10 +91,6 @@ function bindDatagram(
 
 /**
  * Set or access the global SocketConnector instance.
- *
- * @param SocketConnector|null $connector
- *
- * @return SocketConnector
  */
 function socketConnector(?SocketConnector $connector = null): SocketConnector
 {
@@ -118,9 +110,6 @@ function socketConnector(?SocketConnector $connector = null): SocketConnector
  *
  * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ConnectContext|null $context Socket connect context to use when connecting.
- * @param Cancellation|null $cancellation
- *
- * @return EncryptableSocket
  *
  * @throws ConnectException
  * @throws CancelledException
@@ -135,9 +124,6 @@ function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $ca
  *
  * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ConnectContext|null $context Socket connect context to use when connecting.
- * @param Cancellation|null $cancellation
- *
- * @return EncryptableSocket
  *
  * @throws ConnectException
  * @throws TlsException
@@ -201,7 +187,6 @@ function createSocketPair(int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE): 
 
 /**
  * @see https://wiki.openssl.org/index.php/Manual:OPENSSL_VERSION_NUMBER(3)
- * @return bool
  */
 function hasTlsAlpnSupport(): bool
 {

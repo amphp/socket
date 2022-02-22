@@ -98,7 +98,6 @@ final class ResourceDatagramSocket implements DatagramSocket
     }
 
     /**
-     * @param Cancellation|null $cancellation
      * @param positive-int|null $limit If null, the default chunk size is used.
      *
      * @return null|array{SocketAddress, string}
@@ -209,17 +208,11 @@ final class ResourceDatagramSocket implements DatagramSocket
         $this->free();
     }
 
-    /**
-     * @return bool
-     */
     public function isClosed(): bool
     {
         return $this->socket === null;
     }
 
-    /**
-     * @return SocketAddress
-     */
     public function getAddress(): SocketAddress
     {
         return $this->address;

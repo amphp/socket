@@ -19,9 +19,6 @@ interface DatagramSocket extends ClosableStream, ResourceStream
     public function receive(?Cancellation $cancellation = null, ?int $limit = null): ?array;
 
     /**
-     * @param SocketAddress $address
-     * @param string $data
-     *
      * @throws SocketException If the UDP socket closes before the data can be sent or the payload is too large.
      */
     public function send(SocketAddress $address, string $data): void;

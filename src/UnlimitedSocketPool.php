@@ -135,10 +135,6 @@ final class UnlimitedSocketPool implements SocketPool
     }
 
     /**
-     * @param string $uri
-     *
-     * @return array
-     *
      * @throws SocketException
      */
     private function normalizeUri(string $uri): array
