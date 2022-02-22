@@ -32,8 +32,11 @@ final class ResourceSocketServer implements SocketServer
      *
      * @throws \Error If a stream resource is not given for $socket.
      */
-    public function __construct($socket, int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE)
-    {
+    public function __construct(
+        $socket,
+        int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE,
+        ?ServerTlsContext $tlsContext = null,
+    ) {
         if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
         }
@@ -41,7 +44,7 @@ final class ResourceSocketServer implements SocketServer
         $this->socket = $socket;
         $this->chunkSize = $chunkSize;
         $this->address = SocketAddress::fromLocalResource($socket);
-        $this->tlsContext = ServerTlsContext::fromServerResource($this->socket);
+        $this->tlsContext = $tlsContext ?? ServerTlsContext::fromServerResource($this->socket);
 
         \stream_set_blocking($this->socket, false);
 

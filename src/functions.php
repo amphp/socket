@@ -49,7 +49,7 @@ function listen(
         ), $errno);
     }
 
-    return new ResourceSocketServer($server, $chunkSize);
+    return new ResourceSocketServer($server, $chunkSize, $context->getTlsContext());
 }
 
 /**
