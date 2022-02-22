@@ -70,8 +70,9 @@ final class DnsSocketConnector implements SocketConnector
                 /** @psalm-suppress NullArgument */
                 if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $streamContext)) {
                     throw new ConnectException(\sprintf(
-                        'Connection to %s failed: [Error #%d] %s%s',
+                        'Connection to %s @ %s failed: (Error #%d) %s%s',
                         $uri,
+                        $builtUri,
                         $errno,
                         $errstr,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
@@ -81,7 +82,7 @@ final class DnsSocketConnector implements SocketConnector
                 \stream_set_blocking($socket, false);
 
                 $deferred = new DeferredFuture;
-                $id = $cancellation->subscribe(\Closure::fromCallable([$deferred, 'error']));
+                $id = $cancellation->subscribe($deferred->error(...));
                 $watcher = EventLoop::onWritable(
                     $socket,
                     static function (string $watcher) use ($deferred, $id, $cancellation): void {
@@ -97,8 +98,9 @@ final class DnsSocketConnector implements SocketConnector
                     $cancellation->throwIfRequested(); // Rethrow if cancelled from user-provided token.
 
                     throw new ConnectException(\sprintf(
-                        'Connecting to %s failed: timeout exceeded (%0.3f s)%s',
+                        'Connecting to %s @ %s failed: timeout exceeded (%0.3f s)%s',
                         $uri,
+                        $builtUri,
                         $timeout,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
                     ), 110); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
@@ -112,8 +114,9 @@ final class DnsSocketConnector implements SocketConnector
                 if (\stream_socket_get_name($socket, true) === false) {
                     \fclose($socket);
                     throw new ConnectException(\sprintf(
-                        'Connection to %s refused%s',
+                        'Connection to %s @ %s refused%s',
                         $uri,
+                        $builtUri,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
                     ), 111); // See ECONNREFUSED in http://www.virtsync.com/c-error-codes-include-errno
                 }
@@ -132,7 +135,7 @@ final class DnsSocketConnector implements SocketConnector
                     break;
                 }
 
-                $failures[] = "{$uri} ({$reason})";
+                $failures[] = "$uri @ $builtUri ($reason)";
 
                 continue; // Could not connect to host, try next host in the list.
             }
