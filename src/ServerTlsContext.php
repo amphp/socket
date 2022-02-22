@@ -336,13 +336,6 @@ final class ServerTlsContext
             if (!$certificate instanceof Certificate) {
                 throw new \TypeError('Expected an array of Certificate instances');
             }
-
-            if (\PHP_VERSION_ID < 70200 && $certificate->getCertFile() !== $certificate->getKeyFile()) {
-                throw new \Error(
-                    'Different files for cert and key are not supported on this version of PHP. ' .
-                    'Please upgrade to PHP 7.2 or later.'
-                );
-            }
         }
 
         $clone = clone $this;
