@@ -16,6 +16,9 @@ final class ServerTlsContext
         'TLSv1.3' => self::TLSv1_3,
     ];
 
+    /**
+     * @param resource $socket
+     */
     public static function fromServerResource($socket): ?self
     {
         $tls = \stream_context_get_options($socket)['ssl'] ?? [];
