@@ -15,7 +15,7 @@ class ResourceSocketServerTest extends AsyncTestCase
     public function testListenInvalidScheme(): void
     {
         $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Only tcp and unix schemes allowed for server creation');
+        $this->expectExceptionMessage('Invalid URI scheme (invalid); tcp, udp, unix or udg scheme expected');
 
         Socket\listen("invalid://127.0.0.1:0");
     }
@@ -23,7 +23,7 @@ class ResourceSocketServerTest extends AsyncTestCase
     public function testListenStreamSocketServerError(): void
     {
         $this->expectException(Socket\SocketException::class);
-        $this->expectExceptionMessageMatches('/Could not create server .*: \[Error: #.*\] .*$/');
+        $this->expectExceptionMessage('Invalid address: error');
 
         Socket\listen('error');
     }

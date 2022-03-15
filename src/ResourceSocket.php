@@ -58,8 +58,8 @@ final class ResourceSocket implements EncryptableSocket
         $this->tlsContext = $tlsContext;
         $this->reader = new ReadableResourceStream($resource, $chunkSize);
         $this->writer = new WritableResourceStream($resource, $chunkSize);
-        $this->remoteAddress = SocketAddress::fromPeerResource($resource);
-        $this->localAddress = SocketAddress::fromLocalResource($resource);
+        $this->remoteAddress = ResourceSocketAddress::fromPeer($resource);
+        $this->localAddress = ResourceSocketAddress::fromLocal($resource);
         $this->tlsState = self::TLS_STATE_DISABLED;
     }
 

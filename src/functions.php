@@ -12,69 +12,62 @@ use Revolt\EventLoop;
  *
  * If you want to accept TLS connections, you have to use `yield $socket->setupTls()` after accepting new clients.
  *
- * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
- * @param BindContext|null $context Context options for listening.
+ * @param SocketAddress|string $address URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param BindContext|null $bindContext Context options for listening.
  * @param positive-int $chunkSize Chunk size for the accepted sockets.
  *
  * @throws SocketException If binding to the specified URI failed.
  */
 function listen(
-    string $uri,
-    ?BindContext $context = null,
+    SocketAddress|string $address,
+    ?BindContext $bindContext = null,
     int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE
 ): ResourceSocketServer {
-    $context = $context ?? new BindContext;
+    if (\is_string($address)) {
+        [$scheme, $host, $port] = Internal\parseUri($address);
 
-    $scheme = \strstr($uri, '://', true);
-
-    if ($scheme === false) {
-        $uri = 'tcp://' . $uri;
-    } elseif (!\in_array($scheme, ['tcp', 'unix'])) {
-        throw new \Error('Only tcp and unix schemes allowed for server creation');
+        if ($scheme === 'tcp') {
+            $address = new InternetAddress($host, $port);
+        } elseif ($scheme === 'unix') {
+            $address = new UnixAddress('/' . $host);
+        } else {
+            throw new SocketException('Invalid address: ' . $address);
+        }
     }
 
-    $streamContext = \stream_context_create($context->toStreamContextArray());
-
-    // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
-    $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $streamContext);
-
-    if (!$server || $errno) {
-        throw new SocketException(\sprintf(
-            'Could not create server %s: [Error: #%d] %s',
-            $uri,
-            $errno,
-            $errstr
-        ), $errno);
-    }
-
-    return new ResourceSocketServer($server, $context, $chunkSize);
+    return (new ResourceSocketServerFactory($chunkSize))->listen($address, $bindContext);
 }
 
 /**
  * Create a new Datagram (UDP server) on the specified server address.
  *
- * @param string $uri URI in scheme://host:port format. UDP is assumed if no scheme is present.
- * @param BindContext|null $context Context options for listening.
+ * @param InternetAddress|string $address URI in scheme://host:port format. UDP is assumed if no scheme is present.
+ * @param BindContext|null $bindContext Context options for listening.
  * @param positive-int $limit Maximum size for received messages.
  *
  * @throws SocketException If binding to the specified URI failed.
  */
 function bindDatagram(
-    string $uri,
-    ?BindContext $context = null,
+    InternetAddress|string $address,
+    ?BindContext $bindContext = null,
     int $limit = ResourceDatagramSocket::DEFAULT_LIMIT
 ): ResourceDatagramSocket {
-    $context = $context ?? new BindContext;
+    $bindContext = $bindContext ?? new BindContext;
 
-    $scheme = \strstr($uri, '://', true);
+    if ($address instanceof InternetAddress) {
+        $uri = 'udp://' . $address->toString();
+    } else {
+        $uri = $address;
 
-    if ($scheme === false) {
-        $uri = 'udp://' . $uri;
-    } elseif ($scheme !== 'udp') {
-        throw new \Error('Only udp scheme allowed for datagram creation');
+        $scheme = \strstr($address, '://', true);
+        if ($scheme === false) {
+            $uri = 'udp://' . $address;
+        } elseif ($scheme !== 'udp') {
+            throw new \Error('Only udp scheme allowed for datagram creation');
+        }
     }
 
-    $streamContext = \stream_context_create($context->toStreamContextArray());
+    $streamContext = \stream_context_create($bindContext->toStreamContextArray());
 
     // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
     $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND, $streamContext);

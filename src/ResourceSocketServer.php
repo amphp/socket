@@ -44,7 +44,7 @@ final class ResourceSocketServer implements SocketServer
         $this->socket = $socket;
         $this->chunkSize = $chunkSize;
         $this->bindContext = $bindContext;
-        $this->address = SocketAddress::fromLocalResource($socket);
+        $this->address = ResourceSocketAddress::fromLocal($socket);
 
         \stream_set_blocking($this->socket, false);
 
