@@ -11,6 +11,11 @@ final class UnixAddress implements SocketAddress
         $this->path = $path;
     }
 
+    public function getType(): SocketAddressType
+    {
+        return SocketAddressType::Unix;
+    }
+
     public function isUnnamed(): bool
     {
         return $this->path === '';

@@ -2,8 +2,11 @@
 
 namespace Amp\Socket;
 
-final class ResourceSocketAddress
+enum SocketAddressType
 {
+    case Internet;
+    case Unix;
+
     /**
      * @param resource $resource
      *
@@ -58,10 +61,5 @@ final class ResourceSocketAddress
         }
 
         return new UnixAddress($name);
-    }
-
-    private function __construct()
-    {
-        // private to avoid objects
     }
 }

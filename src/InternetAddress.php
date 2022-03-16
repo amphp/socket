@@ -65,6 +65,11 @@ final class InternetAddress implements SocketAddress
         $this->port = $port;
     }
 
+    public function getType(): SocketAddressType
+    {
+        return SocketAddressType::Internet;
+    }
+
     public function getAddress(): string
     {
         return $this->textualAddress;
@@ -75,7 +80,7 @@ final class InternetAddress implements SocketAddress
         return $this->binaryAddress;
     }
 
-    public function getType(): InternetAddressType
+    public function getVersion(): InternetAddressType
     {
         if (\strlen($this->binaryAddress) === 4) {
             return InternetAddressType::IPV4;
@@ -97,7 +102,7 @@ final class InternetAddress implements SocketAddress
      */
     public function toString(): string
     {
-        if ($this->getType() === InternetAddressType::IPV6) {
+        if ($this->getVersion() === InternetAddressType::IPV6) {
             return '[' . $this->textualAddress . ']' . ':' . $this->port;
         }
 
