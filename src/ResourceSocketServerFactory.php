@@ -10,7 +10,7 @@ final class ResourceSocketServerFactory implements SocketServerFactory
     /**
      * @param positive-int|null $chunkSize
      */
-    public function __construct(?int $chunkSize)
+    public function __construct(?int $chunkSize = null)
     {
         $this->chunkSize = $chunkSize;
     }
