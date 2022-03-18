@@ -17,7 +17,7 @@ final class InternetAddress implements SocketAddress
         $ip = \substr($address, 0, $colon);
         $port = \substr($address, $colon);
 
-        if (!\preg_match('/[1-9][0-9]{0,4}/', $port)) {
+        if (!\preg_match('/^[1-9][0-9]{0,4}$/', $port)) {
             throw new SocketException('Invalid port: ' . $port);
         }
 
@@ -92,13 +92,13 @@ final class InternetAddress implements SocketAddress
     /**
      * @return int<0, 65535>
      */
-    public function getPort(): ?int
+    public function getPort(): int
     {
         return $this->port;
     }
 
     /**
-     * @return string <address>:<port> formatted string.
+     * @return non-empty-string <address>:<port> formatted string.
      */
     public function toString(): string
     {
