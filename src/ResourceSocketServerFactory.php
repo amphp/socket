@@ -22,9 +22,9 @@ final class ResourceSocketServerFactory implements SocketServerFactory
     {
         $bindContext ??= new BindContext;
 
-        $uri = match (true) {
-            $address instanceof InternetAddress => 'tcp://' . $address->toString(),
-            $address instanceof UnixAddress => 'unix://' . $address->toString(),
+        $uri = match ($address->getType()) {
+            SocketAddressType::Internet => 'tcp://' . $address->toString(),
+            SocketAddressType::Unix => 'unix://' . $address->toString(),
         };
 
         $streamContext = \stream_context_create($bindContext->toStreamContextArray());
