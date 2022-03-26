@@ -6,11 +6,6 @@ use Amp\Cancellation;
 
 interface EncryptableSocket extends Socket
 {
-    public const TLS_STATE_DISABLED = 0;
-    public const TLS_STATE_SETUP_PENDING = 1;
-    public const TLS_STATE_ENABLED = 2;
-    public const TLS_STATE_SHUTDOWN_PENDING = 3;
-
     /**
      * @return void Returns when TLS is successfully set up on the socket.
      *
@@ -25,10 +20,7 @@ interface EncryptableSocket extends Socket
      */
     public function shutdownTls(?Cancellation $cancellation = null): void;
 
-    /**
-     * @return int One of the TLS_STATE_* constants defined in this interface.
-     */
-    public function getTlsState(): int;
+    public function getTlsState(): TlsState;
 
     /**
      * @return TlsInfo|null The TLS (crypto) context info if TLS is enabled on the socket or null otherwise.

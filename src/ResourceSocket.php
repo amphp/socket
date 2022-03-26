@@ -34,7 +34,7 @@ final class ResourceSocket implements EncryptableSocket
 
     private readonly ?ClientTlsContext $tlsContext;
 
-    private int $tlsState;
+    private TlsState $tlsState;
 
     private readonly ReadableResourceStream $reader;
 
@@ -60,7 +60,7 @@ final class ResourceSocket implements EncryptableSocket
         $this->writer = new WritableResourceStream($resource, $chunkSize);
         $this->remoteAddress = SocketAddress\fromResourcePeer($resource);
         $this->localAddress = SocketAddress\fromResourceLocal($resource);
-        $this->tlsState = self::TLS_STATE_DISABLED;
+        $this->tlsState = TlsState::Disabled;
     }
 
     public function setupTls(?Cancellation $cancellation = null): void
@@ -71,7 +71,7 @@ final class ResourceSocket implements EncryptableSocket
             throw new ClosedException("Can't setup TLS, because the socket has already been closed");
         }
 
-        $this->tlsState = self::TLS_STATE_SETUP_PENDING;
+        $this->tlsState = TlsState::SetupPending;
 
         if ($this->tlsContext) {
             $context = $this->tlsContext->toStreamContextArray();
@@ -92,7 +92,7 @@ final class ResourceSocket implements EncryptableSocket
             /** @psalm-suppress PossiblyInvalidArgument */
             Internal\setupTls($resource, $context, $cancellation);
 
-            $this->tlsState = self::TLS_STATE_ENABLED;
+            $this->tlsState = TlsState::Enabled;
         } catch (\Throwable $exception) {
             $this->close();
 
@@ -106,13 +106,13 @@ final class ResourceSocket implements EncryptableSocket
             throw new ClosedException("Can't shutdown TLS, because the socket has already been closed");
         }
 
-        $this->tlsState = self::TLS_STATE_SHUTDOWN_PENDING;
+        $this->tlsState = TlsState::ShutdownPending;
 
         try {
             /** @psalm-suppress PossiblyInvalidArgument */
             Internal\shutdownTls($resource);
         } finally {
-            $this->tlsState = self::TLS_STATE_DISABLED;
+            $this->tlsState = TlsState::Disabled;
         }
     }
 
@@ -167,7 +167,7 @@ final class ResourceSocket implements EncryptableSocket
         return $this->remoteAddress;
     }
 
-    public function getTlsState(): int
+    public function getTlsState(): TlsState
     {
         return $this->tlsState;
     }
