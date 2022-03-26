@@ -4,6 +4,7 @@ namespace Amp\Socket;
 
 use Amp\Cancellation;
 use Amp\CancelledException;
+use Amp\DeferredFuture;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 
@@ -27,6 +28,8 @@ final class ResourceDatagramSocket implements DatagramSocket
 
     private int $defaultLimit;
 
+    private readonly DeferredFuture $onClose;
+
     /**
      * @param resource $socket A bound udp socket resource.
      * @param positive-int $limit Maximum size for received messages.
@@ -48,13 +51,15 @@ final class ResourceDatagramSocket implements DatagramSocket
         $this->address = SocketAddress\fromResourceLocal($socket);
         $this->defaultLimit = $this->limit = &$limit;
 
+        $this->onClose = new DeferredFuture;
+
         \stream_set_blocking($this->socket, false);
         \stream_set_read_buffer($this->socket, 0);
 
         $reader = &$this->reader;
         $this->callbackId = EventLoop::onReadable($this->socket, static function (string $callbackId, $socket) use (
             &$reader,
-            &$limit
+            &$limit,
         ): void {
             \assert($reader !== null);
 
@@ -213,6 +218,11 @@ final class ResourceDatagramSocket implements DatagramSocket
         return $this->socket === null;
     }
 
+    public function onClose(\Closure $onClose): void
+    {
+        $this->onClose->getFuture()->finally($onClose);
+    }
+
     public function getAddress(): SocketAddress
     {
         return $this->address;
@@ -239,5 +249,9 @@ final class ResourceDatagramSocket implements DatagramSocket
 
         $this->reader?->resume();
         $this->reader = null;
+
+        if (!$this->onClose->isComplete()) {
+            $this->onClose->complete();
+        }
     }
 }

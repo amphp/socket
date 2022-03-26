@@ -32,17 +32,17 @@ final class ResourceSocket implements EncryptableSocket
         return new self($resource, $tlsContext, $chunkSize);
     }
 
-    private ?ClientTlsContext $tlsContext;
+    private readonly ?ClientTlsContext $tlsContext;
 
     private int $tlsState;
 
-    private ReadableResourceStream $reader;
+    private readonly ReadableResourceStream $reader;
 
-    private WritableResourceStream $writer;
+    private readonly WritableResourceStream $writer;
 
-    private SocketAddress $localAddress;
+    private readonly SocketAddress $localAddress;
 
-    private SocketAddress $remoteAddress;
+    private readonly SocketAddress $remoteAddress;
 
     private ?TlsInfo $tlsInfo = null;
 
@@ -190,6 +190,11 @@ final class ResourceSocket implements EncryptableSocket
     public function isClosed(): bool
     {
         return $this->reader->isClosed() && $this->writer->isClosed();
+    }
+
+    public function onClose(\Closure $onClose): void
+    {
+        $this->reader->onClose($onClose);
     }
 
     /**

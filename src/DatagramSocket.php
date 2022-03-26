@@ -2,11 +2,11 @@
 
 namespace Amp\Socket;
 
-use Amp\ByteStream\ClosableStream;
+use Amp\ByteStream\Closable;
 use Amp\ByteStream\ResourceStream;
 use Amp\Cancellation;
 
-interface DatagramSocket extends ClosableStream, ResourceStream
+interface DatagramSocket extends Closable, ResourceStream
 {
     /**
      * @param positive-int|null $limit Read at most $limit bytes from the datagram socket. {@code null} uses an

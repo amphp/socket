@@ -4,6 +4,7 @@ namespace Amp\Socket;
 
 use Amp\Cancellation;
 use Amp\CancelledException;
+use Amp\DeferredFuture;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 
@@ -14,9 +15,9 @@ final class ResourceSocketServer implements SocketServer
 
     private string $callbackId;
 
-    private SocketAddress $address;
+    private readonly SocketAddress $address;
 
-    private BindContext $bindContext;
+    private readonly BindContext $bindContext;
 
     /** @var positive-int */
     private int $chunkSize;
@@ -25,6 +26,8 @@ final class ResourceSocketServer implements SocketServer
 
     /** @var \Closure(CancelledException) */
     private \Closure $cancel;
+
+    private readonly DeferredFuture $onClose;
 
     /**
      * @param resource $socket A bound socket server resource
@@ -46,12 +49,14 @@ final class ResourceSocketServer implements SocketServer
         $this->bindContext = $bindContext;
         $this->address = SocketAddress\fromResourceLocal($socket);
 
+        $this->onClose = new DeferredFuture;
+
         \stream_set_blocking($this->socket, false);
 
         $acceptor = &$this->acceptor;
         $this->callbackId = EventLoop::onReadable($this->socket, static function (string $watcher, $socket) use (
             &$acceptor,
-            $chunkSize
+            $chunkSize,
         ): void {
             // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
             if (!$client = @\stream_socket_accept($socket, 0)) {  // Timeout of 0 to be non-blocking.
@@ -97,6 +102,10 @@ final class ResourceSocketServer implements SocketServer
 
         $this->acceptor?->resume();
         $this->acceptor = null;
+
+        if (!$this->onClose->isComplete()) {
+            $this->onClose->complete();
+        }
     }
 
     /**
@@ -146,6 +155,11 @@ final class ResourceSocketServer implements SocketServer
     public function isClosed(): bool
     {
         return $this->socket === null;
+    }
+
+    public function onClose(\Closure $onClose): void
+    {
+        $this->onClose->getFuture()->finally($onClose);
     }
 
     /**
