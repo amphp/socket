@@ -21,7 +21,10 @@
         "hasTlsSecurityLevelSupport",
         "fromResourceLocal",
         "fromResourcePeer",
-        "fromString"
+        "fromString",
+        "Amp\\Socket\\Internal\\CONNECTION_BUSY",
+        "Amp\\Socket\\Internal\\CONNECTION_REFUSED",
+        "Amp\\Socket\\Internal\\CONNECTION_TIMEOUT"
     ],
     "php-core-extensions": [
         "Core",
@@ -31,6 +34,7 @@
         "Reflection",
         "SPL",
         "standard",
-        "hash"
+        "hash",
+        "sockets"
     ]
 }
