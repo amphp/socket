@@ -45,7 +45,7 @@ final class ResourceDatagramSocket implements DatagramSocket
         }
 
         $this->socket = $socket;
-        $this->address = SocketAddress::fromLocalResource($socket);
+        $this->address = SocketAddress\fromResourceLocal($socket);
         $this->defaultLimit = $this->limit = &$limit;
 
         \stream_set_blocking($this->socket, false);
@@ -68,7 +68,7 @@ final class ResourceDatagramSocket implements DatagramSocket
             } else {
                 EventLoop::disable($callbackId);
 
-                $reader->resume([SocketAddress::fromSocketName($address), $data]);
+                $reader->resume([SocketAddress\fromString($address), $data]);
             }
 
             $reader = null;

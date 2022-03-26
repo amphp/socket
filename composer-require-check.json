@@ -18,7 +18,10 @@
         "object",
         "socketConnector",
         "hasTlsAlpnSupport",
-        "hasTlsSecurityLevelSupport"
+        "hasTlsSecurityLevelSupport",
+        "fromResourceLocal",
+        "fromResourcePeer",
+        "fromString"
     ],
     "php-core-extensions": [
         "Core",

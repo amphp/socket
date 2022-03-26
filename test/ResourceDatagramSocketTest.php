@@ -37,15 +37,17 @@ class ResourceDatagramSocketTest extends AsyncTestCase
 
         $socket = Socket\connect('udp://' . $endpoint->getAddress());
         $remote = $socket->getLocalAddress();
+        $this->assertInstanceOf(InternetAddress::class, $remote);
 
         $socket->write('Hello!');
 
         EventLoop::queue(function () use ($endpoint, $remote): void {
             while ([$address, $data] = $endpoint->receive()) {
-                \assert($address instanceof Socket\SocketAddress);
-                $this->assertSame('Hello!', $data);
-                $this->assertSame($remote->getHost(), $address->getHost());
-                $this->assertSame($remote->getPort(), $address->getPort());
+                self::assertInstanceOf(Socket\InternetAddress::class, $address);
+                self::assertSame('Hello!', $data);
+                self::assertSame('127.0.0.1', $address->getAddress());
+                self::assertNotSame(0, $address->getPort());
+                self::assertSame($remote->getPort(), $address->getPort());
             }
         });
 
@@ -62,14 +64,16 @@ class ResourceDatagramSocketTest extends AsyncTestCase
 
         $socket = Socket\connect('udp://' . $endpoint->getAddress());
         $remote = $socket->getLocalAddress();
+        $this->assertInstanceOf(InternetAddress::class, $remote);
 
         $socket->write('a');
 
         async(function () use ($endpoint, $remote) {
             while ([$address, $data] = $endpoint->receive()) {
-                self::assertInstanceOf(Socket\SocketAddress::class, $address);
+                self::assertInstanceOf(Socket\InternetAddress::class, $address);
                 self::assertSame('a', $data);
-                self::assertSame($remote->getHost(), $address->getHost());
+                self::assertSame('127.0.0.1', $address->getAddress());
+                self::assertNotSame(0, $address->getPort());
                 self::assertSame($remote->getPort(), $address->getPort());
 
                 $endpoint->send($address, 'b');

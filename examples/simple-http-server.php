@@ -20,7 +20,9 @@ echo 'Open your browser and visit http://' . $server->getAddress() . '/' . PHP_E
 while ($socket = $server->accept()) {
     async(function () use ($socket) {
         $address = $socket->getRemoteAddress();
-        $ip = $address->getHost();
+        assert($address instanceof Socket\InternetAddress);
+
+        $ip = $address->getAddress();
         $port = $address->getPort();
 
         echo "Accepted connection from {$address}." . PHP_EOL;

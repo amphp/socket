@@ -9,9 +9,12 @@ use function Amp\ByteStream\splitLines;
 
 $server = Socket\listen('127.0.0.1:0');
 
-echo 'Listening for new connections on ' . $server->getAddress() . ' ...' . PHP_EOL;
+$address = $server->getAddress();
+assert($address instanceof Socket\InternetAddress);
+
+echo 'Listening for new connections on ' . $address . ' ...' . PHP_EOL;
 echo 'Connect from a terminal, e.g. ';
-echo '"nc ' . $server->getAddress()->getHost() . ' ' . $server->getAddress()->getPort() . '"' . PHP_EOL;
+echo '"nc ' . $address->getAddress() . ' ' . $address->getPort() . '"' . PHP_EOL;
 
 while ($socket = $server->accept()) {
     async(function () use ($socket) {

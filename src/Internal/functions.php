@@ -44,9 +44,9 @@ function parseUri(string $uri): array
         );
     }
 
-    if ($host === '' || $port === 0) {
+    if ($host === '') {
         throw new \Error(
-            "Invalid URI: $uri; host and port components required"
+            "Invalid URI: $uri; host component required"
         );
     }
 

@@ -53,7 +53,8 @@
         },
         "files": [
             "src/functions.php",
-            "src/Internal/functions.php"
+            "src/Internal/functions.php",
+            "src/SocketAddress/functions.php"
         ]
     },
     "autoload-dev": {
