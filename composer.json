@@ -42,6 +42,7 @@
         "revolt/event-loop": "^0.2"
     },
     "require-dev": {
+        "ext-sockets": "*",
         "phpunit/phpunit": "^9",
         "amphp/phpunit-util": "^3",
         "amphp/php-cs-fixer-config": "^2-dev",

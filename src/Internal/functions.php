@@ -9,7 +9,7 @@ use Amp\Socket\TlsException;
 use League\Uri\UriString;
 use Revolt\EventLoop;
 
-if (\extension_loaded('socket')) {
+if (\extension_loaded('sockets')) {
     \define(__NAMESPACE__ . '\\CONNECTION_BUSY', \SOCKET_EAGAIN);
     \define(__NAMESPACE__ . '\\CONNECTION_TIMEOUT', \SOCKET_ETIMEDOUT);
     \define(__NAMESPACE__ . '\\CONNECTION_REFUSED', \SOCKET_ECONNREFUSED);
