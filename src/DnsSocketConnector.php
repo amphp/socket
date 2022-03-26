@@ -147,7 +147,7 @@ final class DnsSocketConnector implements SocketConnector
          * This is reached if either all URIs failed or the maximum number of attempts is reached.
          *
          * @noinspection PhpUndefinedVariableInspection
-         * @psalm-suppress PossiblyUndefinedVariable
+         * @psalm-suppress UndefinedVariable
          */
         throw $e;
     }

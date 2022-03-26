@@ -12,6 +12,9 @@ final class RetrySocketConnector implements SocketConnector
     ) {
     }
 
+    /**
+     * @psalm-suppress InvalidReturnType
+     */
     public function connect(
         string $uri,
         ?ConnectContext $context = null,
@@ -27,7 +30,7 @@ final class RetrySocketConnector implements SocketConnector
             } catch (ConnectException $e) {
                 if (++$attempts === $context->getMaxAttempts()) {
                     throw new ConnectException(\sprintf(
-                        'Connection to %s @ %s failed after %d attempts',
+                        'Connection to %s failed after %d attempts%s',
                         $uri,
                         $attempts,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
@@ -36,7 +39,7 @@ final class RetrySocketConnector implements SocketConnector
 
                 $failures[] = $e->getMessage();
 
-                delay($context->getExponentialBackoffFactor() ** $attempts);
+                delay($context->getExponentialBackoffBase() ** $attempts);
             }
         } while (true);
     }

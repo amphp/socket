@@ -11,7 +11,7 @@ final class ConnectContext
 
     private float $connectTimeout = 10;
     private int $maxAttempts = 2;
-    private float $backoffFactor = 2;
+    private float $backoffBase = 2;
 
     private ?int $typeRestriction = null;
 
@@ -73,21 +73,21 @@ final class ConnectContext
         return $this->maxAttempts;
     }
 
-    public function withExponentialBackoffFactor(float $factor): self
+    public function withExponentialBackoffBase(float $base): self
     {
-        if ($factor <= 0) {
-            throw new \ValueError("Invalid exponential backoff factor ({$factor}), must be greater than 0");
+        if ($base < 0) {
+            throw new \ValueError("Invalid exponential backoff base ({$base}), must be greater than or equal to 0");
         }
 
         $clone = clone $this;
-        $clone->backoffFactor = $factor;
+        $clone->backoffBase = $base;
 
         return $clone;
     }
 
-    public function getExponentialBackoffFactor(): float
+    public function getExponentialBackoffBase(): float
     {
-        return $this->backoffFactor;
+        return $this->backoffBase;
     }
 
     public function withoutDnsTypeRestriction(): self
