@@ -95,7 +95,7 @@ function socketConnector(?SocketConnector $connector = null): SocketConnector
         return $map[$driver] = $connector;
     }
 
-    return $map[$driver] ??= new DnsSocketConnector();
+    return $map[$driver] ??= new RetrySocketConnector(new DnsSocketConnector());
 }
 
 /**

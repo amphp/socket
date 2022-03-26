@@ -9,6 +9,17 @@ use Amp\Socket\TlsException;
 use League\Uri\UriString;
 use Revolt\EventLoop;
 
+if (\extension_loaded('socket')) {
+    \define(__NAMESPACE__ . '\\CONNECTION_BUSY', \SOCKET_EAGAIN);
+    \define(__NAMESPACE__ . '\\CONNECTION_TIMEOUT', \SOCKET_ETIMEDOUT);
+    \define(__NAMESPACE__ . '\\CONNECTION_REFUSED', \SOCKET_ECONNREFUSED);
+} else {
+    // Use Linux error codes if the socket extension is not available
+    \define(__NAMESPACE__ . '\\CONNECTION_BUSY', 11);
+    \define(__NAMESPACE__ . '\\CONNECTION_TIMEOUT', 110);
+    \define(__NAMESPACE__ . '\\CONNECTION_REFUSED', 111);
+}
+
 /**
  * Parse an URI into [scheme, host, port].
  *

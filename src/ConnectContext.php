@@ -11,6 +11,7 @@ final class ConnectContext
 
     private float $connectTimeout = 10;
     private int $maxAttempts = 2;
+    private float $backoffFactor = 2;
 
     private ?int $typeRestriction = null;
 
@@ -41,7 +42,7 @@ final class ConnectContext
     public function withConnectTimeout(float $timeout): self
     {
         if ($timeout <= 0) {
-            throw new \Error("Invalid connect timeout ({$timeout}), must be greater than 0");
+            throw new \ValueError("Invalid connect timeout ({$timeout}), must be greater than 0");
         }
 
         $clone = clone $this;
@@ -58,7 +59,7 @@ final class ConnectContext
     public function withMaxAttempts(int $maxAttempts): self
     {
         if ($maxAttempts <= 0) {
-            throw new \Error("Invalid max attempts ({$maxAttempts}), must be greater than 0");
+            throw new \ValueError("Invalid max attempts ({$maxAttempts}), must be greater than 0");
         }
 
         $clone = clone $this;
@@ -72,6 +73,23 @@ final class ConnectContext
         return $this->maxAttempts;
     }
 
+    public function withExponentialBackoffFactor(float $factor): self
+    {
+        if ($factor <= 0) {
+            throw new \ValueError("Invalid exponential backoff factor ({$factor}), must be greater than 0");
+        }
+
+        $clone = clone $this;
+        $clone->backoffFactor = $factor;
+
+        return $clone;
+    }
+
+    public function getExponentialBackoffFactor(): float
+    {
+        return $this->backoffFactor;
+    }
+
     public function withoutDnsTypeRestriction(): self
     {
         return $this->withDnsTypeRestriction(null);
@@ -80,7 +98,7 @@ final class ConnectContext
     public function withDnsTypeRestriction(?int $type): self
     {
         if ($type !== null && $type !== Record::AAAA && $type !== Record::A) {
-            throw new \Error('Invalid resolver type restriction');
+            throw new \ValueError('Invalid resolver type restriction');
         }
 
         $clone = clone $this;

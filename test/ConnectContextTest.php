@@ -101,6 +101,18 @@ class ConnectContextTest extends TestCase
         self::assertSame($maxAttempts, $clonedContext->getMaxAttempts());
     }
 
+    /**
+     * @dataProvider withMaxAttemptsDataProvider
+     */
+    public function withExponentialBackoff($factor): void
+    {
+        $context = new ConnectContext();
+        $clonedContext = $context->withExponentialBackoffFactor($factor);
+
+        self::assertSame(2, $context->getExponentialBackoffFactor());
+        self::assertSame($factor, $clonedContext->getExponentialBackoffFactor());
+    }
+
     public function withMaxAttemptsInvalidTimeoutDataProvider(): array
     {
         return [
@@ -119,6 +131,17 @@ class ConnectContextTest extends TestCase
         $this->expectExceptionMessage("Invalid max attempts ({$maxAttempts}), must be greater than 0");
         $context = new ConnectContext();
         $context->withMaxAttempts($maxAttempts);
+    }
+
+    /**
+     * @dataProvider withMaxAttemptsInvalidTimeoutDataProvider
+     */
+    public function testWithExponentialBackoffInvalidTimeout($factor): void
+    {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage("Invalid exponential backoff factor ({$factor}), must be greater than 0");
+        $context = new ConnectContext();
+        $context->withExponentialBackoffFactor($factor);
     }
 
     public function withDnsTypeRestrictionDataProvider(): array

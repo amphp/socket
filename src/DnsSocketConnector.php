@@ -26,7 +26,6 @@ final class DnsSocketConnector implements SocketConnector
     ): EncryptableSocket {
         $context ??= new ConnectContext;
         $cancellation ??= new NullCancellation;
-        $attempt = 0;
         $uris = [];
         $failures = [];
 
@@ -106,7 +105,7 @@ final class DnsSocketConnector implements SocketConnector
                         $builtUri,
                         $timeout,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
-                    ), 110); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
+                    ), Internal\CONNECTION_TIMEOUT); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
                 } finally {
                     EventLoop::cancel($watcher);
                     $cancellation->unsubscribe($id);
@@ -121,22 +120,19 @@ final class DnsSocketConnector implements SocketConnector
                         $uri,
                         $builtUri,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
-                    ), 111); // See ECONNREFUSED in http://www.virtsync.com/c-error-codes-include-errno
+                    ), Internal\CONNECTION_REFUSED); // See ECONNREFUSED in http://www.virtsync.com/c-error-codes-include-errno
                 }
             } catch (ConnectException $e) {
                 // Includes only error codes used in this file, as error codes on other OS families might be different.
                 // In fact, this might show a confusing error message on OS families that return 110 or 111 by itself.
                 $knownReasons = [
-                    110 => 'connection timeout',
-                    111 => 'connection refused',
+                    Internal\CONNECTION_BUSY => 'connection busy',
+                    Internal\CONNECTION_TIMEOUT => 'connection timeout',
+                    Internal\CONNECTION_REFUSED => 'connection refused',
                 ];
 
                 $code = $e->getCode();
                 $reason = $knownReasons[$code] ?? ('Error #' . $code);
-
-                if (++$attempt === $context->getMaxAttempts()) {
-                    break;
-                }
 
                 $failures[] = "$uri @ $builtUri ($reason)";
 
