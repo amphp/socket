@@ -22,6 +22,9 @@
         "fromResourceLocal",
         "fromResourcePeer",
         "fromString",
+        "SOCKET_EAGAIN",
+        "SOCKET_ECONNREFUSED",
+        "SOCKET_ETIMEDOUT",
         "Amp\\Socket\\Internal\\CONNECTION_BUSY",
         "Amp\\Socket\\Internal\\CONNECTION_REFUSED",
         "Amp\\Socket\\Internal\\CONNECTION_TIMEOUT"
@@ -34,7 +37,6 @@
         "Reflection",
         "SPL",
         "standard",
-        "hash",
-        "sockets"
+        "hash"
     ]
 }
