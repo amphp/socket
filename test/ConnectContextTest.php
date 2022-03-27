@@ -81,46 +81,6 @@ class ConnectContextTest extends TestCase
         $context->withConnectTimeout($timeout);
     }
 
-    public function withMaxAttemptsDataProvider(): array
-    {
-        return [
-            [1],
-            [12345],
-        ];
-    }
-
-    /**
-     * @dataProvider withMaxAttemptsDataProvider
-     */
-    public function testWithMaxAttempts($maxAttempts): void
-    {
-        $context = new ConnectContext();
-        $clonedContext = $context->withMaxAttempts($maxAttempts);
-
-        self::assertSame(2, $context->getMaxAttempts());
-        self::assertSame($maxAttempts, $clonedContext->getMaxAttempts());
-    }
-
-    public function withMaxAttemptsInvalidTimeoutDataProvider(): array
-    {
-        return [
-            [0],
-            [-1],
-            [-123456],
-        ];
-    }
-
-    /**
-     * @dataProvider withMaxAttemptsInvalidTimeoutDataProvider
-     */
-    public function testWithMaxAttemptsInvalidTimeout($maxAttempts): void
-    {
-        $this->expectException(\Error::class);
-        $this->expectExceptionMessage("Invalid max attempts ({$maxAttempts}), must be greater than 0");
-        $context = new ConnectContext();
-        $context->withMaxAttempts($maxAttempts);
-    }
-
     public function withDnsTypeRestrictionDataProvider(): array
     {
         return [

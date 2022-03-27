@@ -10,7 +10,6 @@ final class ConnectContext
     private ?string $bindTo = null;
 
     private float $connectTimeout = 10;
-    private int $maxAttempts = 2;
 
     private ?int $typeRestriction = null;
 
@@ -41,7 +40,7 @@ final class ConnectContext
     public function withConnectTimeout(float $timeout): self
     {
         if ($timeout <= 0) {
-            throw new \Error("Invalid connect timeout ({$timeout}), must be greater than 0");
+            throw new \ValueError("Invalid connect timeout ({$timeout}), must be greater than 0");
         }
 
         $clone = clone $this;
@@ -55,23 +54,6 @@ final class ConnectContext
         return $this->connectTimeout;
     }
 
-    public function withMaxAttempts(int $maxAttempts): self
-    {
-        if ($maxAttempts <= 0) {
-            throw new \Error("Invalid max attempts ({$maxAttempts}), must be greater than 0");
-        }
-
-        $clone = clone $this;
-        $clone->maxAttempts = $maxAttempts;
-
-        return $clone;
-    }
-
-    public function getMaxAttempts(): int
-    {
-        return $this->maxAttempts;
-    }
-
     public function withoutDnsTypeRestriction(): self
     {
         return $this->withDnsTypeRestriction(null);
@@ -80,7 +62,7 @@ final class ConnectContext
     public function withDnsTypeRestriction(?int $type): self
     {
         if ($type !== null && $type !== Record::AAAA && $type !== Record::A) {
-            throw new \Error('Invalid resolver type restriction');
+            throw new \ValueError('Invalid resolver type restriction');
         }
 
         $clone = clone $this;
