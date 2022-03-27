@@ -9,6 +9,8 @@ final class RetrySocketConnector implements SocketConnector
 {
     public function __construct(
         private readonly SocketConnector $delegate,
+        private readonly int $maxAttempts = 3,
+        private readonly int $exponentialBackoffBase = 2,
     ) {
     }
 
@@ -28,7 +30,7 @@ final class RetrySocketConnector implements SocketConnector
             try {
                 return $this->delegate->connect($uri, $context, $cancellation);
             } catch (ConnectException $e) {
-                if (++$attempts === $context->getMaxAttempts()) {
+                if (++$attempts === $this->maxAttempts) {
                     throw new ConnectException(\sprintf(
                         'Connection to %s failed after %d attempts%s',
                         $uri,
@@ -39,7 +41,7 @@ final class RetrySocketConnector implements SocketConnector
 
                 $failures[] = $e->getMessage();
 
-                delay($context->getExponentialBackoffBase() ** $attempts);
+                delay($this->exponentialBackoffBase ** $attempts);
             }
         } while (true);
     }

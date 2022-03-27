@@ -10,8 +10,6 @@ final class ConnectContext
     private ?string $bindTo = null;
 
     private float $connectTimeout = 10;
-    private int $maxAttempts = 2;
-    private float $backoffBase = 2;
 
     private ?int $typeRestriction = null;
 
@@ -54,40 +52,6 @@ final class ConnectContext
     public function getConnectTimeout(): float
     {
         return $this->connectTimeout;
-    }
-
-    public function withMaxAttempts(int $maxAttempts): self
-    {
-        if ($maxAttempts <= 0) {
-            throw new \ValueError("Invalid max attempts ({$maxAttempts}), must be greater than 0");
-        }
-
-        $clone = clone $this;
-        $clone->maxAttempts = $maxAttempts;
-
-        return $clone;
-    }
-
-    public function getMaxAttempts(): int
-    {
-        return $this->maxAttempts;
-    }
-
-    public function withExponentialBackoffBase(float $base): self
-    {
-        if ($base < 0) {
-            throw new \ValueError("Invalid exponential backoff base ({$base}), must be greater than or equal to 0");
-        }
-
-        $clone = clone $this;
-        $clone->backoffBase = $base;
-
-        return $clone;
-    }
-
-    public function getExponentialBackoffBase(): float
-    {
-        return $this->backoffBase;
     }
 
     public function withoutDnsTypeRestriction(): self
