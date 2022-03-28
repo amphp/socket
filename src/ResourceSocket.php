@@ -175,13 +175,13 @@ final class ResourceSocket implements EncryptableSocket
             return $this->streamContext;
         }
 
+        if ($this->tlsContext) {
+            return $this->streamContext = $this->tlsContext->toStreamContextArray();
+        }
+
         $resource = $this->getResource();
         if (!\is_resource($resource)) {
             return null;
-        }
-
-        if ($this->tlsContext) {
-            return $this->streamContext = $this->tlsContext->toStreamContextArray();
         }
 
         return $this->streamContext = \stream_context_get_options($resource);
