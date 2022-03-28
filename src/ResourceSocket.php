@@ -36,6 +36,8 @@ final class ResourceSocket implements EncryptableSocket
 
     private TlsState $tlsState;
 
+    private ?array $streamContext = null;
+
     private readonly ReadableResourceStream $reader;
 
     private readonly WritableResourceStream $writer;
@@ -73,19 +75,14 @@ final class ResourceSocket implements EncryptableSocket
 
         $this->tlsState = TlsState::SetupPending;
 
-        if ($this->tlsContext) {
-            $context = $this->tlsContext->toStreamContextArray();
-        } else {
-            /** @psalm-suppress PossiblyInvalidArgument */
-            $context = @\stream_context_get_options($resource);
+        $context = $this->getStreamContext();
 
-            if (empty($context['ssl'])) {
-                throw new TlsException(
-                    "Can't enable TLS without configuration. If you used Amp\\Socket\\listen(), " .
-                    "be sure to pass a ServerTlsContext within the BindContext in the second argument, " .
-                    "otherwise set the 'ssl' context option to the PHP stream resource."
-                );
-            }
+        if (empty($context['ssl'])) {
+            throw new TlsException(
+                "Can't enable TLS without configuration. If you used Amp\\Socket\\listen(), " .
+                "be sure to pass a ServerTlsContext within the BindContext in the second argument, " .
+                "otherwise set the 'ssl' context option to the PHP stream resource."
+            );
         }
 
         try {
@@ -167,6 +164,29 @@ final class ResourceSocket implements EncryptableSocket
         return $this->remoteAddress;
     }
 
+    public function isTlsAvailable(): bool
+    {
+        return $this->tlsContext || !empty($this->getStreamContext()['ssl']);
+    }
+
+    private function getStreamContext(): ?array
+    {
+        if ($this->streamContext !== null) {
+            return $this->streamContext;
+        }
+
+        $resource = $this->getResource();
+        if (!\is_resource($resource)) {
+            return null;
+        }
+
+        if ($this->tlsContext) {
+            return $this->streamContext = $this->tlsContext->toStreamContextArray();
+        }
+
+        return $this->streamContext = \stream_context_get_options($resource);
+    }
+
     public function getTlsState(): TlsState
     {
         return $this->tlsState;
@@ -174,13 +194,12 @@ final class ResourceSocket implements EncryptableSocket
 
     public function getTlsInfo(): ?TlsInfo
     {
-        if (null !== $this->tlsInfo) {
+        if ($this->tlsInfo !== null) {
             return $this->tlsInfo;
         }
 
         $resource = $this->getResource();
-
-        if ($resource === null || !\is_resource($resource)) {
+        if (!\is_resource($resource)) {
             return null;
         }
 

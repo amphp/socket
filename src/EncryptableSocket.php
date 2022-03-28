@@ -20,6 +20,8 @@ interface EncryptableSocket extends Socket
      */
     public function shutdownTls(?Cancellation $cancellation = null): void;
 
+    public function isTlsAvailable(): bool;
+
     public function getTlsState(): TlsState;
 
     /**
