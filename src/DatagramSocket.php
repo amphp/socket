@@ -2,9 +2,9 @@
 
 namespace Amp\Socket;
 
-use Amp\ByteStream\Closable;
 use Amp\ByteStream\ResourceStream;
 use Amp\Cancellation;
+use Amp\Closable;
 
 interface DatagramSocket extends Closable, ResourceStream
 {
