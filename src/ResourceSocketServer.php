@@ -54,20 +54,8 @@ final class ResourceSocketServer implements SocketServer
         \stream_set_blocking($this->socket, false);
 
         $acceptor = &$this->acceptor;
-        $this->callbackId = EventLoop::onReadable($this->socket, static function (string $watcher, $socket) use (
-            &$acceptor,
-            $chunkSize,
-        ): void {
-            // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
-            if (!$client = @\stream_socket_accept($socket, 0)) {  // Timeout of 0 to be non-blocking.
-                return; // Accepting client failed.
-            }
-
-            EventLoop::disable($watcher);
-
-            \assert($acceptor !== null);
-
-            $acceptor->resume(ResourceSocket::fromServerSocket($client, $chunkSize));
+        $this->callbackId = EventLoop::onReadable($this->socket, static function () use (&$acceptor): void {
+            $acceptor->resume(true);
             $acceptor = null;
         });
 
@@ -100,7 +88,7 @@ final class ResourceSocketServer implements SocketServer
 
         $this->socket = null;
 
-        $this->acceptor?->resume();
+        $this->acceptor?->resume(false);
         $this->acceptor = null;
 
         if (!$this->onClose->isComplete()) {
@@ -127,13 +115,22 @@ final class ResourceSocketServer implements SocketServer
         }
 
         EventLoop::enable($this->callbackId);
-        $this->acceptor = EventLoop::getSuspension();
 
         $id = $cancellation?->subscribe($this->cancel);
 
         try {
-            return $this->acceptor->suspend();
+            // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
+            do {
+                $this->acceptor = EventLoop::getSuspension();
+                if (!$this->acceptor->suspend()) {
+                    return null;
+                }
+            } while (!$client = @\stream_socket_accept($this->socket, 0));  // Timeout of 0 to be non-blocking.
+
+            return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         } finally {
+            EventLoop::disable($this->callbackId);
+
             /** @psalm-suppress PossiblyNullArgument $id is always defined if $cancellation is non-null */
             $cancellation?->unsubscribe($id);
         }
