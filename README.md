@@ -16,47 +16,34 @@ This package can be installed as a [Composer](https://getcomposer.org/) dependen
 composer require amphp/socket
 ```
 
-## Client Connections
+## Requirements
+
+`amphp/socket` heavily relies on `amphp/byte-stream`, specifically its `ReadableStream` and `WritableStream` interfaces.
+
+## Connecting to a Server
 
 `amphp/socket` allows clients to connect to servers via TCP, UDP, or Unix domain sockets.
-
-### Connecting
-
-You can establish a socket connection to a specified URI by using `Amp\Socket\connect`.
-It will automatically take care of resolving DNS names and will try other IPs if a connection fails and multiple IPs are available via DNS.
+You can establish a socket connection using `Amp\Socket\connect()`.
+It will automatically resolve DNS names and retries other IPs if a connection fails and multiple IPs are available.
 
 ```php
-/**
- * Establish a socket connection to the specified URI without using blocking I/O.
- *
- * @param string              $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
- * @param ConnectContext|null $socketContext Socket connect context to use when connecting.
- * @param Cancellation|null   $token
- *
- * @return Amp\Socket\EncryptableSocket
- */
-function connect(
-    string $uri,
-    ConnectContext $socketContext = null,
-    CancellationToken $token = null
-): Amp\Socket\EncryptableSocket {
-    /* ... */
-}
+// You can customize connect() options using ConnectContext
+$connectContext = (new Amp\Socket\ConnectContext)
+        ->withConnectTimeout(5);
+
+// You can optionally pass a Cancellation object to cancel a pending connect() operation
+$deferredCancellation = new Amp\DeferredCancellation();
+
+$socket = connect('amphp.org:80', $connectContext, $deferredCancellation->getCancellation());
 ```
 
-### Client TLS
+### Encrypted Connections / TLS
 
 If you want to connect via TLS, use `Amp\Socket\connectTls()` instead or call `$socket->setupTls()` on the returned socket.
 
-### Sending Data
+### Handling Connections
 
-`EncryptableSocket` implements `WritableStream`, so everything from [`amphp/byte-stream`](https://v3.amphp.org/byte-stream#writablestream) applies.
-
-### Receiving Data
-
-`EncryptableSocket` implements `ReadableStream`, so everything from [`amphp/byte-stream`](https://v3.amphp.org/byte-stream#readablestream) applies.
-
-### Client Example
+`EncryptableSocket` implements `ReadableStream` and `WritableStream`, so everything from [`amphp/byte-stream`](https://v3.amphp.org/byte-stream) applies for receiving and sending data.
 
 ```php
 #!/usr/bin/env php
@@ -103,48 +90,30 @@ ByteStream\pipe($socket, $stdout);
 `amphp/socket` allows listening for incoming TCP connections as well as connections via Unix domain sockets.
 It defaults to secure TLS settings if you decide to enable TLS.
 
-### Listening
+### Listening and Accepting Connections
 
-To listen on a port or unix domain socket, use `Amp\Socket\Socket\listen()`.
+Use `Amp\Socket\Socket\listen()` to listen on a port or unix domain socket.
 It's a wrapper around `stream_socket_server` that gives useful error message on failures via exceptions.
 
-```php
-/**
- * Listen for client connections on the specified server address.
- *
- * If you want to accept TLS connections, you have to use `$socket->setupTls()` after accepting new clients.
- *
- * @param string      $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
- * @param BindContext $socketContext Context options for listening.
- *
- * @return SocketServer
- *
- * @throws SocketException If binding to the specified URI failed.
- */
-function listen(string $uri, BindContext $socketContext = null): SocketServer {
-    /* ... */
-}
-```
-
-### Accepting Connections
-
 Once you're listening, accept clients using `Server::accept()`.
-It returns an `EncryptableSocket` that returns once a new client has been accepted. It's usually called within a `while` loop:
+It returns an `EncryptableSocket` that returns once a new client has been accepted.
+It's usually called within a `while` loop:
 
 ```php
 $server = Socket\listen("tcp://127.0.0.1:1337");
 
-while ($client = yield $server->accept()) {
-    // do something with $client, which is a ResourceSocket instance
-
-    // you shouldn't spend too much time here, because that block accepting another client, see below.
+while ($client = $server->accept()) {
+    // You shouldn't spend too much time here, because that blocks accepting another client, so we use async():
+    async(function () use ($socket) {
+        // Handle client connection here
+    });
 }
 ```
 
 ### Handling Connections
 
+`EncryptableSocket` implements `ReadableStream` and `WritableStream`, so everything from [`amphp/byte-stream`](https://v3.amphp.org/byte-stream) applies for receiving and sending data.
 It's best to handle clients in their own coroutine, while letting the server accept all clients as soon as there are new clients.
-
 
 ```php
 #!/usr/bin/env php
@@ -193,21 +162,13 @@ See above for an example.
 
 Sometimes you don't know the address the server is listening on, e.g. because you listed to `tcp://127.0.0.1:0`, which assigns a random free port. You can use `Server::getAddress()` to get the address the server is bound to.
 
-### Sending Data
-
-`ResourceSocket` implements `WritableStream`, so everything from [`amphp/byte-stream`](https://v3.amphp.org/byte-stream#writablestream) applies.
-
-### Receiving Data
-
-`ResourceSocket` implements `ReadableStream`, so everything from [`amphp/byte-stream`](https://v3.amphp.org/byte-stream#readablestream) applies.
-
 ### Server Shutdown
 
 Once you're done with the server socket, close the socket.
 That means, the server won't listen on the specified location anymore.
 Use `Server::close()` to close the server socket.
 
-### Server TLS
+### Encrypted Connections / TLS
 
 As already mentioned in the documentation for `Amp\Socket\Socket\listen()`, you need to enable TLS manually after accepting connections.
 For a TLS server socket, you listen on the `tcp://` protocol on a specified address.
