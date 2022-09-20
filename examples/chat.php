@@ -18,9 +18,10 @@ assert($socketAddress instanceof Socket\InternetAddress);
 echo 'Listening for new connections on ' . $socketAddress . ' ...' . PHP_EOL;
 echo 'Open your terminal and run nc ' . $socketAddress->getAddress() . ' ' . $socketAddress->getPort() . PHP_EOL;
 
+/** @var SplObjectStorage<Queue, null> $queues */
 $queues = new SplObjectStorage();
 
-$broadcast = function (Queue $ignore, string $message) use ($queues) {
+$broadcast = function (Queue $ignore, string $message) use ($queues): void {
     foreach ($queues as $queue) {
         if ($queue === $ignore) {
             continue;
