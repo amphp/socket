@@ -15,7 +15,7 @@ final class InternetAddress implements SocketAddress
         }
 
         $ip = \substr($address, 0, $colon);
-        $port = \substr($address, $colon);
+        $port = \substr($address, $colon + 1);
 
         if (!\preg_match('/^[1-9][0-9]{0,4}$/', $port)) {
             throw new SocketException('Invalid port: ' . $port);
