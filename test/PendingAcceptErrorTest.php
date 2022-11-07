@@ -30,9 +30,6 @@ class PendingAcceptErrorTest extends TestCase
     }
 
     /**
-     * @param $params
-     * @param $expectedValues
-     *
      * @dataProvider constructorParametersProvider
      */
     public function testConstruct($params, $expectedValues): void
