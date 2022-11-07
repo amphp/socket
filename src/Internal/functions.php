@@ -174,6 +174,8 @@ function shutdownTls($socket): void
  * Normalizes "bindto" options to add a ":0" in case no port is present, otherwise PHP will silently ignore those.
  *
  * @throws \Error If an invalid option has been passed.
+ *
+ * @internal
  */
 function normalizeBindToOption(string $bindTo = null): ?string
 {
