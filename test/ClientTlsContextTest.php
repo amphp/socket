@@ -353,19 +353,6 @@ class ClientTlsContextTest extends TestCase
         self::assertFalse($contextC->hasSelfSignedAllowed());
     }
 
-    public function testWithCompressionDisabled(): void
-    {
-        $contextA = new ClientTlsContext();
-        $contextB = $contextA->withCompressionEnabled();
-
-        self::assertFalse($contextA->hasCompressionEnabled());
-        self::assertTrue($contextB->hasCompressionEnabled());
-
-        $contextC = $contextB->withCompressionDisabled();
-
-        self::assertFalse($contextC->hasCompressionEnabled());
-    }
-
     public function testWithPeerFingerprint(): void
     {
         $testKey = 'test';
@@ -418,7 +405,6 @@ class ClientTlsContextTest extends TestCase
                 'capture_peer_cert' => $context->hasPeerCapturing(),
                 'capture_peer_cert_chain' => $context->hasPeerCapturing(),
                 'SNI_enabled' => $context->hasSni(),
-                'disable_compression' => true,
                 'allow_self_signed' => false,
                 'capath' => $context->getCaPath(),
             ],

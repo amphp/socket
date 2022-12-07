@@ -26,8 +26,6 @@ final class ClientTlsContext
 
     private bool $allowSelfSigned = false;
 
-    private bool $disableCompression = true;
-
     private ?array $peerFingerprint = null;
 
     private ?string $ciphers = null;
@@ -393,27 +391,6 @@ final class ClientTlsContext
         return $this->allowSelfSigned;
     }
 
-    public function withCompressionDisabled(): self
-    {
-        $clone = clone $this;
-        $clone->disableCompression = true;
-
-        return $clone;
-    }
-
-    public function withCompressionEnabled(): self
-    {
-        $clone = clone $this;
-        $clone->disableCompression = false;
-
-        return $clone;
-    }
-
-    public function hasCompressionEnabled(): bool
-    {
-        return !$this->disableCompression;
-    }
-
     public function withPeerFingerprint(string|array $fingerprint): self
     {
         $clone = clone $this;
@@ -502,7 +479,6 @@ final class ClientTlsContext
             'capture_peer_cert' => $this->capturePeer,
             'capture_peer_cert_chain' => $this->capturePeer,
             'SNI_enabled' => $this->sniEnabled,
-            'disable_compression' => $this->disableCompression,
             'allow_self_signed' => $this->allowSelfSigned,
         ];
 
