@@ -22,7 +22,7 @@ class ClientTlsContextTest extends TestCase
      */
     public function testWithMinimumVersion(int $version): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withMinimumVersion($version);
 
         self::assertSame(ClientTlsContext::TLSv1_2, $context->getMinimumVersion());
@@ -44,7 +44,7 @@ class ClientTlsContextTest extends TestCase
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Invalid minimum version');
 
-        (new ClientTlsContext(''))->withMinimumVersion($version);
+        (new ClientTlsContext())->withMinimumVersion($version);
     }
 
     public function peerNameDataProvider(): array
@@ -60,7 +60,7 @@ class ClientTlsContextTest extends TestCase
      */
     public function testWithPeerName(string $peerName): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withPeerName($peerName);
 
         self::assertSame('', $context->getPeerName());
@@ -69,7 +69,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithPeerVerification(): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withPeerVerification();
 
         self::assertTrue($context->hasPeerVerification());
@@ -78,7 +78,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithoutPeerVerification(): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withoutPeerVerification();
 
         self::assertTrue($context->hasPeerVerification());
@@ -98,7 +98,7 @@ class ClientTlsContextTest extends TestCase
      */
     public function testWithCertificate(?Certificate $certificate): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withCertificate($certificate);
 
         self::assertNull($context->getCertificate());
@@ -118,7 +118,7 @@ class ClientTlsContextTest extends TestCase
      */
     public function testWithVerificationDepth(int $verifyDepth): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withVerificationDepth($verifyDepth);
 
         self::assertSame(10, $context->getVerificationDepth());
@@ -141,7 +141,7 @@ class ClientTlsContextTest extends TestCase
         $this->expectException(\Error::class);
         $this->expectExceptionMessageMatches('/Invalid verification depth (.*), must be greater than or equal to 0/');
 
-        (new ClientTlsContext(''))->withVerificationDepth($verifyDepth);
+        (new ClientTlsContext())->withVerificationDepth($verifyDepth);
     }
 
     public function ciphersDataProvider(): array
@@ -157,7 +157,7 @@ class ClientTlsContextTest extends TestCase
      */
     public function testWithCiphers(string $ciphers): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withCiphers($ciphers);
 
         self::assertSame(\OPENSSL_DEFAULT_STREAM_CIPHERS, $context->getCiphers());
@@ -177,7 +177,7 @@ class ClientTlsContextTest extends TestCase
      */
     public function testWithCaFile(?string $caFile): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withCaFile($caFile);
 
         self::assertNull($context->getCaFile());
@@ -197,7 +197,7 @@ class ClientTlsContextTest extends TestCase
      */
     public function testWithCaPath(?string $caPath): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withCaPath($caPath);
 
         self::assertNull($context->getCaPath());
@@ -206,7 +206,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithPeerCapturing(): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withPeerCapturing();
 
         self::assertFalse($context->hasPeerCapturing());
@@ -215,7 +215,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithoutPeerCapturing(): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withoutPeerCapturing();
 
         self::assertFalse($context->hasPeerCapturing());
@@ -224,7 +224,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithSni(): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withSni();
 
         self::assertTrue($context->hasSni());
@@ -233,7 +233,7 @@ class ClientTlsContextTest extends TestCase
 
     public function testWithoutSni(): void
     {
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $clonedContext = $context->withoutSni();
 
         self::assertTrue($context->hasSni());
@@ -256,7 +256,7 @@ class ClientTlsContextTest extends TestCase
         $this->expectException(\Error::class);
         $this->expectExceptionMessage("Invalid security level ({$level}), must be between 0 and 5.");
 
-        (new ClientTlsContext(''))->withSecurityLevel($level);
+        (new ClientTlsContext())->withSecurityLevel($level);
     }
 
     public function testWithSecurityLevel(): void
@@ -265,7 +265,7 @@ class ClientTlsContextTest extends TestCase
             self::markTestSkipped('OpenSSL 1.1.0 required');
         }
 
-        $contextA = new ClientTlsContext('');
+        $contextA = new ClientTlsContext();
         $contextB = $contextA->withSecurityLevel(4);
 
         self::assertSame(2, $contextA->getSecurityLevel());
@@ -292,7 +292,7 @@ class ClientTlsContextTest extends TestCase
     public function testWithSecurityLevelValid(int $level): void
     {
         if (Socket\hasTlsSecurityLevelSupport()) {
-            $value = (new ClientTlsContext(''))
+            $value = (new ClientTlsContext())
                 ->withSecurityLevel($level)
                 ->getSecurityLevel();
 
@@ -301,16 +301,16 @@ class ClientTlsContextTest extends TestCase
             $this->expectException(\Error::class);
             $this->expectExceptionMessage("Can't set a security level, as PHP is compiled with OpenSSL < 1.1.0.");
 
-            (new ClientTlsContext(''))->withSecurityLevel($level);
+            (new ClientTlsContext())->withSecurityLevel($level);
         }
     }
 
     public function testWithSecurityLevelDefaultValue(): void
     {
         if (\OPENSSL_VERSION_NUMBER >= 0x10100000) {
-            self::assertSame(2, (new ClientTlsContext(''))->getSecurityLevel());
+            self::assertSame(2, (new ClientTlsContext())->getSecurityLevel());
         } else {
-            self::assertSame(0, (new ClientTlsContext(''))->getSecurityLevel());
+            self::assertSame(0, (new ClientTlsContext())->getSecurityLevel());
         }
     }
 
@@ -320,7 +320,7 @@ class ClientTlsContextTest extends TestCase
             self::markTestSkipped('OpenSSL 1.0.2 required');
         }
 
-        $contextA = new ClientTlsContext('');
+        $contextA = new ClientTlsContext();
         $contextB = $contextA->withApplicationLayerProtocols(['http/1.1', 'h2']);
 
         self::assertSame([], $contextA->getApplicationLayerProtocols());
@@ -336,13 +336,72 @@ class ClientTlsContextTest extends TestCase
         $this->expectException(\TypeError::class);
         $this->expectExceptionMessage('Protocol names must be strings');
 
-        $context = new ClientTlsContext('');
+        $context = new ClientTlsContext();
         $context->withApplicationLayerProtocols([1, 2]);
+    }
+
+    public function testWithSelfSigned(): void
+    {
+        $contextA = new ClientTlsContext();
+        $contextB = $contextA->withSelfSignedAllowed();
+
+        self::assertFalse($contextA->hasSelfSignedAllowed());
+        self::assertTrue($contextB->hasSelfSignedAllowed());
+
+        $contextC = $contextB->withSelfSignedDisallowed();
+
+        self::assertFalse($contextC->hasSelfSignedAllowed());
+    }
+
+    public function testWithCompressionDisabled(): void
+    {
+        $contextA = new ClientTlsContext();
+        $contextB = $contextA->withCompressionEnabled();
+
+        self::assertFalse($contextA->hasCompressionEnabled());
+        self::assertTrue($contextB->hasCompressionEnabled());
+
+        $contextC = $contextB->withCompressionDisabled();
+
+        self::assertFalse($contextC->hasCompressionEnabled());
+    }
+
+    public function testWithPeerFingerprint(): void
+    {
+        $testKey = 'test';
+
+        $contextA = new ClientTlsContext();
+        $contextB = $contextA->withPeerFingerprint(\sha1($testKey));
+        $contextC = $contextA->withPeerFingerprint(['md5' => \md5($testKey)]);
+
+        self::assertNull($contextA->getPeerFingerprint());
+        self::assertSame(['sha1' => \sha1($testKey)], $contextB->getPeerFingerprint());
+        self::assertSame(['md5' => \md5($testKey)], $contextC->getPeerFingerprint());
+
+        self::assertNull($contextC->withoutPeerFingerprint()->getPeerFingerprint());
+    }
+
+    public function testWithInvalidFingerprintString(): void
+    {
+        $this->expectException(\ValueError::class);
+        $this->expectExceptionMessage('String must be an MD5 or SHA1 hash');
+
+        $context = new ClientTlsContext();
+        $context->withPeerFingerprint('invalid');
+    }
+
+    public function testWithInvalidFingerprintArray(): void
+    {
+        $this->expectException(\ValueError::class);
+        $this->expectExceptionMessage('Invalid fingerprint array');
+
+        $context = new ClientTlsContext();
+        $context->withPeerFingerprint(['md5' => 'invalid']);
     }
 
     public function testStreamContextArray(): void
     {
-        $context = (new ClientTlsContext(''))
+        $context = (new ClientTlsContext())
             ->withCaPath('/var/foobar');
 
         $contextArray = $context->toStreamContextArray();
@@ -359,6 +418,8 @@ class ClientTlsContextTest extends TestCase
                 'capture_peer_cert' => $context->hasPeerCapturing(),
                 'capture_peer_cert_chain' => $context->hasPeerCapturing(),
                 'SNI_enabled' => $context->hasSni(),
+                'disable_compression' => true,
+                'allow_self_signed' => false,
                 'capath' => $context->getCaPath(),
             ],
         ], $contextArray);

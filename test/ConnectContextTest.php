@@ -147,6 +147,8 @@ class ConnectContextTest extends TestCase
                 'capture_peer_cert' => false,
                 'capture_peer_cert_chain' => false,
                 'SNI_enabled' => true,
+                'disable_compression' => true,
+                'allow_self_signed' => false,
             ],
         ];
 

@@ -24,6 +24,12 @@ final class ClientTlsContext
 
     private int $verifyDepth = 10;
 
+    private bool $allowSelfSigned = false;
+
+    private bool $disableCompression = true;
+
+    private ?array $peerFingerprint = null;
+
     private ?string $ciphers = null;
 
     private ?string $caFile = null;
@@ -41,7 +47,7 @@ final class ClientTlsContext
     /** @var string[] */
     private array $alpnProtocols = [];
 
-    public function __construct(string $peerName)
+    public function __construct(string $peerName = '')
     {
         $this->peerName = $peerName;
     }
@@ -366,6 +372,88 @@ final class ClientTlsContext
         return $this->certificate;
     }
 
+    public function withSelfSignedAllowed(): self
+    {
+        $clone = clone $this;
+        $clone->allowSelfSigned = true;
+
+        return $clone;
+    }
+
+    public function withSelfSignedDisallowed(): self
+    {
+        $clone = clone $this;
+        $clone->allowSelfSigned = false;
+
+        return $clone;
+    }
+
+    public function hasSelfSignedAllowed(): bool
+    {
+        return $this->allowSelfSigned;
+    }
+
+    public function withCompressionDisabled(): self
+    {
+        $clone = clone $this;
+        $clone->disableCompression = true;
+
+        return $clone;
+    }
+
+    public function withCompressionEnabled(): self
+    {
+        $clone = clone $this;
+        $clone->disableCompression = false;
+
+        return $clone;
+    }
+
+    public function hasCompressionEnabled(): bool
+    {
+        return !$this->disableCompression;
+    }
+
+    public function withPeerFingerprint(string|array $fingerprint): self
+    {
+        $clone = clone $this;
+
+        if (\is_string($fingerprint)) {
+            $hash = match (\strlen($fingerprint)) {
+                32 => 'md5',
+                40 => 'sha1',
+                default => throw new \ValueError('String must be an MD5 or SHA1 hash'),
+            };
+
+            $fingerprint = [$hash => $fingerprint];
+        }
+
+        if ($fingerprint !== \array_filter($fingerprint, fn ($value, $key) => match ($key) {
+            'md5' => \is_string($value) && \strlen($value) === 32,
+            'sha1' => \is_string($value) && \strlen($value) === 40,
+            default => false,
+        }, \ARRAY_FILTER_USE_BOTH)) {
+            throw new \ValueError('Invalid fingerprint array');
+        }
+
+        $clone->peerFingerprint = $fingerprint;
+
+        return $clone;
+    }
+
+    public function withoutPeerFingerprint(): self
+    {
+        $clone = clone $this;
+        $clone->peerFingerprint = null;
+
+        return $clone;
+    }
+
+    public function getPeerFingerprint(): ?array
+    {
+        return $this->peerFingerprint;
+    }
+
     /**
      * @param string[] $protocols
      *
@@ -414,6 +502,8 @@ final class ClientTlsContext
             'capture_peer_cert' => $this->capturePeer,
             'capture_peer_cert_chain' => $this->capturePeer,
             'SNI_enabled' => $this->sniEnabled,
+            'disable_compression' => $this->disableCompression,
+            'allow_self_signed' => $this->allowSelfSigned,
         ];
 
         if ($this->certificate !== null) {
@@ -421,6 +511,10 @@ final class ClientTlsContext
 
             if ($this->certificate->getCertFile() !== $this->certificate->getKeyFile()) {
                 $options['local_pk'] = $this->certificate->getKeyFile();
+            }
+
+            if ($this->certificate->getPassphrase() !== null) {
+                $options['passphrase'] = $this->certificate->getPassphrase();
             }
         }
 
@@ -438,6 +532,10 @@ final class ClientTlsContext
 
         if (!empty($this->alpnProtocols)) {
             $options['alpn_protocols'] = \implode(',', $this->alpnProtocols);
+        }
+
+        if ($this->peerFingerprint !== null) {
+            $options['peer_fingerprint'] = $this->peerFingerprint;
         }
 
         return ['ssl' => $options];
