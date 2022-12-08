@@ -24,8 +24,6 @@ final class ClientTlsContext
 
     private int $verifyDepth = 10;
 
-    private bool $allowSelfSigned = false;
-
     private ?array $peerFingerprint = null;
 
     private ?string $ciphers = null;
@@ -370,27 +368,6 @@ final class ClientTlsContext
         return $this->certificate;
     }
 
-    public function withSelfSignedAllowed(): self
-    {
-        $clone = clone $this;
-        $clone->allowSelfSigned = true;
-
-        return $clone;
-    }
-
-    public function withSelfSignedDisallowed(): self
-    {
-        $clone = clone $this;
-        $clone->allowSelfSigned = false;
-
-        return $clone;
-    }
-
-    public function hasSelfSignedAllowed(): bool
-    {
-        return $this->allowSelfSigned;
-    }
-
     public function withPeerFingerprint(string|array $fingerprint): self
     {
         $clone = clone $this;
@@ -405,7 +382,7 @@ final class ClientTlsContext
             $fingerprint = [$hash => $fingerprint];
         }
 
-        if ($fingerprint !== \array_filter($fingerprint, fn ($value, $key) => match ($key) {
+        if ($fingerprint !== \array_filter($fingerprint, static fn ($value, $key) => match ($key) {
             'md5' => \is_string($value) && \strlen($value) === 32,
             'sha1' => \is_string($value) && \strlen($value) === 40,
             default => false,
@@ -479,7 +456,6 @@ final class ClientTlsContext
             'capture_peer_cert' => $this->capturePeer,
             'capture_peer_cert_chain' => $this->capturePeer,
             'SNI_enabled' => $this->sniEnabled,
-            'allow_self_signed' => $this->allowSelfSigned,
         ];
 
         if ($this->certificate !== null) {

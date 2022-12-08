@@ -340,19 +340,6 @@ class ClientTlsContextTest extends TestCase
         $context->withApplicationLayerProtocols([1, 2]);
     }
 
-    public function testWithSelfSigned(): void
-    {
-        $contextA = new ClientTlsContext();
-        $contextB = $contextA->withSelfSignedAllowed();
-
-        self::assertFalse($contextA->hasSelfSignedAllowed());
-        self::assertTrue($contextB->hasSelfSignedAllowed());
-
-        $contextC = $contextB->withSelfSignedDisallowed();
-
-        self::assertFalse($contextC->hasSelfSignedAllowed());
-    }
-
     public function testWithPeerFingerprint(): void
     {
         $testKey = 'test';
@@ -389,7 +376,9 @@ class ClientTlsContextTest extends TestCase
     public function testStreamContextArray(): void
     {
         $context = (new ClientTlsContext())
-            ->withCaPath('/var/foobar');
+            ->withCaPath('/var/foobar')
+            ->withoutPeerVerification()
+            ->withPeerFingerprint(\sha1('certificate-content-placeholder'));
 
         $contextArray = $context->toStreamContextArray();
         unset($contextArray['ssl']['security_level']); // present depending on OpenSSL version
@@ -405,8 +394,8 @@ class ClientTlsContextTest extends TestCase
                 'capture_peer_cert' => $context->hasPeerCapturing(),
                 'capture_peer_cert_chain' => $context->hasPeerCapturing(),
                 'SNI_enabled' => $context->hasSni(),
-                'allow_self_signed' => false,
                 'capath' => $context->getCaPath(),
+                'peer_fingerprint' => $context->getPeerFingerprint(),
             ],
         ], $contextArray);
     }
