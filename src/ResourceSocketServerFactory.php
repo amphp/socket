@@ -18,9 +18,19 @@ final class ResourceSocketServerFactory implements SocketServerFactory
     /**
      * @throws SocketException
      */
-    public function listen(SocketAddress $address, ?BindContext $bindContext = null): ResourceSocketServer
+    public function listen(SocketAddress|string $address, ?BindContext $bindContext = null): ResourceSocketServer
     {
         $bindContext ??= new BindContext;
+
+        if (\is_string($address)) {
+            [$scheme, $host, $port] = Internal\parseUri($address);
+
+            $address = match ($scheme) {
+                'tcp' => new InternetAddress($host, $port),
+                'unix' => new UnixAddress('/' . $host),
+                default => throw new \ValueError('Invalid address: only tcp and unix schemes accepted; got ' . $address),
+            };
+        }
 
         $uri = match ($address->getType()) {
             SocketAddressType::Internet => 'tcp://' . $address->toString(),

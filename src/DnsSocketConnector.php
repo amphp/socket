@@ -20,7 +20,7 @@ final class DnsSocketConnector implements SocketConnector
     }
 
     public function connect(
-        string $uri,
+        SocketAddress|string $uri,
         ?ConnectContext $context = null,
         ?Cancellation $cancellation = null
     ): EncryptableSocket {
@@ -28,6 +28,13 @@ final class DnsSocketConnector implements SocketConnector
         $cancellation ??= new NullCancellation;
         $uris = [];
         $failures = [];
+
+        if ($uri instanceof SocketAddress) {
+            $uri = match ($uri->getType()) {
+                SocketAddressType::Internet => 'tcp://' . $uri->toString(),
+                SocketAddressType::Unix => 'unix://' . $uri->toString(),
+            };
+        }
 
         [$scheme, $host, $port] = Internal\parseUri($uri);
 

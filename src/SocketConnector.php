@@ -10,14 +10,14 @@ interface SocketConnector
     /**
      * Establish a socket connection to the specified URI.
      *
-     * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+     * @param SocketAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
      * @param ConnectContext|null $context Socket connect context to use when connecting.
      *
      * @throws ConnectException
      * @throws CancelledException
      */
     public function connect(
-        string $uri,
+        SocketAddress|string $uri,
         ?ConnectContext $context = null,
         ?Cancellation $cancellation = null
     ): EncryptableSocket;

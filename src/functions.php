@@ -23,18 +23,6 @@ function listen(
     ?BindContext $bindContext = null,
     int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE
 ): ResourceSocketServer {
-    if (\is_string($address)) {
-        [$scheme, $host, $port] = Internal\parseUri($address);
-
-        if ($scheme === 'tcp') {
-            $address = new InternetAddress($host, $port);
-        } elseif ($scheme === 'unix') {
-            $address = new UnixAddress('/' . $host);
-        } else {
-            throw new SocketException('Invalid address: ' . $address);
-        }
-    }
-
     return (new ResourceSocketServerFactory($chunkSize))->listen($address, $bindContext);
 }
 
@@ -54,18 +42,11 @@ function bindDatagram(
 ): ResourceDatagramSocket {
     $bindContext = $bindContext ?? new BindContext;
 
-    if ($address instanceof InternetAddress) {
-        $uri = 'udp://' . $address->toString();
-    } else {
-        $uri = $address;
-
-        $scheme = \strstr($address, '://', true);
-        if ($scheme === false) {
-            $uri = 'udp://' . $address;
-        } elseif ($scheme !== 'udp') {
-            throw new \Error('Only udp scheme allowed for datagram creation');
-        }
-    }
+    $uri = match (\strstr((string) $address, '://', true)) {
+        'udp' => $address,
+        false => 'udp://' . $address,
+        default => throw new \ValueError('Only udp scheme allowed for datagram creation; got ' . $address),
+    };
 
     $streamContext = \stream_context_create($bindContext->toStreamContextArray());
 
@@ -101,13 +82,13 @@ function socketConnector(?SocketConnector $connector = null): SocketConnector
 /**
  * Establish a socket connection to the specified URI.
  *
- * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param SocketAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ConnectContext|null $context Socket connect context to use when connecting.
  *
  * @throws ConnectException
  * @throws CancelledException
  */
-function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): EncryptableSocket
+function connect(SocketAddress|string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): EncryptableSocket
 {
     return socketConnector()->connect($uri, $context, $cancellation);
 }
@@ -115,14 +96,14 @@ function connect(string $uri, ?ConnectContext $context = null, ?Cancellation $ca
 /**
  * Establish a socket connection to the specified URI and enable TLS.
  *
- * @param string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @param SocketAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ConnectContext|null $context Socket connect context to use when connecting.
  *
  * @throws ConnectException
  * @throws TlsException
  * @throws CancelledException
  */
-function connectTls(string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): EncryptableSocket
+function connectTls(SocketAddress|string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): EncryptableSocket
 {
     $context ??= new ConnectContext();
     $tlsContext = $context->getTlsContext() ?? new ClientTlsContext('');

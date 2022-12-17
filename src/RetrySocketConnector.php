@@ -18,7 +18,7 @@ final class RetrySocketConnector implements SocketConnector
      * @psalm-suppress InvalidReturnType
      */
     public function connect(
-        string $uri,
+        SocketAddress|string $uri,
         ?ConnectContext $context = null,
         ?Cancellation $cancellation = null
     ): EncryptableSocket {
@@ -33,7 +33,7 @@ final class RetrySocketConnector implements SocketConnector
                 if (++$attempts === $this->maxAttempts) {
                     throw new ConnectException(\sprintf(
                         'Connection to %s failed after %d attempts%s',
-                        $uri,
+                        (string) $uri,
                         $attempts,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
                     ));

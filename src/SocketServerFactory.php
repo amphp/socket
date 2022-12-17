@@ -7,5 +7,5 @@ interface SocketServerFactory
     /**
      * @throws SocketException
      */
-    public function listen(SocketAddress $address, ?BindContext $bindContext = null): SocketServer;
+    public function listen(SocketAddress|string $address, ?BindContext $bindContext = null): SocketServer;
 }

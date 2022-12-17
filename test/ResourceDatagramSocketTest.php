@@ -21,14 +21,6 @@ class ResourceDatagramSocketTest extends AsyncTestCase
         Socket\bindDatagram("invalid://127.0.0.1:0");
     }
 
-    public function testBindEndpointError(): void
-    {
-        $this->expectException(Socket\SocketException::class);
-        $this->expectExceptionMessageMatches('/Could not create datagram .*: \[Error: #.*\] .*$/');
-
-        Socket\bindDatagram('error');
-    }
-
     public function testReceive(): void
     {
         $endpoint = Socket\bindDatagram('127.0.0.1:0');

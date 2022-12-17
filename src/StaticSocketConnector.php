@@ -19,7 +19,7 @@ final class StaticSocketConnector implements SocketConnector
     }
 
     public function connect(
-        string $uri,
+        SocketAddress|string $uri,
         ?ConnectContext $context = null,
         ?Cancellation $cancellation = null
     ): EncryptableSocket {

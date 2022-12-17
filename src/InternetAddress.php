@@ -11,15 +11,11 @@ final class InternetAddress implements SocketAddress
     {
         $colon = \strrpos($address, ':');
         if ($colon === false) {
-            throw new SocketException('Missing port in address: ' . $address);
+            throw new \ValueError('Missing port in address: ' . $address);
         }
 
         $ip = \substr($address, 0, $colon);
         $port = \substr($address, $colon + 1);
-
-        if (!\preg_match('/^[1-9][0-9]{0,4}$/', $port)) {
-            throw new SocketException('Invalid port: ' . $port);
-        }
 
         /** @psalm-suppress ArgumentTypeCoercion */
         return new self($ip, (int) $port);
@@ -41,7 +37,7 @@ final class InternetAddress implements SocketAddress
     {
         /** @psalm-suppress TypeDoesNotContainType */
         if ($port < 0 || $port > 65535) {
-            throw new SocketException('Port number must be an integer between 0 and 65535');
+            throw new \ValueError('Port number must be an integer between 0 and 65535; got ' . $port);
         }
 
         if (\strrpos($address, ':')) {
