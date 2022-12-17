@@ -50,8 +50,13 @@ function bindDatagram(
 
     $streamContext = \stream_context_create($bindContext->toStreamContextArray());
 
-    // Error reporting suppressed since stream_socket_server() emits an E_WARNING on failure (checked below).
-    $server = @\stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND, $streamContext);
+    \set_error_handler(static fn () => true); // Error checked after call to stream_socket_server().
+
+    try {
+        $server = \stream_socket_server($uri, $errno, $errstr, STREAM_SERVER_BIND, $streamContext);
+    } finally {
+        \restore_error_handler();
+    }
 
     if (!$server || $errno) {
         throw new SocketException(

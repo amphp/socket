@@ -2,6 +2,7 @@
 
 namespace Amp\Socket\SocketAddress;
 
+use Amp\Socket\Internal;
 use Amp\Socket\InternetAddress;
 use Amp\Socket\SocketAddress;
 use Amp\Socket\SocketException;
@@ -14,7 +15,7 @@ use Amp\Socket\UnixAddress;
  */
 function fromResourcePeer($resource): SocketAddress
 {
-    $name = @\stream_socket_get_name($resource, true);
+    $name = Internal\getStreamSocketName($resource, true);
 
     /** @psalm-suppress TypeDoesNotContainType */
     if ($name === false || $name === "\0") {
@@ -34,7 +35,7 @@ function fromResourceLocal($resource): SocketAddress
     $wantPeer = false;
 
     do {
-        $name = @\stream_socket_get_name($resource, $wantPeer);
+        $name = Internal\getStreamSocketName($resource, $wantPeer);
 
         /** @psalm-suppress RedundantCondition */
         if ($name !== false && $name !== "\0") {

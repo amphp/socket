@@ -12,11 +12,14 @@ use Revolt\EventLoop;
 
 final class DnsSocketConnector implements SocketConnector
 {
-    private ?Dns\Resolver $resolver;
+    private readonly ?Dns\Resolver $resolver;
+
+    private readonly \Closure $errorHandler;
 
     public function __construct(?Dns\Resolver $resolver = null)
     {
         $this->resolver = $resolver;
+        $this->errorHandler = static fn () => true;
     }
 
     public function connect(
@@ -42,7 +45,7 @@ final class DnsSocketConnector implements SocketConnector
             $host = \substr($host, 1, -1);
         }
 
-        if ($port === 0 || @\inet_pton($host)) {
+        if ($port === 0 || Internal\packIpAddress($host)) {
             // Host is already an IP address or file path.
             $uris = [$uri];
         } else {
@@ -76,8 +79,16 @@ final class DnsSocketConnector implements SocketConnector
             try {
                 $streamContext = \stream_context_create($context->withoutTlsContext()->toStreamContextArray());
 
-                /** @psalm-suppress NullArgument */
-                if (!$socket = @\stream_socket_client($builtUri, $errno, $errstr, null, $flags, $streamContext)) {
+                \set_error_handler($this->errorHandler);
+
+                try {
+                    /** @psalm-suppress NullArgument */
+                    $socket = \stream_socket_client($builtUri, $errno, $errstr, null, $flags, $streamContext);
+                } finally {
+                    \restore_error_handler();
+                }
+
+                if (!$socket) {
                     throw new ConnectException(\sprintf(
                         'Connection to %s @ %s failed: (Error #%d) %s%s',
                         $uri,

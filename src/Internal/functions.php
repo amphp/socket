@@ -165,9 +165,21 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
  */
 function shutdownTls($socket): void
 {
-    // note that disabling crypto *ALWAYS* returns false, immediately
-    // don't set _enabled to false, TLS can be setup only once
-    @\stream_socket_enable_crypto($socket, enable: false);
+    \set_error_handler(static function (int $errno, string $errstr) use ($socket) {
+        if (\feof($socket)) {
+            $errstr = 'Connection reset by peer';
+        }
+
+        throw new TlsException('TLS negotiation failed: ' . $errstr);
+    });
+
+    try {
+        // note that disabling crypto *ALWAYS* returns false, immediately
+        // don't set _enabled to false, TLS can be setup only once
+        \stream_socket_enable_crypto($socket, enable: false);
+    } finally {
+        \restore_error_handler();
+    }
 }
 
 /**
@@ -187,7 +199,7 @@ function normalizeBindToOption(string $bindTo = null): ?string
         $ip = $match['ip'];
         $port = $match['port'] ?? 0;
 
-        if (@\inet_pton($ip) === false) {
+        if (packIpAddress($ip) === false) {
             throw new \Error("Invalid IPv6 address: $ip");
         }
 
@@ -202,7 +214,7 @@ function normalizeBindToOption(string $bindTo = null): ?string
         $ip = $match['ip'];
         $port = $match['port'] ?? 0;
 
-        if (@\inet_pton($ip) === false) {
+        if (packIpAddress($ip) === false) {
             throw new \Error("Invalid IPv4 address: $ip");
         }
 
@@ -214,4 +226,42 @@ function normalizeBindToOption(string $bindTo = null): ?string
     }
 
     throw new \Error("Invalid bindTo value: $bindTo");
+}
+
+/**
+ * Alias of {@see inet_pton()} with errors suppressed.
+ *
+ * @internal
+ */
+function packIpAddress(string $ip): string|false
+{
+    static $errorHandler;
+
+    \set_error_handler($errorHandler ??= static fn () => true);
+
+    try {
+        return \inet_pton($ip);
+    } finally {
+        \restore_error_handler();
+    }
+}
+
+/**
+ * Alias of {@see stream_socket_get_name()} with errors suppressed.
+ *
+ * @param resource $resource
+ *
+ * @internal
+ */
+function getStreamSocketName($resource, bool $wantPeer): string|false
+{
+    static $errorHandler;
+
+    \set_error_handler($errorHandler ??= static fn () => true);
+
+    try {
+        return \stream_socket_get_name($resource, $wantPeer);
+    } finally {
+        \restore_error_handler();
+    }
 }

@@ -61,9 +61,17 @@ final class ResourceDatagramSocket implements DatagramSocket
             &$reader,
             &$limit,
         ): void {
+            static $errorHandler;
+
             \assert($reader !== null);
 
-            $data = @\stream_socket_recvfrom($socket, $limit, 0, $address);
+            \set_error_handler($errorHandler ??= static fn () => true);
+
+            try {
+                $data = \stream_socket_recvfrom($socket, $limit, 0, $address);
+            } finally {
+                \restore_error_handler();
+            }
 
             /** @psalm-suppress TypeDoesNotContainType */
             if ($data === false) {

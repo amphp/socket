@@ -27,6 +27,8 @@ final class ResourceSocketServer implements SocketServer
     /** @var \Closure(CancelledException) */
     private \Closure $cancel;
 
+    private readonly \Closure $errorHandler;
+
     private readonly DeferredFuture $onClose;
 
     /**
@@ -48,6 +50,9 @@ final class ResourceSocketServer implements SocketServer
         $this->chunkSize = $chunkSize;
         $this->bindContext = $bindContext;
         $this->address = SocketAddress\fromResourceLocal($socket);
+
+        // Ignore any errors raised while this handler is set. Errors will be checked through return values.
+        $this->errorHandler = static fn () => true;
 
         $this->onClose = new DeferredFuture;
 
@@ -109,8 +114,7 @@ final class ResourceSocketServer implements SocketServer
             return null; // Resolve with null when server is closed.
         }
 
-        // Error reporting suppressed since stream_socket_accept() emits E_WARNING on client accept failure.
-        if ($client = @\stream_socket_accept($this->socket, 0)) { // Timeout of 0 to be non-blocking.
+        if ($client = $this->acceptSocketClient()) {
             return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         }
 
@@ -125,7 +129,7 @@ final class ResourceSocketServer implements SocketServer
                 if (!$this->acceptor->suspend()) {
                     return null;
                 }
-            } while (!$client = @\stream_socket_accept($this->socket, 0));  // Timeout of 0 to be non-blocking.
+            } while (!$client = $this->acceptSocketClient());
 
             return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         } finally {
@@ -133,6 +137,20 @@ final class ResourceSocketServer implements SocketServer
 
             /** @psalm-suppress PossiblyNullArgument $id is always defined if $cancellation is non-null */
             $cancellation?->unsubscribe($id);
+        }
+    }
+
+    /**
+     * @return resource|false
+     */
+    private function acceptSocketClient()
+    {
+        \set_error_handler($this->errorHandler);
+
+        try {
+            return \stream_socket_accept($this->socket, 0); // Timeout of 0 to be non-blocking.
+        } finally {
+            \restore_error_handler();
         }
     }
 
