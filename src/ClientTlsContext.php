@@ -368,10 +368,8 @@ final class ClientTlsContext
         return $this->certificate;
     }
 
-    public function withPeerFingerprint(string|array $fingerprint): self
+    public function withPeerFingerprints(string|array $fingerprint): self
     {
-        $clone = clone $this;
-
         if (\is_string($fingerprint)) {
             $hash = match (\strlen($fingerprint)) {
                 32 => 'md5',
@@ -390,12 +388,13 @@ final class ClientTlsContext
             throw new \ValueError('Invalid fingerprint array');
         }
 
+        $clone = clone $this;
         $clone->peerFingerprint = $fingerprint;
 
         return $clone;
     }
 
-    public function withoutPeerFingerprint(): self
+    public function withoutPeerFingerprints(): self
     {
         $clone = clone $this;
         $clone->peerFingerprint = null;
@@ -403,7 +402,7 @@ final class ClientTlsContext
         return $clone;
     }
 
-    public function getPeerFingerprint(): ?array
+    public function getPeerFingerprints(): ?array
     {
         return $this->peerFingerprint;
     }
@@ -498,21 +497,12 @@ final class ClientTlsContext
      */
     public function toStreamCryptoMethod(): int
     {
-        switch ($this->minVersion) {
-            case self::TLSv1_0:
-                return self::TLSv1_0 | self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3;
-
-            case self::TLSv1_1:
-                return self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3;
-
-            case self::TLSv1_2:
-                return self::TLSv1_2 | self::TLSv1_3;
-
-            case self::TLSv1_3:
-                return self::TLSv1_3;
-
-            default:
-                throw new \RuntimeException('Unknown minimum TLS version: ' . $this->minVersion);
-        }
+        return match ($this->minVersion) {
+            self::TLSv1_0 => self::TLSv1_0 | self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3,
+            self::TLSv1_1 => self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3,
+            self::TLSv1_2 => self::TLSv1_2 | self::TLSv1_3,
+            self::TLSv1_3 => self::TLSv1_3,
+            default => throw new \Error('Unknown minimum TLS version: ' . $this->minVersion),
+        };
     }
 }
