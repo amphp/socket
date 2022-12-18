@@ -2,13 +2,16 @@
 
 namespace Amp\Socket;
 
+use Amp\ByteStream;
 use Amp\CancelledException;
 use Amp\PHPUnit\AsyncTestCase;
+use Amp\Process\Process;
 use Amp\Socket;
 use Amp\TimeoutCancellation;
 use function Amp\async;
 use function Amp\ByteStream\buffer;
 use function Amp\delay;
+use function Amp\Process\escapeArgument;
 
 class ResourceSocketServerTest extends AsyncTestCase
 {
@@ -159,7 +162,8 @@ class ResourceSocketServerTest extends AsyncTestCase
         try {
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('amphp.org'))
-                    ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
+                    ->withoutPeerVerification()
+                    ->withPeerFingerprint($this->readFingerprintFromFile(__DIR__ . '/tls/amphp.org.crt'))
             );
 
             $client = Socket\connect($server->getAddress(), $context);
@@ -169,13 +173,46 @@ class ResourceSocketServerTest extends AsyncTestCase
 
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
-                    ->withCaFile(__DIR__ . '/tls/www.amphp.org.crt')
+                    ->withoutPeerVerification()
+                    ->withPeerFingerprint($this->readFingerprintFromFile(__DIR__ . '/tls/www.amphp.org.crt'))
             );
 
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World');
             self::assertSame('test', buffer($client));
+        } finally {
+            $server->close();
+        }
+    }
+
+    public function testPeerFingerprintMatchFailure(): void
+    {
+        $tlsContext = (new Socket\ServerTlsContext)
+            ->withDefaultCertificate(new Socket\Certificate(__DIR__ . '/tls/amphp.org.pem'));
+
+        $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
+
+        async(function () use ($server): void {
+            /** @var Socket\ResourceSocket $socket */
+            while ($socket = $server->accept()) {
+                async($socket->setupTls(...))->ignore();
+            }
+        });
+
+        try {
+            $context = (new Socket\ConnectContext)->withTlsContext(
+                (new Socket\ClientTlsContext('www.amphp.org'))
+                    ->withoutPeerVerification()
+                    ->withPeerFingerprint(\sha1('invalid-certificate-contents'))
+            );
+
+            $client = Socket\connect($server->getAddress(), $context);
+            $client->setupTls();
+
+            $this->fail('Call to setupTls should have failed');
+        } catch (TlsException $exception) {
+            self::assertStringContainsString('peer_fingerprint match failure', $exception->getMessage());
         } finally {
             $server->close();
         }
@@ -248,5 +285,29 @@ class ResourceSocketServerTest extends AsyncTestCase
         $data = 'test';
         $serverSocket->write($data);
         self::assertSame($data, $clientSocket->read());
+    }
+
+    private function readFingerprintFromFile(string $filename): string
+    {
+        $process = Process::start([
+            'openssl',
+            'x509',
+            '-fingerprint',
+            '-in',
+            $filename,
+            '-noout'
+        ]);
+
+        $process->join();
+
+        if (!\preg_match(
+            '[^SHA1 Fingerprint=(?<fingerprint>(?:[A-F0-9]{2}:){19}[A-F0-9]{2})$]',
+            ByteStream\buffer($process->getStdout()),
+            $matches,
+        )) {
+            $this->fail('Could not read certificate fingerprint file ' . $filename);
+        }
+
+        return \str_replace(':', '', $matches['fingerprint']);
     }
 }

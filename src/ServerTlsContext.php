@@ -461,14 +461,16 @@ final class ServerTlsContext
 
         if ($this->certificates) {
             $options['SNI_server_certs'] = \array_map(static function (Certificate $certificate) {
-                if ($certificate->getCertFile() === $certificate->getKeyFile()) {
-                    return $certificate->getCertFile();
-                }
-
-                return [
+                $options = [
                     'local_cert' => $certificate->getCertFile(),
                     'local_pk' => $certificate->getKeyFile(),
                 ];
+
+                if ($certificate->getPassphrase() !== null) {
+                    $options['passphrase'] = $certificate->getPassphrase();
+                }
+
+                return $options;
             }, $this->certificates);
         }
 

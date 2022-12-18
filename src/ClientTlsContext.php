@@ -24,6 +24,8 @@ final class ClientTlsContext
 
     private int $verifyDepth = 10;
 
+    private ?array $peerFingerprint = null;
+
     private ?string $ciphers = null;
 
     private ?string $caFile = null;
@@ -41,7 +43,7 @@ final class ClientTlsContext
     /** @var string[] */
     private array $alpnProtocols = [];
 
-    public function __construct(string $peerName)
+    public function __construct(string $peerName = '')
     {
         $this->peerName = $peerName;
     }
@@ -366,6 +368,48 @@ final class ClientTlsContext
         return $this->certificate;
     }
 
+    public function withPeerFingerprint(string $fingerprint): self
+    {
+        $hash = match (\strlen($fingerprint)) {
+            32 => 'md5',
+            40 => 'sha1',
+            default => throw new \ValueError('String must be an MD5 or SHA1 hash'),
+        };
+
+        return $this->withPeerFingerprints([$hash => $fingerprint]);
+    }
+
+    public function withPeerFingerprints(array $fingerprints): self
+    {
+        foreach ($fingerprints as $hash => $fingerprint) {
+            if (!\is_string($fingerprint) || !match ($hash) {
+                'md5' => \strlen($fingerprint) === 32,
+                'sha1' => \strlen($fingerprint) === 40,
+                default => false,
+            }) {
+                throw new \ValueError("Invalid fingerprint array; {$hash} is invalid");
+            }
+        }
+
+        $clone = clone $this;
+        $clone->peerFingerprint = $fingerprints;
+
+        return $clone;
+    }
+
+    public function withoutPeerFingerprints(): self
+    {
+        $clone = clone $this;
+        $clone->peerFingerprint = null;
+
+        return $clone;
+    }
+
+    public function getPeerFingerprints(): ?array
+    {
+        return $this->peerFingerprint;
+    }
+
     /**
      * @param string[] $protocols
      *
@@ -422,6 +466,10 @@ final class ClientTlsContext
             if ($this->certificate->getCertFile() !== $this->certificate->getKeyFile()) {
                 $options['local_pk'] = $this->certificate->getKeyFile();
             }
+
+            if ($this->certificate->getPassphrase() !== null) {
+                $options['passphrase'] = $this->certificate->getPassphrase();
+            }
         }
 
         if ($this->caFile !== null) {
@@ -440,6 +488,10 @@ final class ClientTlsContext
             $options['alpn_protocols'] = \implode(',', $this->alpnProtocols);
         }
 
+        if ($this->peerFingerprint !== null) {
+            $options['peer_fingerprint'] = $this->peerFingerprint;
+        }
+
         return ['ssl' => $options];
     }
 
@@ -448,21 +500,12 @@ final class ClientTlsContext
      */
     public function toStreamCryptoMethod(): int
     {
-        switch ($this->minVersion) {
-            case self::TLSv1_0:
-                return self::TLSv1_0 | self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3;
-
-            case self::TLSv1_1:
-                return self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3;
-
-            case self::TLSv1_2:
-                return self::TLSv1_2 | self::TLSv1_3;
-
-            case self::TLSv1_3:
-                return self::TLSv1_3;
-
-            default:
-                throw new \RuntimeException('Unknown minimum TLS version: ' . $this->minVersion);
-        }
+        return match ($this->minVersion) {
+            self::TLSv1_0 => self::TLSv1_0 | self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3,
+            self::TLSv1_1 => self::TLSv1_1 | self::TLSv1_2 | self::TLSv1_3,
+            self::TLSv1_2 => self::TLSv1_2 | self::TLSv1_3,
+            self::TLSv1_3 => self::TLSv1_3,
+            default => throw new \Error('Unknown minimum TLS version: ' . $this->minVersion),
+        };
     }
 }

@@ -178,6 +178,8 @@ Any data transmitted before `EncryptableSocket::setupTls()` completes will be tr
 Don't attempt to read from the socket or write to it manually.
 Doing so will read the raw TLS handshake data that's supposed to be read by OpenSSL.
 
+A note about self-signed certificates: No option to allow self-signed certificates is provided in `ClientTlsContext` since it is no more secure than disabling peer verification. To safely use a self-signed certificate, disable peer verification and require fingerprint verification of the certificate using `ClientTlsContext::withPeerFingerprint()`.
+
 ## Security
 
 If you discover any security related issues, please email [`me@kelunik.com`](mailto:me@kelunik.com) instead of using the issue tracker.

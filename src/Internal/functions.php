@@ -138,7 +138,6 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
 
                 throw new TlsException('TLS negotiation failed: ' . $errstr);
             });
-
             $result = \stream_socket_enable_crypto($socket, enable: true);
             if ($result === false) {
                 $message = \feof($socket) ? 'Connection reset by peer' : 'Unknown error';
