@@ -368,28 +368,31 @@ final class ClientTlsContext
         return $this->certificate;
     }
 
-    public function withPeerFingerprints(string|array $fingerprint): self
+    public function withPeerFingerprint(string $fingerprint): self
     {
-        if (\is_string($fingerprint)) {
-            $hash = match (\strlen($fingerprint)) {
-                32 => 'md5',
-                40 => 'sha1',
-                default => throw new \ValueError('String must be an MD5 or SHA1 hash'),
-            };
+        $hash = match (\strlen($fingerprint)) {
+            32 => 'md5',
+            40 => 'sha1',
+            default => throw new \ValueError('String must be an MD5 or SHA1 hash'),
+        };
 
-            $fingerprint = [$hash => $fingerprint];
-        }
+        return $this->withPeerFingerprints([$hash => $fingerprint]);
+    }
 
-        if ($fingerprint !== \array_filter($fingerprint, static fn ($value, $key) => match ($key) {
-            'md5' => \is_string($value) && \strlen($value) === 32,
-            'sha1' => \is_string($value) && \strlen($value) === 40,
-            default => false,
-        }, \ARRAY_FILTER_USE_BOTH)) {
-            throw new \ValueError('Invalid fingerprint array');
+    public function withPeerFingerprints(array $fingerprints): self
+    {
+        foreach ($fingerprints as $hash => $fingerprint) {
+            if (!\is_string($fingerprint) || !match ($hash) {
+                'md5' => \strlen($fingerprint) === 32,
+                'sha1' => \strlen($fingerprint) === 40,
+                default => false,
+            }) {
+                throw new \ValueError("Invalid fingerprint array; {$hash} is invalid");
+            }
         }
 
         $clone = clone $this;
-        $clone->peerFingerprint = $fingerprint;
+        $clone->peerFingerprint = $fingerprints;
 
         return $clone;
     }

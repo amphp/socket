@@ -163,7 +163,7 @@ class ResourceSocketServerTest extends AsyncTestCase
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('amphp.org'))
                     ->withoutPeerVerification()
-                    ->withPeerFingerprints($this->readFingerprintFromFile(__DIR__ . '/tls/amphp.org.crt'))
+                    ->withPeerFingerprint($this->readFingerprintFromFile(__DIR__ . '/tls/amphp.org.crt'))
             );
 
             $client = Socket\connect($server->getAddress(), $context);
@@ -174,7 +174,7 @@ class ResourceSocketServerTest extends AsyncTestCase
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
                     ->withoutPeerVerification()
-                    ->withPeerFingerprints($this->readFingerprintFromFile(__DIR__ . '/tls/www.amphp.org.crt'))
+                    ->withPeerFingerprint($this->readFingerprintFromFile(__DIR__ . '/tls/www.amphp.org.crt'))
             );
 
             $client = Socket\connect($server->getAddress(), $context);
@@ -204,7 +204,7 @@ class ResourceSocketServerTest extends AsyncTestCase
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
                     ->withoutPeerVerification()
-                    ->withPeerFingerprints(\sha1('invalid-certificate-contents'))
+                    ->withPeerFingerprint(\sha1('invalid-certificate-contents'))
             );
 
             $client = Socket\connect($server->getAddress(), $context);

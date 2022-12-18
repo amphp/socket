@@ -345,12 +345,14 @@ class ClientTlsContextTest extends TestCase
         $testKey = 'test';
 
         $contextA = new ClientTlsContext();
-        $contextB = $contextA->withPeerFingerprints(\sha1($testKey));
-        $contextC = $contextA->withPeerFingerprints(['md5' => \md5($testKey)]);
+        $contextB = $contextA->withPeerFingerprint(\sha1($testKey));
+        $contextC = $contextB->withPeerFingerprints(['md5' => \md5($testKey)]);
+        $contextD = $contextB->withPeerFingerprint(\md5($testKey));
 
         self::assertNull($contextA->getPeerFingerprints());
         self::assertSame(['sha1' => \sha1($testKey)], $contextB->getPeerFingerprints());
         self::assertSame(['md5' => \md5($testKey)], $contextC->getPeerFingerprints());
+        self::assertSame(['md5' => \md5($testKey)], $contextD->getPeerFingerprints());
 
         self::assertNull($contextC->withoutPeerFingerprints()->getPeerFingerprints());
     }
@@ -361,7 +363,7 @@ class ClientTlsContextTest extends TestCase
         $this->expectExceptionMessage('String must be an MD5 or SHA1 hash');
 
         $context = new ClientTlsContext();
-        $context->withPeerFingerprints('invalid');
+        $context->withPeerFingerprint('invalid');
     }
 
     public function testWithInvalidFingerprintArray(): void
@@ -378,7 +380,7 @@ class ClientTlsContextTest extends TestCase
         $context = (new ClientTlsContext())
             ->withCaPath('/var/foobar')
             ->withoutPeerVerification()
-            ->withPeerFingerprints(\sha1('certificate-content-placeholder'));
+            ->withPeerFingerprint(\sha1('certificate-content-placeholder'));
 
         $contextArray = $context->toStreamContextArray();
         unset($contextArray['ssl']['security_level']); // present depending on OpenSSL version
