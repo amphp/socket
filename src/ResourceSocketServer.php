@@ -145,6 +145,8 @@ final class ResourceSocketServer implements SocketServer
      */
     private function acceptSocketClient()
     {
+        \assert($this->socket !== null, "Unexpected server state");
+
         \set_error_handler($this->errorHandler);
 
         try {

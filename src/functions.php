@@ -42,10 +42,11 @@ function bindDatagram(
 ): ResourceDatagramSocket {
     $bindContext = $bindContext ?? new BindContext;
 
-    $uri = match (\strstr((string) $address, '://', true)) {
-        'udp' => $address,
-        false => 'udp://' . $address,
-        default => throw new \ValueError('Only udp scheme allowed for datagram creation; got ' . $address),
+    $uri = (string) $address;
+    $uri = match (\strstr($uri, '://', true)) {
+        'udp' => $uri,
+        false => 'udp://' . $uri,
+        default => throw new \ValueError('Only udp scheme allowed for datagram creation; got ' . $uri),
     };
 
     $streamContext = \stream_context_create($bindContext->toStreamContextArray());
@@ -115,10 +116,11 @@ function connectTls(SocketAddress|string $uri, ?ConnectContext $context = null, 
 
     if ($tlsContext->getPeerName() === '') {
         $hostname = '';
-        if (\str_contains($uri, 'tcp://')) {
-            $hostname = UriString::parse($uri)['host'] ?? '';
-        } elseif (!\str_contains($uri, '://')) {
-            $hostname = UriString::parse('tcp://' . $uri)['host'] ?? '';
+        $uriString = (string) $uri;
+        if (\str_contains($uriString, 'tcp://')) {
+            $hostname = UriString::parse($uriString)['host'] ?? '';
+        } elseif (!\str_contains($uriString, '://')) {
+            $hostname = UriString::parse('tcp://' . $uriString)['host'] ?? '';
         }
 
         $tlsContext = $tlsContext->withPeerName($hostname);
@@ -147,9 +149,9 @@ function createSocketPair(int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE): 
         });
 
         $sockets = \stream_socket_pair(
-            \PHP_OS_FAMILY === 'Windows' ? STREAM_PF_INET : STREAM_PF_UNIX,
-            STREAM_SOCK_STREAM,
-            STREAM_IPPROTO_IP,
+            \PHP_OS_FAMILY === 'Windows' ? \STREAM_PF_INET : \STREAM_PF_UNIX,
+            \STREAM_SOCK_STREAM,
+            \STREAM_IPPROTO_IP,
         );
         if ($sockets === false) {
             throw new SocketException('Failed to create socket pair.');

@@ -33,10 +33,10 @@
             </errorLevel>
         </DocblockTypeContradiction>
 
-        <MissingClosureParamType>
+        <MissingClosureReturnType>
             <errorLevel type="suppress">
                 <directory name="src"/>
             </errorLevel>
-        </MissingClosureParamType>
+        </MissingClosureReturnType>
     </issueHandlers>
 </psalm>

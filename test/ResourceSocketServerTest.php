@@ -11,7 +11,6 @@ use Amp\TimeoutCancellation;
 use function Amp\async;
 use function Amp\ByteStream\buffer;
 use function Amp\delay;
-use function Amp\Process\escapeArgument;
 
 class ResourceSocketServerTest extends AsyncTestCase
 {
