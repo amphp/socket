@@ -113,8 +113,9 @@ class ResourceSocketServerTest extends AsyncTestCase
                 async(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
-                    $this->assertSame('Hello World', $socket->read());
+                    $this->assertSame('Hello World', buffer($socket));
                     $socket->write('test');
+                    $socket->end();
                 });
             }
         });
@@ -128,8 +129,9 @@ class ResourceSocketServerTest extends AsyncTestCase
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World');
+            $client->end();
 
-            self::assertSame('test', $client->read());
+            self::assertSame('test', buffer($client));
         } finally {
             $server->close();
         }
@@ -150,9 +152,8 @@ class ResourceSocketServerTest extends AsyncTestCase
                 async(function () use ($socket): void {
                     $socket->setupTls();
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
-                    $this->assertSame('Hello World', $socket->read());
+                    $this->assertSame('Hello World', buffer($socket));
                     $socket->write('test');
-                    $socket->shutdownTls();
                     $socket->end();
                 });
             }
@@ -168,6 +169,7 @@ class ResourceSocketServerTest extends AsyncTestCase
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World');
+            $client->end();
             self::assertSame('test', buffer($client));
 
             $context = (new Socket\ConnectContext)->withTlsContext(
@@ -179,6 +181,7 @@ class ResourceSocketServerTest extends AsyncTestCase
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World');
+            $client->end();
             self::assertSame('test', buffer($client));
         } finally {
             $server->close();
@@ -237,6 +240,7 @@ class ResourceSocketServerTest extends AsyncTestCase
                     $this->assertInstanceOf(Socket\ResourceSocket::class, $socket);
                     $this->assertSame('Hello World', $socket->read());
                     $socket->write('test');
+                    $socket->end();
                 });
             }
         });
@@ -250,7 +254,8 @@ class ResourceSocketServerTest extends AsyncTestCase
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World');
-            self::assertSame('test', $client->read());
+            $client->end();
+            self::assertSame('test', buffer($client));
 
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
@@ -260,7 +265,8 @@ class ResourceSocketServerTest extends AsyncTestCase
             $client = Socket\connect($server->getAddress(), $context);
             $client->setupTls();
             $client->write('Hello World');
-            self::assertSame('test', $client->read());
+            $client->end();
+            self::assertSame('test', buffer($client));
         } finally {
             $server->close();
         }
