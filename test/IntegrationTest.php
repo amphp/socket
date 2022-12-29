@@ -104,7 +104,7 @@ class IntegrationTest extends AsyncTestCase
         $connectContext = (new ConnectContext)->withTlsContext(
             (new ClientTlsContext('tls-v1-0.badssl.com'))
                 ->withMinimumVersion(ClientTlsContext::TLSv1_0)
-                ->withSecurityLevel(1)
+                ->withSecurityLevel(0)
         );
 
         $socket = Socket\connect('tls-v1-0.badssl.com:1010', $connectContext);
@@ -131,7 +131,7 @@ class IntegrationTest extends AsyncTestCase
         $connectContext = (new ConnectContext)->withTlsContext(
             (new ClientTlsContext('tls-v1-1.badssl.com'))
                 ->withMinimumVersion(ClientTlsContext::TLSv1_1)
-                ->withSecurityLevel(1)
+                ->withSecurityLevel(0)
         );
 
         $socket = Socket\connect('tls-v1-1.badssl.com:1011', $connectContext);
