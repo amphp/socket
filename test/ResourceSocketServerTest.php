@@ -163,7 +163,7 @@ class ResourceSocketServerTest extends AsyncTestCase
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('amphp.org'))
                     ->withoutPeerVerification()
-                    ->withPeerFingerprint($this->readFingerprintFromFile(__DIR__ . '/tls/amphp.org.crt'))
+                    ->withPeerFingerprint($this->createFingerprintFromFile(__DIR__ . '/tls/amphp.org.crt'))
             );
 
             $client = Socket\connect($server->getAddress(), $context);
@@ -175,7 +175,7 @@ class ResourceSocketServerTest extends AsyncTestCase
             $context = (new Socket\ConnectContext)->withTlsContext(
                 (new Socket\ClientTlsContext('www.amphp.org'))
                     ->withoutPeerVerification()
-                    ->withPeerFingerprint($this->readFingerprintFromFile(__DIR__ . '/tls/www.amphp.org.crt'))
+                    ->withPeerFingerprint($this->createFingerprintFromFile(__DIR__ . '/tls/www.amphp.org.crt'))
             );
 
             $client = Socket\connect($server->getAddress(), $context);
@@ -292,7 +292,7 @@ class ResourceSocketServerTest extends AsyncTestCase
         self::assertSame($data, $clientSocket->read());
     }
 
-    private function readFingerprintFromFile(string $filename): string
+    private function createFingerprintFromFile(string $filename): string
     {
         $process = Process::start([
             'openssl',
@@ -305,12 +305,10 @@ class ResourceSocketServerTest extends AsyncTestCase
 
         $process->join();
 
-        if (!\preg_match(
-            '[^SHA1 Fingerprint=(?<fingerprint>(?:[A-F0-9]{2}:){19}[A-F0-9]{2})$]',
-            ByteStream\buffer($process->getStdout()),
-            $matches,
-        )) {
-            $this->fail('Could not read certificate fingerprint file ' . $filename);
+        $output = ByteStream\buffer($process->getStdout());
+
+        if (!\preg_match('[^SHA1 Fingerprint=(?<fingerprint>(?:[A-F0-9]{2}:){19}[A-F0-9]{2})]', $output, $matches)) {
+            $this->fail('Could not read certificate fingerprint file ' . $filename . '; openssl output: ' . $output);
         }
 
         return \str_replace(':', '', $matches['fingerprint']);
