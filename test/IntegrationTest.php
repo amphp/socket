@@ -130,7 +130,7 @@ class IntegrationTest extends AsyncTestCase
     {
         $connectContext = (new ConnectContext)->withTlsContext(
             (new ClientTlsContext('tls-v1-1.badssl.com'))
-                ->withMinimumVersion(ClientTlsContext::TLSv1_0)
+                ->withMinimumVersion(ClientTlsContext::TLSv1_1)
                 ->withSecurityLevel(1)
         );
 
