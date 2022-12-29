@@ -136,6 +136,7 @@ final class ResourceSocketServer implements SocketServer
                 }
             } while (!$client = $this->acceptSocketClient());
 
+            /** @var resource $client Psalm 5.x seems to think $client is of type 'never' */
             return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         } finally {
             EventLoop::disable($this->callbackId);

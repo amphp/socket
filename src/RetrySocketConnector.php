@@ -12,11 +12,22 @@ final class RetrySocketConnector implements SocketConnector
     use ForbidCloning;
     use ForbidSerialization;
 
+    /**
+     * @param positive-int $maxAttempts
+     * @param positive-int $exponentialBackoffBase
+     */
     public function __construct(
         private readonly SocketConnector $delegate,
         private readonly int $maxAttempts = 3,
         private readonly int $exponentialBackoffBase = 2,
     ) {
+        if ($this->maxAttempts < 1) {
+            throw new \ValueError('The maximum attempts must be a positive integer');
+        }
+
+        if ($this->exponentialBackoffBase < 1) {
+            throw new \ValueError('The exponential backoff base must be a positive integer');
+        }
     }
 
     /**
@@ -37,10 +48,10 @@ final class RetrySocketConnector implements SocketConnector
             } catch (ConnectException $e) {
                 if (++$attempts === $this->maxAttempts) {
                     throw new ConnectException(\sprintf(
-                        'Connection to %s failed after %d attempts%s',
+                        'Connection to %s failed after %d attempts; previous attempts: %s',
                         (string) $uri,
                         $attempts,
-                        $failures ? '; previous attempts: ' . \implode($failures) : ''
+                        \implode(', ', $failures),
                     ));
                 }
 

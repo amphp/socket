@@ -31,7 +31,10 @@ final class UnixAddress implements SocketAddress
         return $this->path;
     }
 
-    public function __toString()
+    /**
+     * @see toString
+     */
+    public function __toString(): string
     {
         return $this->toString();
     }
