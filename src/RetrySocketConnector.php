@@ -3,10 +3,15 @@
 namespace Amp\Socket;
 
 use Amp\Cancellation;
+use Amp\ForbidCloning;
+use Amp\ForbidSerialization;
 use function Amp\delay;
 
 final class RetrySocketConnector implements SocketConnector
 {
+    use ForbidCloning;
+    use ForbidSerialization;
+
     public function __construct(
         private readonly SocketConnector $delegate,
         private readonly int $maxAttempts = 3,

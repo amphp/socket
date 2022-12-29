@@ -3,12 +3,17 @@
 namespace Amp\Socket;
 
 use Amp\Cancellation;
+use Amp\ForbidCloning;
+use Amp\ForbidSerialization;
 
 /**
  * Connector that connects to a statically defined URI instead of the URI passed to the {@code connect()} call.
  */
 final class StaticSocketConnector implements SocketConnector
 {
+    use ForbidCloning;
+    use ForbidSerialization;
+
     private string $uri;
     private SocketConnector $connector;
 

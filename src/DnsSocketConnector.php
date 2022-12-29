@@ -6,12 +6,17 @@ use Amp\Cancellation;
 use Amp\CancelledException;
 use Amp\DeferredFuture;
 use Amp\Dns;
+use Amp\ForbidCloning;
+use Amp\ForbidSerialization;
 use Amp\NullCancellation;
 use Amp\TimeoutCancellation;
 use Revolt\EventLoop;
 
 final class DnsSocketConnector implements SocketConnector
 {
+    use ForbidCloning;
+    use ForbidSerialization;
+
     private readonly ?Dns\Resolver $resolver;
 
     private readonly \Closure $errorHandler;

@@ -5,11 +5,16 @@ namespace Amp\Socket;
 use Amp\Cancellation;
 use Amp\CancelledException;
 use Amp\DeferredFuture;
+use Amp\ForbidCloning;
+use Amp\ForbidSerialization;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 
 final class ResourceSocketServer implements SocketServer
 {
+    use ForbidCloning;
+    use ForbidSerialization;
+
     /** @var resource|null Stream socket server resource. */
     private $socket;
 

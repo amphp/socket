@@ -6,9 +6,14 @@ use Amp\ByteStream\ClosedException;
 use Amp\ByteStream\ReadableResourceStream;
 use Amp\ByteStream\WritableResourceStream;
 use Amp\Cancellation;
+use Amp\ForbidCloning;
+use Amp\ForbidSerialization;
 
 final class ResourceSocket implements EncryptableSocket
 {
+    use ForbidCloning;
+    use ForbidSerialization;
+
     public const DEFAULT_CHUNK_SIZE = ReadableResourceStream::DEFAULT_CHUNK_SIZE;
 
     /**

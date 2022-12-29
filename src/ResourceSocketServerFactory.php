@@ -2,8 +2,14 @@
 
 namespace Amp\Socket;
 
+use Amp\ForbidCloning;
+use Amp\ForbidSerialization;
+
 final class ResourceSocketServerFactory implements SocketServerFactory
 {
+    use ForbidCloning;
+    use ForbidSerialization;
+
     /** @var positive-int|null */
     private ?int $chunkSize;
 

@@ -3,6 +3,8 @@
 namespace Amp\Socket;
 
 use Amp\Cancellation;
+use Amp\ForbidCloning;
+use Amp\ForbidSerialization;
 use League\Uri\UriString;
 use Revolt\EventLoop;
 
@@ -18,6 +20,9 @@ use Revolt\EventLoop;
  */
 final class UnlimitedSocketPool implements SocketPool
 {
+    use ForbidCloning;
+    use ForbidSerialization;
+
     private const ALLOWED_SCHEMES = [
         'tcp' => null,
         'unix' => null,

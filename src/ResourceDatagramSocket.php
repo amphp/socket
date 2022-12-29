@@ -5,11 +5,16 @@ namespace Amp\Socket;
 use Amp\Cancellation;
 use Amp\CancelledException;
 use Amp\DeferredFuture;
+use Amp\ForbidCloning;
+use Amp\ForbidSerialization;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 
 final class ResourceDatagramSocket implements DatagramSocket
 {
+    use ForbidCloning;
+    use ForbidSerialization;
+
     public const DEFAULT_LIMIT = 8192;
 
     /** @var resource|null UDP socket resource. */
