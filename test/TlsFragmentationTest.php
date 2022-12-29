@@ -68,7 +68,7 @@ class TlsFragmentationTest extends AsyncTestCase
             while (($chunk = $source->read()) !== null) {
                 foreach (\str_split($chunk) as $byte) {
                     $destination->write($byte);
-                    delay(0.001);
+                    delay(0);
                 }
             }
 
