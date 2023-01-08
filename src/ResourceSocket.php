@@ -4,15 +4,20 @@ namespace Amp\Socket;
 
 use Amp\ByteStream\ClosedException;
 use Amp\ByteStream\ReadableResourceStream;
+use Amp\ByteStream\ReadableStreamIteratorAggregate;
 use Amp\ByteStream\WritableResourceStream;
 use Amp\Cancellation;
 use Amp\ForbidCloning;
 use Amp\ForbidSerialization;
 
-final class ResourceSocket implements EncryptableSocket
+/**
+ * @implements \IteratorAggregate<int, string>
+ */
+final class ResourceSocket implements EncryptableSocket, \IteratorAggregate
 {
     use ForbidCloning;
     use ForbidSerialization;
+    use ReadableStreamIteratorAggregate;
 
     public const DEFAULT_CHUNK_SIZE = ReadableResourceStream::DEFAULT_CHUNK_SIZE;
 
