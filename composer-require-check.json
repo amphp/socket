@@ -22,7 +22,6 @@
         "fromResourceLocal",
         "fromResourcePeer",
         "fromString",
-        "packIpAddress",
         "SOCKET_EAGAIN",
         "SOCKET_ECONNREFUSED",
         "SOCKET_ETIMEDOUT",

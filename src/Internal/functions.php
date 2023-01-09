@@ -198,7 +198,7 @@ function normalizeBindToOption(string $bindTo = null): ?string
         $ip = $match['ip'];
         $port = $match['port'] ?? 0;
 
-        if (packIpAddress($ip) === false) {
+        if (\inet_pton($ip) === false) {
             throw new \Error("Invalid IPv6 address: $ip");
         }
 
@@ -213,7 +213,7 @@ function normalizeBindToOption(string $bindTo = null): ?string
         $ip = $match['ip'];
         $port = $match['port'] ?? 0;
 
-        if (packIpAddress($ip) === false) {
+        if (\inet_pton($ip) === false) {
             throw new \Error("Invalid IPv4 address: $ip");
         }
 
@@ -225,24 +225,6 @@ function normalizeBindToOption(string $bindTo = null): ?string
     }
 
     throw new \Error("Invalid bindTo value: $bindTo");
-}
-
-/**
- * Alias of {@see inet_pton()} with errors suppressed.
- *
- * @internal
- */
-function packIpAddress(string $ip): string|false
-{
-    static $errorHandler;
-
-    \set_error_handler($errorHandler ??= static fn () => true);
-
-    try {
-        return \inet_pton($ip);
-    } finally {
-        \restore_error_handler();
-    }
 }
 
 /**

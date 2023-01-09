@@ -50,7 +50,7 @@ final class DnsSocketConnector implements SocketConnector
             $host = \substr($host, 1, -1);
         }
 
-        if ($port === 0 || Internal\packIpAddress($host)) {
+        if ($port === 0 || \inet_pton($host)) {
             // Host is already an IP address or file path.
             $uris = [$uri];
         } else {
@@ -87,8 +87,7 @@ final class DnsSocketConnector implements SocketConnector
                 \set_error_handler($this->errorHandler);
 
                 try {
-                    /** @psalm-suppress NullArgument */
-                    $socket = \stream_socket_client($builtUri, $errno, $errstr, null, $flags, $streamContext);
+                    $socket = \stream_socket_client($builtUri, $errno, $errstr, flags: $flags, context: $streamContext);
                 } finally {
                     \restore_error_handler();
                 }
