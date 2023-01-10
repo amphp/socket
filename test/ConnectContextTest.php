@@ -2,7 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\Dns\Record;
+use Amp\Dns\DnsRecord;
 use Amp\Socket;
 use PHPUnit\Framework\TestCase;
 
@@ -85,8 +85,8 @@ class ConnectContextTest extends TestCase
     {
         return [
             [null],
-            [Record::AAAA],
-            [Record::A],
+            [DnsRecord::AAAA],
+            [DnsRecord::A],
         ];
     }
 
@@ -107,8 +107,8 @@ class ConnectContextTest extends TestCase
     public function withDnsTypeRestrictionInvalidTypeDataProvider(): array
     {
         return [
-            [Record::NS],
-            [Record::MX],
+            [DnsRecord::NS],
+            [DnsRecord::MX],
         ];
     }
 

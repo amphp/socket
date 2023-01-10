@@ -5,25 +5,27 @@ namespace Amp\Socket;
 use Amp\Cancellation;
 use Amp\CancelledException;
 use Amp\DeferredFuture;
-use Amp\Dns;
+use Amp\Dns\DnsRecord;
+use Amp\Dns\DnsResolver;
 use Amp\ForbidCloning;
 use Amp\ForbidSerialization;
 use Amp\NullCancellation;
 use Amp\TimeoutCancellation;
 use Revolt\EventLoop;
+use function Amp\Dns\dnsResolver;
 
 final class DnsSocketConnector implements SocketConnector
 {
     use ForbidCloning;
     use ForbidSerialization;
 
-    private readonly ?Dns\Resolver $resolver;
+    private readonly ?DnsResolver $dnsResolver;
 
     private readonly \Closure $errorHandler;
 
-    public function __construct(?Dns\Resolver $resolver = null)
+    public function __construct(?DnsResolver $dnsResolver = null)
     {
-        $this->resolver = $resolver;
+        $this->dnsResolver = $dnsResolver;
         $this->errorHandler = static fn () => true;
     }
 
@@ -54,7 +56,7 @@ final class DnsSocketConnector implements SocketConnector
             // Host is already an IP address or file path.
             $uris = [$uri];
         } else {
-            $resolver = $this->resolver ?? Dns\resolver();
+            $resolver = $this->dnsResolver ?? dnsResolver();
 
             // Host is not an IP address, so resolve the domain name.
             $records = $resolver->resolve(
@@ -64,12 +66,12 @@ final class DnsSocketConnector implements SocketConnector
 
             // Usually the faster response should be preferred, but we don't have a reliable way of determining IPv6
             // support, so we always prefer IPv4 here.
-            \usort($records, static function (Dns\Record $a, Dns\Record $b) {
+            \usort($records, static function (DnsRecord $a, DnsRecord $b) {
                 return $a->getType() - $b->getType();
             });
 
             foreach ($records as $record) {
-                if ($record->getType() === Dns\Record::AAAA) {
+                if ($record->getType() === DnsRecord::AAAA) {
                     $uris[] = \sprintf('%s://[%s]:%d', $scheme, $record->getValue(), $port);
                 } else {
                     $uris[] = \sprintf('%s://%s:%d', $scheme, $record->getValue(), $port);
@@ -182,9 +184,9 @@ final class DnsSocketConnector implements SocketConnector
         }
 
         if (\str_starts_with($bindTo, '[')) {
-            return Dns\Record::AAAA;
+            return DnsRecord::AAAA;
         }
 
-        return Dns\Record::A;
+        return DnsRecord::A;
     }
 }

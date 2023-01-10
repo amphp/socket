@@ -2,7 +2,7 @@
 
 namespace Amp\Socket;
 
-use Amp\Dns\Record;
+use Amp\Dns\DnsRecord;
 use function Amp\Socket\Internal\normalizeBindToOption;
 
 final class ConnectContext
@@ -61,7 +61,7 @@ final class ConnectContext
 
     public function withDnsTypeRestriction(?int $type): self
     {
-        if ($type !== null && $type !== Record::AAAA && $type !== Record::A) {
+        if ($type !== null && $type !== DnsRecord::AAAA && $type !== DnsRecord::A) {
             throw new \ValueError('Invalid resolver type restriction');
         }
 
