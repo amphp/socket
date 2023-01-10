@@ -154,7 +154,7 @@ final class ResourceDatagramSocket implements DatagramSocket
     public function send(SocketAddress $address, string $data): void
     {
         static $errorHandler;
-        $errorHandler ??= static function (int $errno, string $errstr): void {
+        $errorHandler ??= static function (int $errno, string $errstr): never {
             throw new SocketException(\sprintf('Could not send datagram packet: %s', $errstr));
         };
 

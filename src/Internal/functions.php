@@ -83,11 +83,16 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
     \error_clear_last();
     \stream_context_set_option($socket, $options);
 
-    try {
-        \set_error_handler(static function (int $errno, string $errstr) {
-            throw new TlsException('TLS negotiation failed: ' . $errstr);
-        });
+    $errorHandler = static function (int $errno, string $errstr) use ($socket): never {
+        if (\feof($socket)) {
+            $errstr = 'Connection reset by peer';
+        }
 
+        throw new TlsException('TLS negotiation failed: ' . $errstr);
+    };
+
+    try {
+        \set_error_handler($errorHandler);
         $result = \stream_socket_enable_crypto($socket, enable: true);
         if ($result === false) {
             throw new TlsException('TLS negotiation failed: Unknown error');
@@ -108,7 +113,7 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
         $suspension = EventLoop::getSuspension();
 
         // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
-        $cancellationId = $cancellation->subscribe(static function ($e) use ($suspension, &$callbackId) {
+        $cancellationId = $cancellation->subscribe(static function ($e) use ($suspension, &$callbackId): void {
             EventLoop::cancel($callbackId);
 
             $suspension->throw($e);
@@ -131,13 +136,7 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
         }
 
         try {
-            \set_error_handler(static function (int $errno, string $errstr) use ($socket) {
-                if (\feof($socket)) {
-                    $errstr = 'Connection reset by peer';
-                }
-
-                throw new TlsException('TLS negotiation failed: ' . $errstr);
-            });
+            \set_error_handler($errorHandler);
             $result = \stream_socket_enable_crypto($socket, enable: true);
             if ($result === false) {
                 $message = \feof($socket) ? 'Connection reset by peer' : 'Unknown error';
@@ -164,7 +163,7 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
  */
 function shutdownTls($socket): void
 {
-    \set_error_handler(static function (int $errno, string $errstr) use ($socket) {
+    \set_error_handler(static function (int $errno, string $errstr) use ($socket): never {
         if (\feof($socket)) {
             $errstr = 'Connection reset by peer';
         }
@@ -196,7 +195,7 @@ function normalizeBindToOption(string $bindTo = null): ?string
 
     if (\preg_match("/\\[(?P<ip>[0-9a-f:]+)](:(?P<port>\\d+))?$/", $bindTo, $match)) {
         $ip = $match['ip'];
-        $port = $match['port'] ?? 0;
+        $port = (int) ($match['port'] ?? 0);
 
         if (\inet_pton($ip) === false) {
             throw new \Error("Invalid IPv6 address: $ip");
@@ -211,7 +210,7 @@ function normalizeBindToOption(string $bindTo = null): ?string
 
     if (\preg_match("/(?P<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)(:(?P<port>\\d+))?$/", $bindTo, $match)) {
         $ip = $match['ip'];
-        $port = $match['port'] ?? 0;
+        $port = (int) ($match['port'] ?? 0);
 
         if (\inet_pton($ip) === false) {
             throw new \Error("Invalid IPv4 address: $ip");

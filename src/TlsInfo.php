@@ -115,12 +115,9 @@ final class TlsInfo
             throw new SocketException("Peer certificates not captured; use ClientTlsContext::withPeerCapturing() to capture peer certificates");
         }
 
-        if ($this->parsedCertificates === null) {
-            $this->parsedCertificates = \array_map(static function ($resource) {
-                return new Certificate($resource);
-            }, $this->certificates);
-        }
-
-        return $this->parsedCertificates;
+        return $this->parsedCertificates ??= \array_map(
+            static fn ($resource) => new Certificate($resource),
+            $this->certificates,
+        );
     }
 }
