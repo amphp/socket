@@ -37,14 +37,10 @@ final class UnlimitedSocketPool implements SocketPool
     /** @var int[] */
     private array $pendingCount = [];
 
-    private float $idleTimeout;
-
-    private SocketConnector $connector;
-
-    public function __construct(float $idleTimeout = 10, ?SocketConnector $connector = null)
-    {
-        $this->idleTimeout = $idleTimeout;
-        $this->connector = $connector ?? socketConnector();
+    public function __construct(
+        private readonly float $idleTimeout = 10,
+        private readonly ?SocketConnector $connector = null,
+    ) {
     }
 
     public function checkout(
@@ -203,7 +199,7 @@ final class UnlimitedSocketPool implements SocketPool
         $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
         try {
-            $socket = $this->connector->connect($uri, $connectContext, $cancellation);
+            $socket = ($this->connector ?? socketConnector())->connect($uri, $connectContext, $cancellation);
         } finally {
             if (--$this->pendingCount[$uri] === 0) {
                 unset($this->pendingCount[$uri]);

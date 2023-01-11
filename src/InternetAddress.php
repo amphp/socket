@@ -21,12 +21,12 @@ final class InternetAddress implements SocketAddress
         return new self($ip, (int) $port);
     }
 
-    private string $binaryAddress;
+    private readonly string $binaryAddress;
 
-    private string $textualAddress;
+    private readonly string $textualAddress;
 
     /** @var int<0, 65535> */
-    private int $port;
+    private readonly int $port;
 
     /**
      * @param int<0, 65535> $port

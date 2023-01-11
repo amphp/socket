@@ -22,11 +22,6 @@ final class ResourceSocketServer implements SocketServer
 
     private readonly SocketAddress $address;
 
-    private readonly BindContext $bindContext;
-
-    /** @var positive-int */
-    private int $chunkSize;
-
     private ?Suspension $acceptor = null;
 
     /** @var \Closure(CancelledException) */
@@ -44,16 +39,14 @@ final class ResourceSocketServer implements SocketServer
      */
     public function __construct(
         $socket,
-        BindContext $bindContext,
-        int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE,
+        private readonly BindContext $bindContext,
+        private readonly int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE,
     ) {
         if (!\is_resource($socket) || \get_resource_type($socket) !== 'stream') {
             throw new \Error('Invalid resource given to constructor!');
         }
 
         $this->socket = $socket;
-        $this->chunkSize = $chunkSize;
-        $this->bindContext = $bindContext;
         $this->address = SocketAddress\fromResourceLocal($socket);
 
         // Ignore any errors raised while this handler is set. Errors will be checked through return values.

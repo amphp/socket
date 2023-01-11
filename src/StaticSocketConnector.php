@@ -14,13 +14,10 @@ final class StaticSocketConnector implements SocketConnector
     use ForbidCloning;
     use ForbidSerialization;
 
-    private string $uri;
-    private SocketConnector $connector;
-
-    public function __construct(string $uri, SocketConnector $connector)
-    {
-        $this->uri = $uri;
-        $this->connector = $connector;
+    public function __construct(
+        private readonly SocketAddress|string $uri,
+        private readonly SocketConnector $connector,
+    ) {
     }
 
     public function connect(

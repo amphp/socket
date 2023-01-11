@@ -9,18 +9,6 @@ use Kelunik\Certificate\Certificate;
  */
 final class TlsInfo
 {
-    private string $version;
-
-    private string $cipherName;
-
-    private int $cipherBits;
-
-    private string $cipherVersion;
-
-    private ?string $alpnProtocol;
-
-    private ?array $certificates;
-
     /** @var Certificate[]|null */
     private ?array $parsedCertificates = null;
 
@@ -69,14 +57,17 @@ final class TlsInfo
         );
     }
 
-    private function __construct(string $version, string $cipherName, int $cipherBits, string $cipherVersion, ?string $alpnProtocol, ?array $certificates)
-    {
-        $this->version = $version;
-        $this->cipherName = $cipherName;
-        $this->cipherBits = $cipherBits;
-        $this->cipherVersion = $cipherVersion;
-        $this->alpnProtocol = $alpnProtocol;
-        $this->certificates = $certificates;
+    /**
+     * @param array<resource>|null $certificates
+     */
+    private function __construct(
+        private readonly string $version,
+        private readonly string $cipherName,
+        private readonly int $cipherBits,
+        private readonly string $cipherVersion,
+        private readonly ?string $alpnProtocol,
+        private readonly ?array $certificates,
+    ) {
     }
 
     public function getVersion(): string

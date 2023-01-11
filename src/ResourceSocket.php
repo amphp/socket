@@ -42,9 +42,7 @@ final class ResourceSocket implements EncryptableSocket, \IteratorAggregate
         return new self($resource, $tlsContext, $chunkSize);
     }
 
-    private readonly ?ClientTlsContext $tlsContext;
-
-    private TlsState $tlsState;
+    private TlsState $tlsState = TlsState::Disabled;
 
     private ?array $streamContext = null;
 
@@ -64,15 +62,13 @@ final class ResourceSocket implements EncryptableSocket, \IteratorAggregate
      */
     private function __construct(
         $resource,
-        ?ClientTlsContext $tlsContext = null,
-        int $chunkSize = self::DEFAULT_CHUNK_SIZE
+        private readonly ?ClientTlsContext $tlsContext = null,
+        int $chunkSize = self::DEFAULT_CHUNK_SIZE,
     ) {
-        $this->tlsContext = $tlsContext;
         $this->reader = new ReadableResourceStream($resource, $chunkSize);
         $this->writer = new WritableResourceStream($resource, $chunkSize);
         $this->remoteAddress = SocketAddress\fromResourcePeer($resource);
         $this->localAddress = SocketAddress\fromResourceLocal($resource);
-        $this->tlsState = TlsState::Disabled;
     }
 
     public function setupTls(?Cancellation $cancellation = null): void

@@ -20,13 +20,10 @@ final class DnsSocketConnector implements SocketConnector
     use ForbidCloning;
     use ForbidSerialization;
 
-    private readonly ?DnsResolver $dnsResolver;
-
     private readonly \Closure $errorHandler;
 
-    public function __construct(?DnsResolver $dnsResolver = null)
+    public function __construct(private readonly ?DnsResolver $dnsResolver = null)
     {
-        $this->dnsResolver = $dnsResolver;
         $this->errorHandler = static fn () => true;
     }
 

@@ -4,11 +4,8 @@ namespace Amp\Socket;
 
 final class UnixAddress implements SocketAddress
 {
-    private string $path;
-
-    public function __construct(string $path)
+    public function __construct(private readonly string $path)
     {
-        $this->path = $path;
     }
 
     public function getType(): SocketAddressType

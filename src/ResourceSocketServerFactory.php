@@ -10,15 +10,11 @@ final class ResourceSocketServerFactory implements SocketServerFactory
     use ForbidCloning;
     use ForbidSerialization;
 
-    /** @var positive-int|null */
-    private ?int $chunkSize;
-
     /**
      * @param positive-int|null $chunkSize
      */
-    public function __construct(?int $chunkSize = null)
+    public function __construct(private readonly ?int $chunkSize = null)
     {
-        $this->chunkSize = $chunkSize;
     }
 
     /**
