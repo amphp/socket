@@ -5,6 +5,7 @@ namespace Amp\Socket;
 use Amp\Cancellation;
 use Amp\CancelledException;
 use Amp\DeferredFuture;
+use Amp\Dns\DnsException;
 use Amp\Dns\DnsRecord;
 use Amp\Dns\DnsResolver;
 use Amp\ForbidCloning;
@@ -36,8 +37,6 @@ final class DnsSocketConnector implements SocketConnector
     ): EncryptableSocket {
         $context ??= new ConnectContext;
         $cancellation ??= new NullCancellation;
-        $uris = [];
-        $failures = [];
 
         if ($uri instanceof SocketAddress) {
             $uri = match ($uri->getType()) {
@@ -46,42 +45,12 @@ final class DnsSocketConnector implements SocketConnector
             };
         }
 
-        [$scheme, $host, $port] = Internal\parseUri($uri);
-
-        if ($host[0] === '[') {
-            $host = \substr($host, 1, -1);
-        }
-
-        if ($port === 0 || \inet_pton($host)) {
-            // Host is already an IP address or file path.
-            $uris = [$uri];
-        } else {
-            $resolver = $this->dnsResolver ?? dnsResolver();
-
-            // Host is not an IP address, so resolve the domain name.
-            $records = $resolver->resolve(
-                $host,
-                $context->getDnsTypeRestriction() ?? $this->getDnsTypeRestrictionFromBindTo($context)
-            );
-
-            // Usually the faster response should be preferred, but we don't have a reliable way of determining IPv6
-            // support, so we always prefer IPv4 here.
-            \usort($records, static function (DnsRecord $a, DnsRecord $b) {
-                return $a->getType() - $b->getType();
-            });
-
-            foreach ($records as $record) {
-                if ($record->getType() === DnsRecord::AAAA) {
-                    $uris[] = \sprintf('%s://[%s]:%d', $scheme, $record->getValue(), $port);
-                } else {
-                    $uris[] = \sprintf('%s://%s:%d', $scheme, $record->getValue(), $port);
-                }
-            }
-        }
+        $uris = $this->resolve($uri, $context);
 
         $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
         $timeout = $context->getConnectTimeout();
 
+        $failures = [];
         foreach ($uris as $builtUri) {
             try {
                 $streamContext = \stream_context_create($context->withoutTlsContext()->toStreamContextArray());
@@ -174,6 +143,55 @@ final class DnsSocketConnector implements SocketConnector
          * @psalm-suppress UndefinedVariable
          */
         throw $e;
+    }
+
+    /**
+     * @return non-empty-list<string>
+     */
+    private function resolve(string $uri, ConnectContext $context): array
+    {
+        [$scheme, $host, $port] = Internal\parseUri($uri);
+
+        if ($host[0] === '[') {
+            $host = \substr($host, 1, -1);
+        }
+
+        if ($port === 0 || \inet_pton($host)) {
+            // Host is already an IP address or file path.
+            return [$uri];
+        }
+
+        $resolver = $this->dnsResolver ?? dnsResolver();
+
+        try {
+            // Host is not an IP address, so resolve the domain name.
+            $records = $resolver->resolve(
+                $host,
+                $context->getDnsTypeRestriction() ?? $this->getDnsTypeRestrictionFromBindTo($context)
+            );
+        } catch (DnsException $exception) {
+            throw new ConnectException(
+                message: \sprintf('DNS resolution for %s failed: %s', $host, $exception->getMessage()),
+                previous: $exception,
+            );
+        }
+
+        // Usually the faster response should be preferred, but we don't have a reliable way of determining IPv6
+        // support, so we always prefer IPv4 here.
+        \usort($records, static fn (DnsRecord $a, DnsRecord $b) => $a->getType() - $b->getType());
+
+        $uris = [];
+        foreach ($records as $record) {
+            if ($record->getType() === DnsRecord::AAAA) {
+                $uris[] = \sprintf('%s://[%s]:%d', $scheme, $record->getValue(), $port);
+            } else {
+                $uris[] = \sprintf('%s://%s:%d', $scheme, $record->getValue(), $port);
+            }
+        }
+
+        \assert(!empty($uris)); // Assert array is not empty for Psalm.
+
+        return $uris;
     }
 
     private function getDnsTypeRestrictionFromBindTo(ConnectContext $context): ?int

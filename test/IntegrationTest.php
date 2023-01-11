@@ -34,6 +34,13 @@ class IntegrationTest extends AsyncTestCase
         Socket\connect('8.8.8.8:1', (new ConnectContext)->withConnectTimeout(1));
     }
 
+    public function testConnectWithDnsFailure(): void
+    {
+        $this->expectException(ConnectException::class);
+
+        Socket\connect('non-existent.amphp.org', (new ConnectContext)->withConnectTimeout(1));
+    }
+
     /**
      * @depends testConnectFailure
      */
