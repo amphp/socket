@@ -74,12 +74,9 @@ final class ResourceSocket implements EncryptableSocket, \IteratorAggregate
     public function setupTls(?Cancellation $cancellation = null): void
     {
         $resource = $this->getResource();
-
         if ($resource === null) {
             throw new ClosedException("Can't setup TLS, because the socket has already been closed");
         }
-
-        $this->tlsState = TlsState::SetupPending;
 
         $context = $this->getStreamContext();
 
@@ -91,6 +88,8 @@ final class ResourceSocket implements EncryptableSocket, \IteratorAggregate
             );
         }
 
+        $this->tlsState = TlsState::SetupPending;
+
         try {
             /** @psalm-suppress PossiblyInvalidArgument */
             Internal\setupTls($resource, $context, $cancellation);
@@ -98,7 +97,7 @@ final class ResourceSocket implements EncryptableSocket, \IteratorAggregate
             $this->tlsState = TlsState::Enabled;
         } catch (\Throwable $exception) {
             $this->close();
-
+            $this->tlsState = TlsState::Disabled;
             throw $exception;
         }
     }
