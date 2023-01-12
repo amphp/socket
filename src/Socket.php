@@ -18,4 +18,11 @@ interface Socket extends ReadableStream, WritableStream, ResourceStream
     public function getLocalAddress(): SocketAddress;
 
     public function getRemoteAddress(): SocketAddress;
+
+    public function getTlsState(): TlsState;
+
+    /**
+     * @return TlsInfo|null The TLS (crypto) context info if TLS is enabled on the socket or null otherwise.
+     */
+    public function getTlsInfo(): ?TlsInfo;
 }
