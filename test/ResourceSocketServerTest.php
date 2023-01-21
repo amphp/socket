@@ -307,10 +307,14 @@ class ResourceSocketServerTest extends AsyncTestCase
 
         $output = ByteStream\buffer($process->getStdout());
 
-        if (!\preg_match('[^SHA1 Fingerprint=(?<fingerprint>(?:[A-F0-9]{2}:){19}[A-F0-9]{2})]', $output, $matches)) {
-            $this->fail('Could not read certificate fingerprint file ' . $filename . '; openssl output: ' . $output);
+        if (\preg_match('[^SHA1 Fingerprint=(?<fingerprint>(?:[A-F0-9]{2}:){19}[A-F0-9]{2})]', $output, $matches)) {
+            return \str_replace(':', '', $matches['fingerprint']);
         }
 
-        return \str_replace(':', '', $matches['fingerprint']);
+        if (\preg_match('[^SHA256 Fingerprint=(?<fingerprint>(?:[A-F0-9]{2}:){31}[A-F0-9]{2})]', $output, $matches)) {
+            return \str_replace(':', '', $matches['fingerprint']);
+        }
+
+        $this->fail('Could not read certificate fingerprint file ' . $filename . '; openssl output: ' . $output);
     }
 }

@@ -373,6 +373,7 @@ final class ClientTlsContext
         $hash = match (\strlen($fingerprint)) {
             32 => 'md5',
             40 => 'sha1',
+            64 => 'sha256',
             default => throw new \ValueError('String must be an MD5 or SHA1 hash'),
         };
 
@@ -385,6 +386,7 @@ final class ClientTlsContext
             if (!\is_string($fingerprint) || !match ($hash) {
                 'md5' => \strlen($fingerprint) === 32,
                 'sha1' => \strlen($fingerprint) === 40,
+                'sha256' => \strlen($fingerprint) === 64,
                 default => false,
             }) {
                 throw new \ValueError("Invalid fingerprint array; {$hash} is invalid");
