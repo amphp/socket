@@ -7,7 +7,7 @@ use Amp\ByteStream\ResourceStream;
 use Amp\ByteStream\WritableStream;
 use Amp\Cancellation;
 
-interface Socket extends ReadableStream, WritableStream, ResourceStream
+interface Socket extends ReadableStream, WritableStream
 {
     /**
      * @param positive-int|null $limit Read at most $limit bytes from the socket. {@code null} uses an implementation

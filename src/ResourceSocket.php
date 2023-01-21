@@ -5,6 +5,7 @@ namespace Amp\Socket;
 use Amp\ByteStream\ClosedException;
 use Amp\ByteStream\ReadableResourceStream;
 use Amp\ByteStream\ReadableStreamIteratorAggregate;
+use Amp\ByteStream\ResourceStream;
 use Amp\ByteStream\WritableResourceStream;
 use Amp\Cancellation;
 use Amp\ForbidCloning;
@@ -13,7 +14,7 @@ use Amp\ForbidSerialization;
 /**
  * @implements \IteratorAggregate<int, string>
  */
-final class ResourceSocket implements EncryptableSocket, \IteratorAggregate
+final class ResourceSocket implements EncryptableSocket, \IteratorAggregate, ResourceStream
 {
     use ForbidCloning;
     use ForbidSerialization;
