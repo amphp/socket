@@ -3,7 +3,6 @@
 namespace Amp\Socket;
 
 use Amp\ByteStream\ReadableStream;
-use Amp\ByteStream\ResourceStream;
 use Amp\ByteStream\WritableStream;
 use Amp\Cancellation;
 
