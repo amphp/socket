@@ -21,14 +21,14 @@ interface Socket extends ReadableStream, WritableStream
     /**
      * @return void Returns when TLS is successfully set up on the socket.
      *
-     * @throws SocketException Promise fails and the socket is closed if setting up TLS fails.
+     * @throws SocketException Socket is closed if setting up TLS fails.
      */
     public function setupTls(?Cancellation $cancellation = null): void;
 
     /**
      * @return void Returns when TLS is successfully shutdown.
      *
-     * @throws SocketException Promise fails and the socket is closed if shutting down TLS fails.
+     * @throws SocketException Socket is closed if shutting down TLS fails.
      */
     public function shutdownTls(?Cancellation $cancellation = null): void;
 
