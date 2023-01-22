@@ -170,7 +170,7 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
         return $this->remoteAddress;
     }
 
-    public function isTlsAvailable(): bool
+    public function isTlsConfigurationAvailable(): bool
     {
         return $this->tlsContext || !empty($this->getStreamContext()['ssl']);
     }

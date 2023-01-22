@@ -32,7 +32,7 @@ interface Socket extends ReadableStream, WritableStream
      */
     public function shutdownTls(?Cancellation $cancellation = null): void;
 
-    public function isTlsAvailable(): bool;
+    public function isTlsConfigurationAvailable(): bool;
 
     public function getTlsState(): TlsState;
 
