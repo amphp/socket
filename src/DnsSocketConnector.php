@@ -186,8 +186,6 @@ final class DnsSocketConnector implements SocketConnector
             }
         }
 
-        \assert(!empty($uris)); // Assert array is not empty for Psalm.
-
         return $uris;
     }
 
