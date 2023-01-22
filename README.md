@@ -43,7 +43,7 @@ If you want to connect via TLS, use `Amp\Socket\connectTls()` instead or call `$
 
 ### Handling Connections
 
-`EncryptableSocket` implements `ReadableStream` and `WritableStream`, so everything from [`amphp/byte-stream`](https://v3.amphp.org/byte-stream) applies for receiving and sending data.
+`Socket` implements `ReadableStream` and `WritableStream`, so everything from [`amphp/byte-stream`](https://v3.amphp.org/byte-stream) applies for receiving and sending data.
 
 ```php
 #!/usr/bin/env php
@@ -96,7 +96,7 @@ Use `Amp\Socket\Socket\listen()` to listen on a port or unix domain socket.
 It's a wrapper around `stream_socket_server` that gives useful error message on failures via exceptions.
 
 Once you're listening, accept clients using `Server::accept()`.
-It returns an `EncryptableSocket` that returns once a new client has been accepted.
+It returns a `Socket` that returns once a new client has been accepted.
 It's usually called within a `while` loop:
 
 ```php
@@ -112,7 +112,7 @@ while ($client = $server->accept()) {
 
 ### Handling Connections
 
-`EncryptableSocket` implements `ReadableStream` and `WritableStream`, so everything from [`amphp/byte-stream`](https://v3.amphp.org/byte-stream) applies for receiving and sending data.
+`Socket` implements `ReadableStream` and `WritableStream`, so everything from [`amphp/byte-stream`](https://v3.amphp.org/byte-stream) applies for receiving and sending data.
 It's best to handle clients in their own coroutine, while letting the server accept all clients as soon as there are new clients.
 
 ```php
@@ -174,11 +174,15 @@ As already mentioned in the documentation for `Amp\Socket\Socket\listen()`, you 
 For a TLS server socket, you listen on the `tcp://` protocol on a specified address.
 After accepting clients, call `$socket->setupTls()` where `$socket` is the socket returned from `SocketServer::accept()`.
 
-Any data transmitted before `EncryptableSocket::setupTls()` completes will be transmitted in clear text.
-Don't attempt to read from the socket or write to it manually.
-Doing so will read the raw TLS handshake data that's supposed to be read by OpenSSL.
+> **Warning**
+> Any data transmitted before `Socket::setupTls()` completes will be transmitted in clear text.
+> Don't attempt to read from the socket or write to it manually.
+> Doing so will read the raw TLS handshake data that's supposed to be read by OpenSSL.
 
-A note about self-signed certificates: No option to allow self-signed certificates is provided in `ClientTlsContext` since it is no more secure than disabling peer verification. To safely use a self-signed certificate, disable peer verification and require fingerprint verification of the certificate using `ClientTlsContext::withPeerFingerprint()`.
+#### Self-Signed Certificates
+
+There's no option to allow self-signed certificates in `ClientTlsContext` since it is no more secure than disabling peer verification.
+To safely use a self-signed certificate, disable peer verification and require fingerprint verification of the certificate using `ClientTlsContext::withPeerFingerprint()`.
 
 ## Security
 
