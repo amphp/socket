@@ -166,7 +166,7 @@ class ResourceDatagramSocketTest extends AsyncTestCase
 
         try {
             $socket = Socket\connect('udp://' . $endpoint->getAddress());
-            \assert($socket instanceof Socket\EncryptableSocket);
+            \assert($socket instanceof Socket\Socket);
 
             $socket->write('Hello!');
             [, $data] = $endpoint->receive(limit: 1);

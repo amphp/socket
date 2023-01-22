@@ -24,7 +24,7 @@ final class StaticSocketConnector implements SocketConnector
         SocketAddress|string $uri,
         ?ConnectContext $context = null,
         ?Cancellation $cancellation = null
-    ): EncryptableSocket {
+    ): Socket {
         return $this->connector->connect($this->uri, $context, $cancellation);
     }
 }

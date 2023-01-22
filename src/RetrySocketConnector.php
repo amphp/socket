@@ -37,7 +37,7 @@ final class RetrySocketConnector implements SocketConnector
         SocketAddress|string $uri,
         ?ConnectContext $context = null,
         ?Cancellation $cancellation = null
-    ): EncryptableSocket {
+    ): Socket {
         $attempts = 0;
         $failures = [];
         $context ??= new ConnectContext;

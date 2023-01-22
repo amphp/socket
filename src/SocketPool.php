@@ -25,7 +25,7 @@ interface SocketPool
      * @param ConnectContext|null $context Socket connect context to use when connecting.
      * @param Cancellation|null $cancellation Optional cancellation token to cancel the checkout request.
      *
-     * @return EncryptableSocket Resolves to an EncryptableSocket instance once a connection is available.
+     * @return Socket Resolves to an Socket instance once a connection is available.
      *
      * @throws SocketException
      * @throws CancelledException
@@ -34,23 +34,23 @@ interface SocketPool
         string $uri,
         ConnectContext $context = null,
         Cancellation $cancellation = null
-    ): EncryptableSocket;
+    ): Socket;
 
     /**
      * Return a previously checked-out socket to the pool, so it can be reused.
      *
-     * @param EncryptableSocket $socket Socket instance.
+     * @param Socket $socket Socket instance.
      *
      * @throws \Error If the provided resource is unknown to the pool.
      */
-    public function checkin(EncryptableSocket $socket): void;
+    public function checkin(Socket $socket): void;
 
     /**
      * Remove the specified socket from the pool.
      *
-     * @param EncryptableSocket $socket Socket instance.
+     * @param Socket $socket Socket instance.
      *
      * @throws \Error If the provided resource is unknown to the pool.
      */
-    public function clear(EncryptableSocket $socket): void;
+    public function clear(Socket $socket): void;
 }

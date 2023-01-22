@@ -108,7 +108,7 @@ class ResourceSocketServerTest extends AsyncTestCase
         $server = Socket\listen('127.0.0.1:0', (new Socket\BindContext)->withTlsContext($tlsContext));
 
         async(function () use ($server): void {
-            /** @var Socket\EncryptableSocket $socket */
+            /** @var Socket\Socket $socket */
             while ($socket = $server->accept()) {
                 async(function () use ($socket): void {
                     $socket->setupTls();

@@ -13,7 +13,7 @@ use Revolt\EventLoop;
  *
  * @psalm-type SocketEntry = object{
  *     uri: string,
- *     object: EncryptableSocket,
+ *     object: Socket,
  *     isAvailable: bool,
  *     idleWatcher: string|null,
  * }
@@ -47,7 +47,7 @@ final class UnlimitedSocketPool implements SocketPool
         string $uri,
         ConnectContext $context = null,
         Cancellation $cancellation = null,
-    ): EncryptableSocket {
+    ): Socket {
         // A request might already be cancelled before we reach the checkout, so do not even attempt to checkout in that
         // case. The weird logic is required to throw the token's exception instead of creating a new one.
         if ($cancellation && $cancellation->isRequested()) {
@@ -99,12 +99,12 @@ final class UnlimitedSocketPool implements SocketPool
         return $this->checkoutNewSocket($uri, $cacheKey, $context, $cancellation);
     }
 
-    public function clear(EncryptableSocket $socket): void
+    public function clear(Socket $socket): void
     {
         $this->clearFromId($socket);
     }
 
-    public function checkin(EncryptableSocket $socket): void
+    public function checkin(Socket $socket): void
     {
         $objectId = \spl_object_id($socket);
 
@@ -195,7 +195,7 @@ final class UnlimitedSocketPool implements SocketPool
         string $cacheKey,
         ConnectContext $connectContext = null,
         Cancellation $cancellation = null,
-    ): EncryptableSocket {
+    ): Socket {
         $this->pendingCount[$uri] = ($this->pendingCount[$uri] ?? 0) + 1;
 
         try {
@@ -213,7 +213,7 @@ final class UnlimitedSocketPool implements SocketPool
 
             public function __construct(
                 public readonly string $uri,
-                public readonly EncryptableSocket $object,
+                public readonly Socket $object,
             ) {
             }
         };
@@ -225,7 +225,7 @@ final class UnlimitedSocketPool implements SocketPool
         return $socket;
     }
 
-    private function clearFromId(EncryptableSocket $socket): void
+    private function clearFromId(Socket $socket): void
     {
         $objectId = \spl_object_id($socket);
 

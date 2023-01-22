@@ -31,7 +31,7 @@ final class DnsSocketConnector implements SocketConnector
         SocketAddress|string $uri,
         ?ConnectContext $context = null,
         ?Cancellation $cancellation = null
-    ): EncryptableSocket {
+    ): Socket {
         $context ??= new ConnectContext;
         $cancellation ??= new NullCancellation;
 

@@ -20,5 +20,5 @@ interface SocketConnector
         SocketAddress|string $uri,
         ?ConnectContext $context = null,
         ?Cancellation $cancellation = null
-    ): EncryptableSocket;
+    ): Socket;
 }
