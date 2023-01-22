@@ -2,11 +2,10 @@
 
 namespace Amp\Socket;
 
-use Amp\ByteStream\ResourceStream;
 use Amp\Cancellation;
 use Amp\Closable;
 
-interface SocketServer extends Closable, ResourceStream
+interface SocketServer extends Closable
 {
     /**
      * @throws PendingAcceptError If another accept request is pending.

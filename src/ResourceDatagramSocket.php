@@ -2,6 +2,7 @@
 
 namespace Amp\Socket;
 
+use Amp\ByteStream\ResourceStream;
 use Amp\Cancellation;
 use Amp\CancelledException;
 use Amp\DeferredFuture;
@@ -10,7 +11,7 @@ use Amp\ForbidSerialization;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 
-final class ResourceDatagramSocket implements DatagramSocket
+final class ResourceDatagramSocket implements DatagramSocket, ResourceStream
 {
     use ForbidCloning;
     use ForbidSerialization;
