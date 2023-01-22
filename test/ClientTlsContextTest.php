@@ -360,7 +360,7 @@ class ClientTlsContextTest extends TestCase
     public function testWithInvalidFingerprintString(): void
     {
         $this->expectException(\ValueError::class);
-        $this->expectExceptionMessage('String must be an MD5 or SHA1 hash');
+        $this->expectExceptionMessage('String must be an SHA256, SHA1, or MD5 hash');
 
         $context = new ClientTlsContext();
         $context->withPeerFingerprint('invalid');
