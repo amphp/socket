@@ -343,16 +343,18 @@ class ClientTlsContextTest extends TestCase
     public function testWithPeerFingerprint(): void
     {
         $testKey = 'test';
+        $sha1 = \hash('sha1', $testKey);
+        $sha256 = \hash('sha256', $testKey);
 
         $contextA = new ClientTlsContext();
-        $contextB = $contextA->withPeerFingerprint(\sha1($testKey));
-        $contextC = $contextB->withPeerFingerprints(['md5' => \md5($testKey)]);
-        $contextD = $contextB->withPeerFingerprint(\md5($testKey));
+        $contextB = $contextA->withPeerFingerprint($sha1);
+        $contextC = $contextB->withPeerFingerprints(['sha256' => $sha256]);
+        $contextD = $contextB->withPeerFingerprint($sha256);
 
         self::assertNull($contextA->getPeerFingerprints());
-        self::assertSame(['sha1' => \sha1($testKey)], $contextB->getPeerFingerprints());
-        self::assertSame(['md5' => \md5($testKey)], $contextC->getPeerFingerprints());
-        self::assertSame(['md5' => \md5($testKey)], $contextD->getPeerFingerprints());
+        self::assertSame(['sha1' => $sha1], $contextB->getPeerFingerprints());
+        self::assertSame(['sha256' => $sha256], $contextC->getPeerFingerprints());
+        self::assertSame(['sha256' => $sha256], $contextD->getPeerFingerprints());
 
         self::assertNull($contextC->withoutPeerFingerprints()->getPeerFingerprints());
     }
@@ -360,7 +362,7 @@ class ClientTlsContextTest extends TestCase
     public function testWithInvalidFingerprintString(): void
     {
         $this->expectException(\ValueError::class);
-        $this->expectExceptionMessage('String must be an SHA256, SHA1, or MD5 hash');
+        $this->expectExceptionMessage('String must be an SHA256 or SHA1 hash');
 
         $context = new ClientTlsContext();
         $context->withPeerFingerprint('invalid');
@@ -372,7 +374,7 @@ class ClientTlsContextTest extends TestCase
         $this->expectExceptionMessage('Invalid fingerprint array');
 
         $context = new ClientTlsContext();
-        $context->withPeerFingerprints(['md5' => 'invalid']);
+        $context->withPeerFingerprints(['sha1' => \hash('sha256', 'invalid')]);
     }
 
     public function testStreamContextArray(): void

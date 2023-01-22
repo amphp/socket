@@ -371,10 +371,9 @@ final class ClientTlsContext
     public function withPeerFingerprint(string $fingerprint): self
     {
         $hash = match (\strlen($fingerprint)) {
-            32 => 'md5',
             40 => 'sha1',
             64 => 'sha256',
-            default => throw new \ValueError('String must be an SHA256, SHA1, or MD5 hash'),
+            default => throw new \ValueError('String must be an SHA256 or SHA1 hash'),
         };
 
         return $this->withPeerFingerprints([$hash => $fingerprint]);
@@ -384,7 +383,6 @@ final class ClientTlsContext
     {
         foreach ($fingerprints as $hash => $fingerprint) {
             if (!\is_string($fingerprint) || !match ($hash) {
-                'md5' => \strlen($fingerprint) === 32,
                 'sha1' => \strlen($fingerprint) === 40,
                 'sha256' => \strlen($fingerprint) === 64,
                 default => false,
