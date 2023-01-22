@@ -94,7 +94,7 @@ function socketConnector(?SocketConnector $connector = null): SocketConnector
  * @throws ConnectException
  * @throws CancelledException
  */
-function connect(SocketAddress|string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): EncryptableSocket
+function connect(SocketAddress|string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): Socket
 {
     return socketConnector()->connect($uri, $context, $cancellation);
 }
@@ -109,7 +109,7 @@ function connect(SocketAddress|string $uri, ?ConnectContext $context = null, ?Ca
  * @throws TlsException
  * @throws CancelledException
  */
-function connectTls(SocketAddress|string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): EncryptableSocket
+function connectTls(SocketAddress|string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): Socket
 {
     $context ??= new ConnectContext();
     $tlsContext = $context->getTlsContext() ?? new ClientTlsContext('');

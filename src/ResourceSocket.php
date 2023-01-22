@@ -14,7 +14,7 @@ use Amp\ForbidSerialization;
 /**
  * @implements \IteratorAggregate<int, string>
  */
-final class ResourceSocket implements EncryptableSocket, \IteratorAggregate, ResourceStream
+final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
 {
     use ForbidCloning;
     use ForbidSerialization;

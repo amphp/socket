@@ -10,7 +10,7 @@ interface SocketServer extends Closable
     /**
      * @throws PendingAcceptError If another accept request is pending.
      */
-    public function accept(?Cancellation $cancellation = null): ?EncryptableSocket;
+    public function accept(?Cancellation $cancellation = null): ?Socket;
 
     public function getAddress(): SocketAddress;
 
