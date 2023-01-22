@@ -374,7 +374,7 @@ final class ClientTlsContext
             32 => 'md5',
             40 => 'sha1',
             64 => 'sha256',
-            default => throw new \ValueError('String must be an MD5 or SHA1 hash'),
+            default => throw new \ValueError('String must be an SHA256, SHA1, or MD5 hash'),
         };
 
         return $this->withPeerFingerprints([$hash => $fingerprint]);
