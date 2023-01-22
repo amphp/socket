@@ -12,7 +12,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use Amp\Socket;
 use function Amp\async;
 
-$server = Socket\listen('127.0.0.1:0');
+$server = Socket\listen(Socket\InternetAddress::fromString('127.0.0.1:0'));
 
 echo 'Listening for new connections on ' . $server->getAddress() . ' ...' . PHP_EOL;
 echo 'Open your browser and visit http://' . $server->getAddress() . '/' . PHP_EOL;
@@ -20,7 +20,6 @@ echo 'Open your browser and visit http://' . $server->getAddress() . '/' . PHP_E
 while ($socket = $server->accept()) {
     async(function () use ($socket) {
         $address = $socket->getRemoteAddress();
-        assert($address instanceof Socket\InternetAddress);
 
         $ip = $address->getAddress();
         $port = $address->getPort();

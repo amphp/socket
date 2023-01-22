@@ -6,6 +6,9 @@ use Amp\ByteStream\ReadableStream;
 use Amp\ByteStream\WritableStream;
 use Amp\Cancellation;
 
+/**
+ * @template TAddress of SocketAddress
+ */
 interface Socket extends ReadableStream, WritableStream
 {
     /**
@@ -14,8 +17,14 @@ interface Socket extends ReadableStream, WritableStream
      */
     public function read(?Cancellation $cancellation = null, ?int $limit = null): ?string;
 
+    /**
+     * @return TAddress
+     */
     public function getLocalAddress(): SocketAddress;
 
+    /**
+     * @return TAddress
+     */
     public function getRemoteAddress(): SocketAddress;
 
     /**

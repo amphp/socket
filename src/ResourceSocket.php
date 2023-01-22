@@ -12,6 +12,9 @@ use Amp\ForbidCloning;
 use Amp\ForbidSerialization;
 
 /**
+ * @template TAddress of SocketAddress
+ *
+ * @implements Socket<TAddress>
  * @implements \IteratorAggregate<int, string>
  */
 final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
@@ -51,8 +54,10 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
 
     private readonly WritableResourceStream $writer;
 
+    /** @var TAddress */
     private readonly SocketAddress $localAddress;
 
+    /** @var TAddress */
     private readonly SocketAddress $remoteAddress;
 
     private ?TlsInfo $tlsInfo = null;
@@ -68,7 +73,10 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
     ) {
         $this->reader = new ReadableResourceStream($resource, $chunkSize);
         $this->writer = new WritableResourceStream($resource, $chunkSize);
+
+        /** @var TAddress */
         $this->remoteAddress = SocketAddress\fromResourcePeer($resource);
+        /** @var TAddress */
         $this->localAddress = SocketAddress\fromResourceLocal($resource);
     }
 
@@ -152,6 +160,9 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
         $this->writer->unreference();
     }
 
+    /**
+     * @return TAddress
+     */
     public function getLocalAddress(): SocketAddress
     {
         return $this->localAddress;
@@ -165,6 +176,9 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
         return $this->reader->getResource();
     }
 
+    /**
+     * @return TAddress
+     */
     public function getRemoteAddress(): SocketAddress
     {
         return $this->remoteAddress;

@@ -18,6 +18,10 @@ final class ResourceSocketServerFactory implements SocketServerFactory
     }
 
     /**
+     * @template TAddress of SocketAddress
+     *
+     * @return ResourceSocketServer<TAddress>
+     *
      * @throws SocketException
      */
     public function listen(SocketAddress|string $address, ?BindContext $bindContext = null): ResourceSocketServer
@@ -58,6 +62,7 @@ final class ResourceSocketServerFactory implements SocketServerFactory
             ), $errno);
         }
 
+        /** @var ResourceSocketServer<TAddress> */
         return new ResourceSocketServer($server, $bindContext, $this->chunkSize ?? ResourceSocket::DEFAULT_CHUNK_SIZE);
     }
 }

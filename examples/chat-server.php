@@ -4,10 +4,8 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 // This is a very simple chat server.
-$server = Amp\Socket\listen('127.0.0.1:0');
-
+$server = Amp\Socket\listen(\Amp\Socket\InternetAddress::fromString('127.0.0.1:0'));
 $socketAddress = $server->getAddress();
-assert($socketAddress instanceof Amp\Socket\InternetAddress);
 
 echo 'Run "nc ' . $socketAddress->getAddress() . ' ' . $socketAddress->getPort() . '" to join.' . PHP_EOL;
 echo 'You\'ll only receive messages if you join multiple clients.' . PHP_EOL;
@@ -33,7 +31,6 @@ while ($socket = $server->accept()) {
 
     Amp\async(function () use ($socket, $queue, $broadcast) {
         $address = $socket->getRemoteAddress();
-        assert($address instanceof Amp\Socket\InternetAddress);
 
         $name = $address->getAddress();
         foreach (Amp\ByteStream\splitLines($socket) as $line) {

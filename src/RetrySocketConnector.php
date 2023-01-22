@@ -32,6 +32,7 @@ final class RetrySocketConnector implements SocketConnector
 
     /**
      * @psalm-suppress InvalidReturnType
+     * @psalm-suppress InvalidReturnStatement
      */
     public function connect(
         SocketAddress|string $uri,

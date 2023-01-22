@@ -11,6 +11,11 @@ use Amp\ForbidSerialization;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 
+/**
+ * @template TAddress of SocketAddress
+ *
+ * @implements SocketServer<TAddress>
+ */
 final class ResourceSocketServer implements SocketServer, ResourceStream
 {
     use ForbidCloning;
@@ -21,6 +26,7 @@ final class ResourceSocketServer implements SocketServer, ResourceStream
 
     private string $callbackId;
 
+    /** @var TAddress */
     private readonly SocketAddress $address;
 
     private ?Suspension $acceptor = null;
@@ -48,6 +54,8 @@ final class ResourceSocketServer implements SocketServer, ResourceStream
         }
 
         $this->socket = $socket;
+
+        /** @var TAddress */
         $this->address = SocketAddress\fromResourceLocal($socket);
 
         // Ignore any errors raised while this handler is set. Errors will be checked through return values.
@@ -101,6 +109,8 @@ final class ResourceSocketServer implements SocketServer, ResourceStream
     }
 
     /**
+     * @return ResourceSocket<TAddress>|null
+     *
      * @throws PendingAcceptError If another accept request is pending.
      */
     public function accept(?Cancellation $cancellation = null): ?ResourceSocket
@@ -114,6 +124,7 @@ final class ResourceSocketServer implements SocketServer, ResourceStream
         }
 
         if ($client = $this->acceptSocketClient()) {
+            /** @var ResourceSocket<TAddress> */
             return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         }
 
@@ -130,7 +141,10 @@ final class ResourceSocketServer implements SocketServer, ResourceStream
                 }
             } while (!$client = $this->acceptSocketClient());
 
-            /** @var resource $client Psalm 5.x seems to think $client is of type 'never' */
+            /**
+             * @psalm-suppress NoValue
+             * @var ResourceSocket<TAddress>
+             */
             return ResourceSocket::fromServerSocket($client, $this->chunkSize);
         } finally {
             EventLoop::disable($this->callbackId);

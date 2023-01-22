@@ -10,8 +10,12 @@ interface SocketConnector
     /**
      * Establish a socket connection to the specified URI.
      *
-     * @param SocketAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+     * @template TAddress of SocketAddress
+     *
+     * @param TAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
      * @param ConnectContext|null $context Socket connect context to use when connecting.
+     *
+     * @return Socket<TAddress>
      *
      * @throws ConnectException
      * @throws CancelledException

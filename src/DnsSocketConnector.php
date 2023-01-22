@@ -27,6 +27,19 @@ final class DnsSocketConnector implements SocketConnector
         $this->errorHandler = static fn () => true;
     }
 
+    /**
+     * Establish a socket connection to the specified URI.
+     *
+     * @template TAddress of SocketAddress
+     *
+     * @param TAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+     * @param ConnectContext|null $context Socket connect context to use when connecting.
+     *
+     * @return Socket<TAddress>
+     *
+     * @throws ConnectException
+     * @throws CancelledException
+     */
     public function connect(
         SocketAddress|string $uri,
         ?ConnectContext $context = null,
@@ -36,13 +49,17 @@ final class DnsSocketConnector implements SocketConnector
         $cancellation ??= new NullCancellation;
 
         if ($uri instanceof SocketAddress) {
-            $uri = match ($uri->getType()) {
+            $uriString = match ($uri->getType()) {
                 SocketAddressType::Internet => 'tcp://' . $uri->toString(),
                 SocketAddressType::Unix => 'unix://' . $uri->toString(),
             };
+        } else {
+            \assert(\is_string($uri));
+
+            $uriString = $uri;
         }
 
-        $uris = $this->resolve($uri, $context);
+        $uris = $this->resolve($uriString, $context);
 
         $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
         $timeout = $context->getConnectTimeout();
@@ -63,7 +80,7 @@ final class DnsSocketConnector implements SocketConnector
                 if (!$socket) {
                     throw new ConnectException(\sprintf(
                         'Connection to %s @ %s failed: (Error #%d) %s%s',
-                        $uri,
+                        $uriString,
                         $builtUri,
                         $errno,
                         $errstr,
@@ -91,7 +108,7 @@ final class DnsSocketConnector implements SocketConnector
 
                     throw new ConnectException(\sprintf(
                         'Connecting to %s @ %s failed: timeout exceeded (%0.3f s)%s',
-                        $uri,
+                        $uriString,
                         $builtUri,
                         $timeout,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
@@ -107,7 +124,7 @@ final class DnsSocketConnector implements SocketConnector
                     \fclose($socket);
                     throw new ConnectException(\sprintf(
                         'Connection to %s @ %s refused%s',
-                        $uri,
+                        $uriString,
                         $builtUri,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
                     ), Internal\CONNECTION_REFUSED); // See ECONNREFUSED in http://www.virtsync.com/c-error-codes-include-errno
@@ -124,12 +141,15 @@ final class DnsSocketConnector implements SocketConnector
                 $code = $e->getCode();
                 $reason = $knownReasons[$code] ?? ('Error #' . $code);
 
-                $failures[] = "$uri @ $builtUri ($reason)";
+                $failures[] = "$uriString @ $builtUri ($reason)";
 
                 continue; // Could not connect to host, try next host in the list.
             }
 
-            /** @psalm-suppress PossiblyUndefinedVariable */
+            /**
+             * @psalm-suppress PossiblyUndefinedVariable
+             * @var ResourceSocket<TAddress>
+             */
             return ResourceSocket::fromClientSocket($socket, $context->getTlsContext());
         }
 

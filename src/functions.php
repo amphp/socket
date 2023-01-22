@@ -12,9 +12,13 @@ use Revolt\EventLoop;
  *
  * If you want to accept TLS connections, you have to use `yield $socket->setupTls()` after accepting new clients.
  *
- * @param SocketAddress|string $address URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @template TAddress of SocketAddress
+ *
+ * @param TAddress|string $address URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param BindContext|null $bindContext Context options for listening.
  * @param positive-int $chunkSize Chunk size for the accepted sockets.
+ *
+ * @return ResourceSocketServer<TAddress>
  *
  * @throws SocketException If binding to the specified URI failed.
  */
@@ -88,8 +92,12 @@ function socketConnector(?SocketConnector $connector = null): SocketConnector
 /**
  * Establish a socket connection to the specified URI.
  *
- * @param SocketAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @template TAddress of SocketAddress
+ *
+ * @param TAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ConnectContext|null $context Socket connect context to use when connecting.
+ *
+ * @return Socket<TAddress>
  *
  * @throws ConnectException
  * @throws CancelledException
@@ -102,8 +110,12 @@ function connect(SocketAddress|string $uri, ?ConnectContext $context = null, ?Ca
 /**
  * Establish a socket connection to the specified URI and enable TLS.
  *
- * @param SocketAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ * @template TAddress of SocketAddress
+ *
+ * @param TAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
  * @param ConnectContext|null $context Socket connect context to use when connecting.
+ *
+ * @return Socket<TAddress>
  *
  * @throws ConnectException
  * @throws TlsException
