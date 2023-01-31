@@ -5,7 +5,7 @@ namespace Amp\Socket;
 use Amp\ForbidCloning;
 use Amp\ForbidSerialization;
 
-final class ResourceSocketServerFactory implements SocketServerFactory
+final class ResourceServerSocketFactory implements ServerSocketFactory
 {
     use ForbidCloning;
     use ForbidSerialization;
@@ -20,7 +20,7 @@ final class ResourceSocketServerFactory implements SocketServerFactory
     /**
      * @throws SocketException
      */
-    public function listen(SocketAddress|string $address, ?BindContext $bindContext = null): ResourceSocketServer
+    public function listen(SocketAddress|string $address, ?BindContext $bindContext = null): ResourceServerSocket
     {
         $bindContext ??= new BindContext;
 
@@ -58,6 +58,6 @@ final class ResourceSocketServerFactory implements SocketServerFactory
             ), $errno);
         }
 
-        return new ResourceSocketServer($server, $bindContext, $this->chunkSize ?? ResourceSocket::DEFAULT_CHUNK_SIZE);
+        return new ResourceServerSocket($server, $bindContext, $this->chunkSize ?? ResourceSocket::DEFAULT_CHUNK_SIZE);
     }
 }

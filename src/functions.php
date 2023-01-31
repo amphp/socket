@@ -22,8 +22,8 @@ function listen(
     SocketAddress|string $address,
     ?BindContext $bindContext = null,
     int $chunkSize = ResourceSocket::DEFAULT_CHUNK_SIZE
-): ResourceSocketServer {
-    return (new ResourceSocketServerFactory($chunkSize))->listen($address, $bindContext);
+): ResourceServerSocket {
+    return (new ResourceServerSocketFactory($chunkSize))->listen($address, $bindContext);
 }
 
 /**

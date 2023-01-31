@@ -11,7 +11,7 @@ use Amp\ForbidSerialization;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 
-final class ResourceSocketServer implements SocketServer, ResourceStream
+final class ResourceServerSocket implements ServerSocket, ResourceStream
 {
     use ForbidCloning;
     use ForbidSerialization;

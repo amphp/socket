@@ -5,7 +5,7 @@ namespace Amp\Socket;
 use Amp\Cancellation;
 use Amp\Closable;
 
-interface SocketServer extends Closable
+interface ServerSocket extends Closable
 {
     /**
      * @throws PendingAcceptError If another accept request is pending.
