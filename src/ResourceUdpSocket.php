@@ -11,7 +11,7 @@ use Amp\ForbidSerialization;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 
-final class ResourceDatagramSocket implements DatagramSocket, ResourceStream
+final class ResourceUdpSocket implements UdpSocket, ResourceStream
 {
     use ForbidCloning;
     use ForbidSerialization;
@@ -23,7 +23,7 @@ final class ResourceDatagramSocket implements DatagramSocket, ResourceStream
 
     private string $callbackId;
 
-    private SocketAddress $address;
+    private InternetAddress $address;
 
     private ?Suspension $reader = null;
 
@@ -53,9 +53,14 @@ final class ResourceDatagramSocket implements DatagramSocket, ResourceStream
             throw new \ValueError('Invalid length limit of ' . $limit . ', must be greater than 0');
         }
 
+        $socketAddress = SocketAddress\fromResourceLocal($socket);
+
         $this->socket = $socket;
-        $this->address = SocketAddress\fromResourceLocal($socket);
         $this->defaultLimit = $this->limit = &$limit;
+        $this->address = match ($socketAddress::class) {
+            InternetAddress::class => $socketAddress,
+            default => throw new \ValueError('Invalid socket address type: ' . $socketAddress::class)
+        };
 
         $this->onClose = new DeferredFuture;
 
@@ -119,7 +124,7 @@ final class ResourceDatagramSocket implements DatagramSocket, ResourceStream
     /**
      * @param positive-int|null $limit If null, the default chunk size is used.
      *
-     * @return null|array{SocketAddress, string}
+     * @return null|array{InternetAddress, string}
      */
     public function receive(?Cancellation $cancellation = null, ?int $limit = null): ?array
     {
@@ -152,7 +157,7 @@ final class ResourceDatagramSocket implements DatagramSocket, ResourceStream
         }
     }
 
-    public function send(SocketAddress $address, string $data): void
+    public function send(InternetAddress $address, string $data): void
     {
         static $errorHandler;
         $errorHandler ??= static function (int $errno, string $errstr): never {
@@ -237,7 +242,7 @@ final class ResourceDatagramSocket implements DatagramSocket, ResourceStream
         $this->onClose->getFuture()->finally($onClose);
     }
 
-    public function getAddress(): SocketAddress
+    public function getAddress(): InternetAddress
     {
         return $this->address;
     }

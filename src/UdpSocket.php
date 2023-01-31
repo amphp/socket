@@ -5,13 +5,13 @@ namespace Amp\Socket;
 use Amp\Cancellation;
 use Amp\Closable;
 
-interface DatagramSocket extends Closable
+interface UdpSocket extends Closable
 {
     /**
      * @param positive-int|null $limit Read at most $limit bytes from the datagram socket. {@code null} uses an
      *     implementation defined limit.
      *
-     * @return array{SocketAddress, string}|null Returns {@code null} if the socket is closed.
+     * @return array{InternetAddress, string}|null Returns {@code null} if the socket is closed.
      *
      * @throws PendingReceiveError If a reception request is already pending.
      */
@@ -20,7 +20,7 @@ interface DatagramSocket extends Closable
     /**
      * @throws SocketException If the UDP socket closes before the data can be sent or the payload is too large.
      */
-    public function send(SocketAddress $address, string $data): void;
+    public function send(InternetAddress $address, string $data): void;
 
-    public function getAddress(): SocketAddress;
+    public function getAddress(): InternetAddress;
 }

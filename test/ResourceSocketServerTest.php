@@ -17,7 +17,7 @@ class ResourceSocketServerTest extends AsyncTestCase
     public function testListenInvalidScheme(): void
     {
         $this->expectException(\Error::class);
-        $this->expectExceptionMessage('Invalid URI scheme (invalid); tcp, udp, unix or udg scheme expected');
+        $this->expectExceptionMessage('Invalid URI scheme (invalid); tcp, udp, or unix scheme expected');
 
         Socket\listen("invalid://127.0.0.1:0");
     }
