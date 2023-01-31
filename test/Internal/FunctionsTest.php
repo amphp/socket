@@ -15,10 +15,6 @@ class FunctionsTest extends TestCase
                 ['unix', 'tmp/test', 0],
             ],
             [
-                'udg://test',
-                ['udg', 'test', 0],
-            ],
-            [
                 'tcp://test:1234',
                 ['tcp', 'test', 1234],
             ],
@@ -74,7 +70,7 @@ class FunctionsTest extends TestCase
     public function testParseUriInvalidScheme($uri): void
     {
         $this->expectException(\Error::class);
-        $this->expectExceptionMessageMatches('(Invalid URI scheme (.*); tcp, udp, unix or udg scheme expected)');
+        $this->expectExceptionMessageMatches('(Invalid URI scheme (.*); tcp, udp, or unix scheme expected)');
 
         Internal\parseUri($uri);
     }

@@ -35,11 +35,11 @@ function listen(
  *
  * @throws SocketException If binding to the specified URI failed.
  */
-function bindDatagram(
+function bindUdpSocket(
     InternetAddress|string $address,
     ?BindContext $bindContext = null,
-    int $limit = ResourceDatagramSocket::DEFAULT_LIMIT
-): ResourceDatagramSocket {
+    int $limit = ResourceUdpSocket::DEFAULT_LIMIT
+): ResourceUdpSocket {
     $bindContext = $bindContext ?? new BindContext;
 
     $uri = (string) $address;
@@ -66,7 +66,7 @@ function bindDatagram(
         );
     }
 
-    return new ResourceDatagramSocket($server, $limit);
+    return new ResourceUdpSocket($server, $limit);
 }
 
 /**

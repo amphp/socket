@@ -23,7 +23,8 @@ use Revolt\EventLoop;
  */
 function parseUri(string $uri): array
 {
-    if (\stripos($uri, 'unix://') === 0 || \stripos($uri, 'udg://') === 0) {
+    if (\stripos($uri, 'unix://') === 0) {
+        /** @psalm-suppress PossiblyUndefinedArrayOffset */
         [$scheme, $path] = \explode('://', $uri, 2);
         return [$scheme, \ltrim($path, '/'), 0];
     }
@@ -43,9 +44,9 @@ function parseUri(string $uri): array
     $host = $uriParts['host'] ?? '';
     $port = $uriParts['port'] ?? 0;
 
-    if (!\in_array($scheme, ['tcp', 'udp', 'unix', 'udg'], true)) {
+    if (!\in_array($scheme, ['tcp', 'udp', 'unix'], true)) {
         throw new \Error(
-            "Invalid URI scheme ($scheme); tcp, udp, unix or udg scheme expected"
+            "Invalid URI scheme ($scheme); tcp, udp, or unix scheme expected"
         );
     }
 
