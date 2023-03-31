@@ -43,6 +43,7 @@ jobs:
           extensions: fiber-amphp/ext-fiber@master
 
       - name: Regenerate test certificates
+        shell: bash
         run: |
           pushd test/tls
           ./regenerate.sh
