@@ -25,6 +25,7 @@ final class CidrMatcher
 
         $binMask = \str_split(\str_repeat('1', $bits) . \str_repeat('0', 128 - $bits), 8);
 
+        /** @psalm-suppress InvalidScalarArgument */
         $mask = \implode("", \array_map(fn ($byte) => \chr(\bindec($byte)), $binMask));
 
         $this->address = $networkAddress & $mask;
