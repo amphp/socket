@@ -42,8 +42,17 @@ jobs:
           php-version: ${{ matrix.php-version }}
           extensions: fiber-amphp/ext-fiber@master
 
+      - name: Fix OpenSSL config
+        shell: bash
+        if: runner.os == 'Windows'
+        run: |
+          grep -v 'RANDFILE' "$OPENSSL_CONF" > "$OPENSSL_CONF.bak"
+          mv "$OPENSSL_CONF.bak" "$OPENSSL_CONF"
+
       - name: Regenerate test certificates
         shell: bash
+        env:
+          MSYS_NO_PATHCONV: '1'
         run: |
           pushd test/tls
           ./regenerate.sh

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 openssl genrsa -out amphp.org.key 2048
 openssl genrsa -out www.amphp.org.key 2048
 
