@@ -5,20 +5,44 @@ namespace Amp\Socket;
 final class InternetAddress implements SocketAddress
 {
     /**
-     * @throws SocketException
+     * @throws SocketException Thrown if the address or port is invalid.
      */
     public static function fromString(string $address): self
     {
+        if (!\str_contains($address, ':')) {
+            throw new SocketException('Missing port in address: ' . $address);
+        }
+
+        return self::tryFromString($address)
+            ?? throw new SocketException('Invalid address: ' . $address);
+    }
+
+    /**
+     * @return self|null Returns null if the address is invalid.
+     */
+    public static function tryFromString(string $address): ?self
+    {
         $colon = \strrpos($address, ':');
         if ($colon === false) {
-            throw new \ValueError('Missing port in address: ' . $address);
+            return null;
         }
 
         $ip = \substr($address, 0, $colon);
-        $port = \substr($address, $colon + 1);
+        $port = (int) \substr($address, $colon + 1);
 
-        /** @psalm-suppress ArgumentTypeCoercion */
-        return new self($ip, (int) $port);
+        if ($port < 0 || $port > 65535) {
+            return null;
+        }
+
+        if (\strrpos($ip, ':')) {
+            $ip = \trim($ip, '[]');
+        }
+
+        if (!\inet_pton($ip)) {
+            return null;
+        }
+
+        return new self($ip, $port);
     }
 
     private readonly string $binaryAddress;
@@ -31,31 +55,25 @@ final class InternetAddress implements SocketAddress
     /**
      * @param int<0, 65535> $port
      *
-     * @throws SocketException If an invalid address is given.
+     * @throws SocketException If an invalid address or port is given.
      */
     public function __construct(string $address, int $port)
     {
         /** @psalm-suppress TypeDoesNotContainType */
         if ($port < 0 || $port > 65535) {
-            throw new \ValueError('Port number must be an integer between 0 and 65535; got ' . $port);
+            throw new SocketException('Port number must be an integer between 0 and 65535; got ' . $port);
         }
 
         if (\strrpos($address, ':')) {
             $address = \trim($address, '[]');
         }
 
-        \set_error_handler(static fn () => throw new SocketException('Invalid address: ' . $address));
-
-        try {
-            $binaryAddress = \inet_pton($address);
-            if ($binaryAddress === false) {
-                throw new SocketException('Invalid address: ' . $address);
-            }
-
-            $this->binaryAddress = $binaryAddress;
-        } finally {
-            \restore_error_handler();
+        $binaryAddress = \inet_pton($address);
+        if ($binaryAddress === false) {
+            throw new SocketException('Invalid address: ' . $address);
         }
+
+        $this->binaryAddress = $binaryAddress;
 
         $this->textualAddress = \inet_ntop($binaryAddress);
         $this->port = $port;

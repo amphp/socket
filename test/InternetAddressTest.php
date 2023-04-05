@@ -24,7 +24,7 @@ final class InternetAddressTest extends TestCase
      */
     public function testFromStringMissingPort(): void
     {
-        $this->expectException(\ValueError::class);
+        $this->expectException(SocketException::class);
         $this->expectExceptionMessage('Missing port');
 
         InternetAddress::fromString('1.1.1.1');
@@ -35,8 +35,8 @@ final class InternetAddressTest extends TestCase
      */
     public function testFromStringInvalidPort(): void
     {
-        $this->expectException(\ValueError::class);
-        $this->expectExceptionMessage('Port number must be an integer between 0 and 65535');
+        $this->expectException(SocketException::class);
+        $this->expectExceptionMessage('Invalid address');
 
         InternetAddress::fromString('1.1.1.1:-1');
     }
