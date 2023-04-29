@@ -104,7 +104,7 @@ $server = Socket\listen("tcp://127.0.0.1:1337");
 
 while ($client = $server->accept()) {
     // You shouldn't spend too much time here, because that blocks accepting another client, so we use async():
-    async(function () use ($socket) {
+    async(function () use ($client) {
         // Handle client connection here
     });
 }
