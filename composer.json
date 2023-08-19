@@ -36,7 +36,7 @@
         "amphp/dns": "^2",
         "amphp/byte-stream": "^2",
         "kelunik/certificate": "^1.1",
-        "league/uri": "^6.5",
+        "league/uri": "^6.5 | ^7",
         "revolt/event-loop": "^1 || ^0.2"
     },
     "require-dev": {
