@@ -20,7 +20,7 @@ if (count($argv) !== 2) {
     exit(1);
 }
 
-$uri = Http::createFromString($argv[1]);
+$uri = Http::new($argv[1]);
 $host = $uri->getHost();
 $port = $uri->getPort() ?? ($uri->getScheme() === 'https' ? 443 : 80);
 $path = $uri->getPath() ?: '/';
