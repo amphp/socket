@@ -16,7 +16,7 @@ final class ResourceUdpSocket implements UdpSocket, ResourceStream
     use ForbidCloning;
     use ForbidSerialization;
 
-    public const DEFAULT_LIMIT = 8192;
+    public const DEFAULT_LIMIT = 65507; // Max UDP payload size.
 
     /** @var resource|null UDP socket resource. */
     private $socket;
