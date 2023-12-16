@@ -11,7 +11,7 @@ use const Amp\Process\IS_WINDOWS;
 use function Amp\async;
 use function Amp\delay;
 
-class ResourceDatagramSocketTest extends AsyncTestCase
+class ResourceUdpSocketTest extends AsyncTestCase
 {
     public function testBindEndpointInvalidScheme(): void
     {

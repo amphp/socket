@@ -114,6 +114,7 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
         $suspension = EventLoop::getSuspension();
 
         // Watcher is guaranteed to be created, because we throw above if cancellation has already been requested
+        /** @psalm-suppress PossiblyUndefinedVariable $callbackId is defined below. */
         $cancellationId = $cancellation->subscribe(static function ($e) use ($suspension, &$callbackId): void {
             EventLoop::cancel($callbackId);
 

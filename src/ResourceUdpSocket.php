@@ -21,14 +21,14 @@ final class ResourceUdpSocket implements UdpSocket, ResourceStream
     /** @var resource|null UDP socket resource. */
     private $socket;
 
-    private string $callbackId;
+    private readonly string $callbackId;
 
-    private InternetAddress $address;
+    private readonly InternetAddress $address;
 
     private ?Suspension $reader = null;
 
-    /** @var \Closure(CancelledException) */
-    private \Closure $cancel;
+    /** @var \Closure(CancelledException):void */
+    private readonly \Closure $cancel;
 
     private int $limit;
 
@@ -98,7 +98,7 @@ final class ResourceUdpSocket implements UdpSocket, ResourceStream
             $reader = null;
         });
 
-        $callbackId = &$this->callbackId;
+        $callbackId = $this->callbackId;
         $this->cancel = static function (CancelledException $exception) use (&$reader, $callbackId): void {
             EventLoop::disable($callbackId);
 
@@ -168,9 +168,9 @@ final class ResourceUdpSocket implements UdpSocket, ResourceStream
             throw new SocketException('The datagram socket is not writable');
         }
 
-        try {
-            \set_error_handler($errorHandler);
+        \set_error_handler($errorHandler);
 
+        try {
             $result = \stream_socket_sendto($this->socket, $data, 0, $address->toString());
             /** @psalm-suppress TypeDoesNotContainType */
             if ($result < 0 || $result === false) {

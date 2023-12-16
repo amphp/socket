@@ -19,14 +19,14 @@ final class ResourceServerSocket implements ServerSocket, ResourceStream
     /** @var resource|null Stream socket server resource. */
     private $socket;
 
-    private string $callbackId;
+    private readonly string $callbackId;
 
     private readonly SocketAddress $address;
 
     private ?Suspension $acceptor = null;
 
-    /** @var \Closure(CancelledException) */
-    private \Closure $cancel;
+    /** @var \Closure(CancelledException):void */
+    private readonly \Closure $cancel;
 
     private readonly \Closure $errorHandler;
 
@@ -59,11 +59,11 @@ final class ResourceServerSocket implements ServerSocket, ResourceStream
 
         $acceptor = &$this->acceptor;
         $this->callbackId = EventLoop::onReadable($this->socket, static function () use (&$acceptor): void {
-            $acceptor->resume(true);
+            $acceptor?->resume(true);
             $acceptor = null;
         });
 
-        $callbackId = &$this->callbackId;
+        $callbackId = $this->callbackId;
         $this->cancel = static function (CancelledException $exception) use (&$acceptor, $callbackId): void {
             EventLoop::disable($callbackId);
 
