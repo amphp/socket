@@ -232,7 +232,7 @@ final class ServerTlsContext
     }
 
     /**
-     * @return null|string Path to the file if one is set, otherwise `null`.
+     * @return null|string Path to the trusted certificates file if one is set, otherwise `null`.
      */
     public function getCaFile(): ?string
     {
@@ -242,7 +242,7 @@ final class ServerTlsContext
     /**
      * CAPath to check for trusted certificates.
      *
-     * @param string|null $capath Path to the file or `null` to unset.
+     * @param string|null $capath Path to the directory or `null` to unset.
      *
      * @return self Cloned, modified instance.
      */
@@ -255,7 +255,7 @@ final class ServerTlsContext
     }
 
     /**
-     * @return null|string Path to the file if one is set, otherwise `null`.
+     * @return null|string Path to the trusted certificate directory if one is set, otherwise `null`.
      */
     public function getCaPath(): ?string
     {
