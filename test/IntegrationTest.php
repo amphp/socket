@@ -146,4 +146,11 @@ class IntegrationTest extends AsyncTestCase
 
         $this->expectNotToPerformAssertions();
     }
+
+    public function testBindToNonAssignableAddress(): void
+    {
+        $this->expectException(ConnectException::class);
+
+        (new DnsSocketConnector())->connect("127.0.0.1:80", (new ConnectContext())->withBindto("128.0.0.1"));
+    }
 }

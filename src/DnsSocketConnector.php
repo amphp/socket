@@ -20,11 +20,8 @@ final class DnsSocketConnector implements SocketConnector
     use ForbidCloning;
     use ForbidSerialization;
 
-    private readonly \Closure $errorHandler;
-
     public function __construct(private readonly ?DnsResolver $dnsResolver = null)
     {
-        $this->errorHandler = static fn () => true;
     }
 
     public function connect(
@@ -32,8 +29,8 @@ final class DnsSocketConnector implements SocketConnector
         ?ConnectContext $context = null,
         ?Cancellation $cancellation = null
     ): Socket {
-        $context ??= new ConnectContext;
-        $cancellation ??= new NullCancellation;
+        $context ??= new ConnectContext();
+        $cancellation ??= new NullCancellation();
 
         if ($uri instanceof SocketAddress) {
             $uri = match ($uri->getType()) {
@@ -52,28 +49,31 @@ final class DnsSocketConnector implements SocketConnector
             try {
                 $streamContext = \stream_context_create($context->withoutTlsContext()->toStreamContextArray());
 
-                \set_error_handler($this->errorHandler);
+                \set_error_handler(static function (int $errno, string $errstr) use (
+                    &$failures,
+                    $uri,
+                    $builtUri,
+                ): never {
+                    $authority = $uri === $builtUri ? $builtUri : $uri . ' @ ' . $builtUri;
 
-                try {
-                    $socket = \stream_socket_client($builtUri, $errno, $errstr, flags: $flags, context: $streamContext);
-                } finally {
-                    \restore_error_handler();
-                }
-
-                if (!$socket) {
                     throw new ConnectException(\sprintf(
-                        'Connection to %s @ %s failed: (Error #%d) %s%s',
-                        $uri,
-                        $builtUri,
+                        'Connection to %s failed: (Error #%d) %s%s',
+                        $authority,
                         $errno,
                         $errstr,
                         $failures ? '; previous attempts: ' . \implode($failures) : ''
                     ), $errno);
+                });
+
+                try {
+                    $socket = \stream_socket_client($builtUri, flags: $flags, context: $streamContext);
+                } finally {
+                    \restore_error_handler();
                 }
 
                 \stream_set_blocking($socket, false);
 
-                $deferred = new DeferredFuture;
+                $deferred = new DeferredFuture();
                 $id = $cancellation->subscribe($deferred->error(...));
                 $watcher = EventLoop::onWritable(
                     $socket,
