@@ -1,5 +1,6 @@
 #!/usr/bin/env php
-<?php // basic (and dumb) HTTP client
+<?php declare(strict_types=1);
+// basic (and dumb) HTTP client
 
 require __DIR__ . '/../vendor/autoload.php';
 

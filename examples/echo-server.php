@@ -1,5 +1,6 @@
 #!/usr/bin/env php
-<?php // basic TCP echo server
+<?php declare(strict_types=1);
+// basic TCP echo server
 
 require __DIR__ . '/../vendor/autoload.php';
 

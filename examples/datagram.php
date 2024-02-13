@@ -1,5 +1,6 @@
 #!/usr/bin/env php
-<?php // basic UDP socket
+<?php declare(strict_types=1);
+// basic UDP socket
 
 require __DIR__ . '/../vendor/autoload.php';
 
