@@ -90,8 +90,6 @@ function setupTls($socket, array $options, ?Cancellation $cancellation): void
         \stream_context_set_option($socket, $options);
     }
 
-    \stream_context_set_option($socket, $options);
-
     $errorHandler = static function (int $errno, string $errstr) use ($socket): never {
         if (\feof($socket)) {
             $errstr = 'Connection reset by peer';
