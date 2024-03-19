@@ -72,11 +72,12 @@ final class Socks5SocketConnector implements SocketConnector
         ?string $username,
         ?string $password,
         ?Cancellation $cancellation
-    ): Socket {
+    ): void {
         if (($username === null) !== ($password === null)) {
             throw new \Error("Both or neither username and password must be provided!");
         }
 
+        /** @psalm-suppress DeprecatedMethod */
         $uri = Uri::createFromString($target);
 
         $read = function (int $length) use ($socket, $cancellation): string {
@@ -85,7 +86,10 @@ final class Socks5SocketConnector implements SocketConnector
             $buffer = '';
 
             do {
-                $chunk = $socket->read($cancellation, $length - \strlen($buffer));
+                $limit = $length - \strlen($buffer);
+                \assert($limit > 0);
+
+                $chunk = $socket->read($cancellation, $limit);
                 if ($chunk === null) {
                     throw new SocketException("The socket was closed before the tunnel could be established");
                 }
@@ -153,8 +157,6 @@ final class Socks5SocketConnector implements SocketConnector
             0x4 => 18,
             0x3 => \ord($read(1)) + 2
         });
-
-        return $socket;
     }
 
     public function __construct(
@@ -173,7 +175,8 @@ final class Socks5SocketConnector implements SocketConnector
         $connector = $this->socketConnector ?? socketConnector();
 
         $socket = $connector->connect($this->proxyAddress, $context, $cancellation);
+        self::tunnel($socket, (string) $uri, $this->username, $this->password, $cancellation);
 
-        return self::tunnel($socket, (string) $uri, $this->username, $this->password, $cancellation);
+        return $socket;
     }
 }
