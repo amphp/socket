@@ -17,7 +17,7 @@ final class Certificate
      * @param string      $certFile Certificate file with the certificate + intermediaries.
      * @param string|null $keyFile Key file with the corresponding private key or `null` if the key is in $certFile.
      */
-    public function __construct(string $certFile, string $keyFile = null)
+    public function __construct(string $certFile, ?string $keyFile = null)
     {
         $this->certFile = $certFile;
         $this->keyFile = $keyFile ?? $certFile;

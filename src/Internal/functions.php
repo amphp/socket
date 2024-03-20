@@ -191,7 +191,7 @@ function shutdownTls($socket): Promise
  *
  * @throws \Error If an invalid option has been passed.
  */
-function normalizeBindToOption(string $bindTo = null)
+function normalizeBindToOption(?string $bindTo = null)
 {
     if ($bindTo === null) {
         return null;

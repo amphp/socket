@@ -33,8 +33,8 @@ interface SocketPool
      */
     public function checkout(
         string $uri,
-        ConnectContext $context = null,
-        CancellationToken $token = null
+        ?ConnectContext $context = null,
+        ?CancellationToken $token = null
     ): Promise;
 
     /**

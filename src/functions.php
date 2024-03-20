@@ -37,7 +37,7 @@ function listen(string $uri, ?BindContext $context = null): Server
  *
  * @return Connector
  */
-function connector(Connector $connector = null): Connector
+function connector(?Connector $connector = null): Connector
 {
     if ($connector === null) {
         if ($connector = Loop::getState(LOOP_CONNECTOR_IDENTIFIER)) {
@@ -64,7 +64,7 @@ function connector(Connector $connector = null): Connector
  * @throws ConnectException
  * @throws CancelledException
  */
-function connect(string $uri, ConnectContext $context = null, CancellationToken $token = null): Promise
+function connect(string $uri, ?ConnectContext $context = null, ?CancellationToken $token = null): Promise
 {
     return connector()->connect($uri, $context, $token);
 }
