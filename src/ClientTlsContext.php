@@ -113,6 +113,7 @@ final class ClientTlsContext
     {
         $clone = clone $this;
         $clone->verifyPeer = true;
+        $clone->verifyPeerName = true;
 
         return $clone;
     }
@@ -129,7 +130,6 @@ final class ClientTlsContext
     {
         $clone = clone $this;
         $clone->verifyPeer = false;
-        // This is for compatibility with the former behaviour:
         $clone->verifyPeerName = false;
 
         return $clone;

@@ -58,7 +58,7 @@ final class ServerTlsContext
 
     private bool $verifyPeer = false;
 
-    private bool $verifyPeerName = true;
+    private bool $verifyPeerName = false;
 
     private int $verifyDepth = 10;
 
@@ -143,6 +143,7 @@ final class ServerTlsContext
     {
         $clone = clone $this;
         $clone->verifyPeer = true;
+        $clone->verifyPeerName = true;
 
         return $clone;
     }
@@ -156,6 +157,7 @@ final class ServerTlsContext
     {
         $clone = clone $this;
         $clone->verifyPeer = false;
+        $clone->verifyPeerName = false;
 
         return $clone;
     }
@@ -199,7 +201,7 @@ final class ServerTlsContext
      */
     public function hasPeerNameVerification(): bool
     {
-        return $this->verifyPeer && $this->verifyPeerName;
+        return $this->verifyPeerName;
     }
 
     /**
@@ -473,7 +475,7 @@ final class ServerTlsContext
             'crypto_method' => $this->toStreamCryptoMethod(),
             'peer_name' => $this->peerName,
             'verify_peer' => $this->verifyPeer,
-            'verify_peer_name' => $this->verifyPeer && $this->verifyPeerName,
+            'verify_peer_name' => $this->verifyPeerName,
             'verify_depth' => $this->verifyDepth,
             'ciphers' => $this->ciphers ?? \OPENSSL_DEFAULT_STREAM_CIPHERS,
             'honor_cipher_order' => true,
