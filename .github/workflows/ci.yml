@@ -12,9 +12,14 @@ jobs:
           - operating-system: 'ubuntu-latest'
             php-version: '8.1'
             psalm: 'skip'
+            style-fix: 'none'
+            composer-require-checker-version: 'none'
 
           - operating-system: 'ubuntu-latest'
             php-version: '8.2'
+            psalm: 'skip'
+            style-fix: 'none'
+            composer-require-checker-version: 'none'
 
           - operating-system: 'ubuntu-latest'
             php-version: '8.3'
