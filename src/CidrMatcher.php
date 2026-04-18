@@ -2,6 +2,8 @@
 
 namespace Amp\Socket;
 
+use ValueError;
+
 final class CidrMatcher
 {
     private static function toIPv6(string $networkAddress): string
@@ -37,6 +39,9 @@ final class CidrMatcher
         [$address, $bits] = \explode("/", $cidr, 2) + [null, null];
 
         $networkAddress = \inet_pton($address);
+        if (!$networkAddress) {
+            throw new ValueError('Invalid IP address: ' . $address);
+        }
         $ipv4 = \strlen($networkAddress) === 4;
 
         $bits ??= $ipv4 ? '32' : '128';
@@ -46,7 +51,12 @@ final class CidrMatcher
 
     public function match(string $ip): bool
     {
-        $networkAddress = self::toIPv6(\inet_pton($ip));
+        $inAddr = \inet_pton($ip);
+        if (!$inAddr) {
+            throw new ValueError('Invalid IP address: ' . $ip);
+        }
+
+        $networkAddress = self::toIPv6($inAddr);
 
         return ($networkAddress & $this->mask) === $this->address;
     }

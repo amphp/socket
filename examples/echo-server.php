@@ -13,7 +13,7 @@ $server = Socket\listen('127.0.0.1:0');
 $address = $server->getAddress();
 assert($address instanceof Socket\InternetAddress);
 
-echo 'Listening for new connections on ' . $address . ' ...' . PHP_EOL;
+echo 'Listening for new connections on ' . (string) $address . ' ...' . PHP_EOL;
 echo 'Connect from a terminal, e.g. ';
 echo '"nc ' . $address->getAddress() . ' ' . $address->getPort() . '"' . PHP_EOL;
 

@@ -72,10 +72,14 @@ final class InternetAddress implements SocketAddress
         if ($binaryAddress === false) {
             throw new SocketException('Invalid address: ' . $address);
         }
-
         $this->binaryAddress = $binaryAddress;
 
-        $this->textualAddress = \inet_ntop($binaryAddress);
+        $textualAddress = \inet_ntop($binaryAddress);
+        if (!$textualAddress) {
+            throw new SocketException('Invalid address: ' . $address);
+        }
+        $this->textualAddress = $textualAddress;
+
         $this->port = $port;
     }
 

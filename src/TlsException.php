@@ -4,6 +4,8 @@ namespace Amp\Socket;
 
 /**
  * Thrown if TLS can't be properly negotiated or is not supported on the given socket.
+ *
+ * @psalm-suppress ClassMustBeFinal
  */
 class TlsException extends SocketException
 {

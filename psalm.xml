@@ -14,19 +14,6 @@
     </projectFiles>
 
     <issueHandlers>
-        <StringIncrement>
-            <errorLevel type="suppress">
-                <directory name="examples"/>
-                <directory name="src"/>
-            </errorLevel>
-        </StringIncrement>
-
-        <RedundantConditionGivenDocblockType>
-            <errorLevel type="suppress">
-                <directory name="src"/>
-            </errorLevel>
-        </RedundantConditionGivenDocblockType>
-
         <DocblockTypeContradiction>
             <errorLevel type="suppress">
                 <directory name="src"/>
@@ -39,11 +26,23 @@
             </errorLevel>
         </MissingClosureReturnType>
 
+        <PossiblyUnusedMethod>
+            <errorLevel type="suppress">
+                <directory name="src"/>
+            </errorLevel>
+        </PossiblyUnusedMethod>
+
         <RiskyTruthyFalsyComparison>
             <errorLevel type="suppress">
                 <directory name="src"/>
             </errorLevel>
         </RiskyTruthyFalsyComparison>
+
+        <UnusedClass>
+            <errorLevel type="suppress">
+                <directory name="src"/>
+            </errorLevel>
+        </UnusedClass>
 
         <UnsupportedPropertyReferenceUsage>
             <errorLevel type="suppress">

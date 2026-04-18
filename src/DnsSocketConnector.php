@@ -72,6 +72,8 @@ final class DnsSocketConnector implements SocketConnector
                     \restore_error_handler();
                 }
 
+                \assert($socket !== false); // For Psalm, the error handler will throw for a false return case.
+
                 \stream_set_blocking($socket, false);
 
                 $deferred = new DeferredFuture();

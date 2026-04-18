@@ -142,6 +142,7 @@ final class Socks5SocketConnector implements SocketConnector
 
         $reply = \ord($read(1));
         if ($reply !== 0) {
+            /** @psalm-suppress InvalidArrayOffset */
             $reply = self::REPLIES[$reply] ?? $reply;
             throw new SocketException("Wrong SOCKS5 reply: $reply");
         }

@@ -30,6 +30,7 @@ final class ResourceUdpSocket implements UdpSocket, ResourceStream
     /** @var \Closure(CancelledException):void */
     private readonly \Closure $cancel;
 
+    /** @psalm-suppress UnusedProperty */
     private int $limit;
 
     private int $defaultLimit;
@@ -65,6 +66,7 @@ final class ResourceUdpSocket implements UdpSocket, ResourceStream
         $this->onClose = new DeferredFuture;
 
         \stream_set_blocking($this->socket, false);
+        /** @psalm-suppress UnusedFunctionCall */
         \stream_set_read_buffer($this->socket, 0);
 
         $reader = &$this->reader;
