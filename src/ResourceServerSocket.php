@@ -103,6 +103,7 @@ final class ResourceServerSocket implements ServerSocket, ResourceStream
     /**
      * @throws PendingAcceptError If another accept request is pending.
      */
+    #[\Override]
     public function accept(?Cancellation $cancellation = null): ?ResourceSocket
     {
         if ($this->acceptor) {
@@ -159,6 +160,7 @@ final class ResourceServerSocket implements ServerSocket, ResourceStream
     /**
      * Closes the server and stops accepting connections. Any socket clients accepted will not be closed.
      */
+    #[\Override]
     public function close(): void
     {
         if ($this->socket) {
@@ -169,11 +171,13 @@ final class ResourceServerSocket implements ServerSocket, ResourceStream
         $this->free();
     }
 
+    #[\Override]
     public function isClosed(): bool
     {
         return $this->socket === null;
     }
 
+    #[\Override]
     public function onClose(\Closure $onClose): void
     {
         $this->onClose->getFuture()->finally($onClose);
@@ -184,6 +188,7 @@ final class ResourceServerSocket implements ServerSocket, ResourceStream
      *
      * @see EventLoop::reference()
      */
+    #[\Override]
     public function reference(): void
     {
         if ($this->socket === null) {
@@ -198,6 +203,7 @@ final class ResourceServerSocket implements ServerSocket, ResourceStream
      *
      * @see EventLoop::unreference()
      */
+    #[\Override]
     public function unreference(): void
     {
         if ($this->socket === null) {
@@ -207,11 +213,13 @@ final class ResourceServerSocket implements ServerSocket, ResourceStream
         EventLoop::unreference($this->callbackId);
     }
 
+    #[\Override]
     public function getAddress(): SocketAddress
     {
         return $this->address;
     }
 
+    #[\Override]
     public function getBindContext(): BindContext
     {
         return $this->bindContext;
@@ -222,6 +230,7 @@ final class ResourceServerSocket implements ServerSocket, ResourceStream
      *
      * @return resource|null
      */
+    #[\Override]
     public function getResource()
     {
         return $this->socket;

@@ -72,6 +72,7 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
         $this->localAddress = SocketAddress\fromResourceLocal($resource);
     }
 
+    #[\Override]
     public function setupTls(?Cancellation $cancellation = null): void
     {
         $resource = $this->getResource();
@@ -103,6 +104,7 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
         }
     }
 
+    #[\Override]
     public function shutdownTls(?Cancellation $cancellation = null): void
     {
         if (($resource = $this->reader->getResource()) === null) {
@@ -119,39 +121,46 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
         }
     }
 
+    #[\Override]
     public function read(?Cancellation $cancellation = null, ?int $limit = null): ?string
     {
         return $this->reader->read($cancellation, $limit);
     }
 
+    #[\Override]
     public function write(string $bytes): void
     {
         $this->writer->write($bytes);
     }
 
+    #[\Override]
     public function end(): void
     {
         $this->writer->end();
     }
 
+    #[\Override]
     public function close(): void
     {
         $this->reader->close();
         $this->writer->close();
     }
 
+    #[\Override]
     public function reference(): void
     {
         $this->reader->reference();
         $this->writer->reference();
     }
 
+    #[\Override]
     public function unreference(): void
     {
         $this->reader->unreference();
         $this->writer->unreference();
     }
 
+    #[\Override]
     public function getLocalAddress(): SocketAddress
     {
         return $this->localAddress;
@@ -160,16 +169,19 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
     /**
      * @return resource|object|null
      */
+    #[\Override]
     public function getResource()
     {
         return $this->reader->getResource();
     }
 
+    #[\Override]
     public function getRemoteAddress(): SocketAddress
     {
         return $this->remoteAddress;
     }
 
+    #[\Override]
     public function isTlsConfigurationAvailable(): bool
     {
         return $this->tlsContext || !empty($this->getStreamContext()['ssl']);
@@ -193,11 +205,13 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
         return $this->streamContext = \stream_context_get_options($resource);
     }
 
+    #[\Override]
     public function getTlsState(): TlsState
     {
         return $this->tlsState;
     }
 
+    #[\Override]
     public function getTlsInfo(): ?TlsInfo
     {
         if ($this->tlsInfo !== null) {
@@ -212,11 +226,13 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
         return $this->tlsInfo = TlsInfo::fromStreamResource($resource);
     }
 
+    #[\Override]
     public function isClosed(): bool
     {
         return $this->reader->isClosed() && $this->writer->isClosed();
     }
 
+    #[\Override]
     public function onClose(\Closure $onClose): void
     {
         $this->reader->onClose($onClose);
@@ -231,11 +247,13 @@ final class ResourceSocket implements Socket, ResourceStream, \IteratorAggregate
         $this->writer->setChunkSize($chunkSize);
     }
 
+    #[\Override]
     public function isReadable(): bool
     {
         return $this->reader->isReadable();
     }
 
+    #[\Override]
     public function isWritable(): bool
     {
         return $this->writer->isWritable();

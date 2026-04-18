@@ -43,6 +43,7 @@ final class UnlimitedSocketPool implements SocketPool
     ) {
     }
 
+    #[\Override]
     public function checkout(
         string $uri,
         ?ConnectContext $context = null,
@@ -99,11 +100,13 @@ final class UnlimitedSocketPool implements SocketPool
         return $this->checkoutNewSocket($uri, $cacheKey, $context, $cancellation);
     }
 
+    #[\Override]
     public function clear(Socket $socket): void
     {
         $this->clearFromId($socket);
     }
 
+    #[\Override]
     public function checkin(Socket $socket): void
     {
         $objectId = \spl_object_id($socket);

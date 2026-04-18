@@ -79,6 +79,7 @@ final class InternetAddress implements SocketAddress
         $this->port = $port;
     }
 
+    #[\Override]
     public function getType(): SocketAddressType
     {
         return SocketAddressType::Internet;
@@ -114,6 +115,7 @@ final class InternetAddress implements SocketAddress
     /**
      * @return non-empty-string <address>:<port> formatted string.
      */
+    #[\Override]
     public function toString(): string
     {
         if ($this->getVersion() === InternetAddressVersion::IPv6) {

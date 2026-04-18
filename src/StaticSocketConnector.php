@@ -20,6 +20,7 @@ final class StaticSocketConnector implements SocketConnector
     ) {
     }
 
+    #[\Override]
     public function connect(
         SocketAddress|string $uri,
         ?ConnectContext $context = null,

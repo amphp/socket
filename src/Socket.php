@@ -12,6 +12,7 @@ interface Socket extends ReadableStream, WritableStream
      * @param positive-int|null $limit Read at most $limit bytes from the socket. {@code null} uses an implementation
      *     defined limit.
      */
+    #[\Override]
     public function read(?Cancellation $cancellation = null, ?int $limit = null): ?string;
 
     public function getLocalAddress(): SocketAddress;

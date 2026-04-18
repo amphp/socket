@@ -169,6 +169,7 @@ final class Socks5SocketConnector implements SocketConnector
         }
     }
 
+    #[\Override]
     public function connect(SocketAddress|string $uri, ?ConnectContext $context = null, ?Cancellation $cancellation = null): Socket
     {
         $connector = $this->socketConnector ?? socketConnector();

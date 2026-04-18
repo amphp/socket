@@ -33,6 +33,7 @@ final class RetrySocketConnector implements SocketConnector
     /**
      * @psalm-suppress InvalidReturnType
      */
+    #[\Override]
     public function connect(
         SocketAddress|string $uri,
         ?ConnectContext $context = null,

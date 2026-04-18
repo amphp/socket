@@ -8,6 +8,7 @@ final class UnixAddress implements SocketAddress
     {
     }
 
+    #[\Override]
     public function getType(): SocketAddressType
     {
         return SocketAddressType::Unix;
@@ -23,6 +24,7 @@ final class UnixAddress implements SocketAddress
         return $this->path !== '' && $this->path[0] === "\0";
     }
 
+    #[\Override]
     public function toString(): string
     {
         return $this->path;

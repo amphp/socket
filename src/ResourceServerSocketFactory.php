@@ -20,6 +20,7 @@ final class ResourceServerSocketFactory implements ServerSocketFactory
     /**
      * @throws SocketException
      */
+    #[\Override]
     public function listen(SocketAddress|string $address, ?BindContext $bindContext = null): ResourceServerSocket
     {
         $bindContext ??= new BindContext;
