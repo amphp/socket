@@ -85,7 +85,13 @@ function setupTls($socket, array $options, ?CancellationToken $cancellationToken
     }
 
     \error_clear_last();
-    \stream_context_set_option($socket, $options);
+
+    if (PHP_VERSION_ID >= 80300) {
+        /** @psalm-suppress UnusedFunctionCall */
+        \stream_context_set_options($socket, $options);
+    } else {
+        \stream_context_set_option($socket, $options);
+    }
 
     try {
         \set_error_handler(static function (int $errno, string $errstr) {
