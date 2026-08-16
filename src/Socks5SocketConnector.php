@@ -49,16 +49,25 @@ final class Socks5SocketConnector implements SocketConnector
             throw new SocketException("Host is null!");
         }
 
+        $port = $uri->getPort();
+        if ($port === null) {
+            throw new SocketException("Port is null!");
+        }
+
         $payload = \pack('C3', 0x5, 0x1, 0x0);
 
         $ip = \inet_pton($host);
         if ($ip !== false) {
             $payload .= \chr(\strlen($ip) === 4 ? 0x1 : 0x4) . $ip;
         } else {
+            if (\strlen($host) > 255) {
+                throw new SocketException("Host exceeds maximum length of 255 bytes: $host");
+            }
+
             $payload .= \chr(0x3) . \chr(\strlen($host)) . $host;
         }
 
-        $payload .= \pack('n', $uri->getPort());
+        $payload .= \pack('n', $port);
 
         $socket->write($payload);
     }
@@ -152,10 +161,12 @@ final class Socks5SocketConnector implements SocketConnector
             throw new SocketException("Wrong SOCKS5 RSV: $rsv");
         }
 
-        $read(match (\ord($read(1))) {
+        $addressType = \ord($read(1));
+        $read(match ($addressType) {
             0x1 => 6,
             0x4 => 18,
-            0x3 => \ord($read(1)) + 2
+            0x3 => \ord($read(1)) + 2,
+            default => throw new SocketException("Unsupported SOCKS5 address type: $addressType"),
         });
     }
 
