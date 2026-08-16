@@ -6,6 +6,29 @@ use PHPUnit\Framework\TestCase;
 
 class CidrMatcherTest extends TestCase
 {
+    public function provideInvalidCidrs(): array
+    {
+        return [
+            'empty prefix' => ['10.0.0.0/'],
+            'ipv4 prefix too large' => ['127.0.0.1/33'],
+            'ipv6 prefix too large' => ['::1/129'],
+            'leading zero prefix' => ['10.0.0.0/08'],
+            'negative prefix' => ['10.0.0.0/-1'],
+            'non-numeric prefix' => ['10.0.0.0/ 8'],
+            'invalid address' => ['not-an-ip/24'],
+        ];
+    }
+
+    /**
+     * @dataProvider provideInvalidCidrs
+     */
+    public function testInvalidCidrIsRejected(string $cidr)
+    {
+        $this->expectException(\ValueError::class);
+
+        new CidrMatcher($cidr);
+    }
+
     private array $tests = [
         [
             "cidr" => "192.30.252.0/22",
@@ -28,10 +51,7 @@ class CidrMatcherTest extends TestCase
         ],
     ];
 
-    /**
-     * @test
-     */
-    public function match()
+    public function testMatches()
     {
         foreach ($this->tests as $test) {
             $tests = $test["tests"];

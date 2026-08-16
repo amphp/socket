@@ -44,9 +44,22 @@ final class CidrMatcher
         }
         $ipv4 = \strlen($networkAddress) === 4;
 
-        $bits ??= $ipv4 ? '32' : '128';
+        $maxBits = $ipv4 ? 32 : 128;
 
-        return [self::toIPv6($networkAddress), (int) $bits + ($ipv4 ? 96 : 0)];
+        if ($bits === null) {
+            $bits = $maxBits;
+        } else {
+            if (!\preg_match('/^(0|[1-9]\d*)$/', $bits)) {
+                throw new ValueError('Invalid CIDR prefix length: ' . $bits);
+            }
+
+            $bits = (int) $bits;
+            if ($bits > $maxBits) {
+                throw new ValueError(\sprintf('Invalid CIDR prefix length: %d, must be between 0 and %d', $bits, $maxBits));
+            }
+        }
+
+        return [self::toIPv6($networkAddress), $bits + ($ipv4 ? 96 : 0)];
     }
 
     public function match(string $ip): bool
