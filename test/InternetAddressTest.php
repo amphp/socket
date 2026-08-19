@@ -40,4 +40,32 @@ final class InternetAddressTest extends TestCase
 
         InternetAddress::fromString('1.1.1.1:-1');
     }
+
+    public function provideInvalidPorts(): array
+    {
+        return [
+            'trailing garbage' => ['1.1.1.1:80abc'],
+            'empty port' => ['1.1.1.1:'],
+            'hex port' => ['1.1.1.1:0x50'],
+            'leading whitespace' => ['1.1.1.1: 80'],
+            'out of range' => ['1.1.1.1:65536'],
+        ];
+    }
+
+    /**
+     * @dataProvider provideInvalidPorts
+     */
+    public function testTryFromStringRejectsInvalidPort(string $address): void
+    {
+        self::assertNull(InternetAddress::tryFromString($address));
+    }
+
+    public function testTryFromStringParsesValidPort(): void
+    {
+        $address = InternetAddress::tryFromString('1.1.1.1:80');
+
+        self::assertNotNull($address);
+        self::assertSame('1.1.1.1', $address->getAddress());
+        self::assertSame(80, $address->getPort());
+    }
 }

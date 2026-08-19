@@ -28,8 +28,12 @@ final class InternetAddress implements SocketAddress
         }
 
         $ip = \substr($address, 0, $colon);
-        $port = (int) \substr($address, $colon + 1);
+        $port = \substr($address, $colon + 1);
+        if (!\ctype_digit($port)) {
+            return null;
+        }
 
+        $port = (int) $port;
         if ($port < 0 || $port > 65535) {
             return null;
         }
