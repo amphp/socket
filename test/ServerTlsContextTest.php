@@ -347,4 +347,64 @@ class ServerTlsContextTest extends TestCase
         $context = new ServerTlsContext;
         $context->withApplicationLayerProtocols([1, 2]);
     }
+
+    public function testFromServerResourceReturnsNullWithoutSslOptions(): void
+    {
+        $resource = \stream_context_create([]);
+
+        self::assertNull(ServerTlsContext::fromServerResource($resource));
+    }
+
+    public function testFromServerResourceToleratesPartialSslOptions(): void
+    {
+        // Options not produced by this library only contain a subset of keys; this must not warn or throw.
+        $resource = \stream_context_create(['ssl' => ['verify_peer' => true]]);
+
+        $context = ServerTlsContext::fromServerResource($resource);
+
+        self::assertNotNull($context);
+        self::assertTrue($context->hasPeerVerification());
+        self::assertNull($context->getDefaultCertificate());
+    }
+
+    public function testFromServerResourceWithSniCertificatesAndNoDefaultCertificate(): void
+    {
+        $context = (new ServerTlsContext)
+            ->withCertificates(['amphp.org' => new Certificate(__DIR__ . '/tls/amphp.org.pem')]);
+
+        $resource = \stream_context_create($context->toStreamContextArray());
+
+        $rebuilt = ServerTlsContext::fromServerResource($resource);
+
+        self::assertNotNull($rebuilt);
+        self::assertNull($rebuilt->getDefaultCertificate());
+        self::assertArrayHasKey('amphp.org', $rebuilt->getCertificates());
+        self::assertEquals($context->toStreamContextArray(), $rebuilt->toStreamContextArray());
+    }
+
+    public function testFromServerResourceRoundTrip(): void
+    {
+        if (!Socket\hasTlsAlpnSupport()) {
+            self::markTestSkipped('OpenSSL 1.0.2 required');
+        }
+
+        $context = (new ServerTlsContext)
+            ->withDefaultCertificate(new Certificate(__DIR__ . '/tls/amphp.org.pem'))
+            ->withCertificates([
+                'amphp.org' => new Certificate(__DIR__ . '/tls/amphp.org.pem'),
+                'www.amphp.org' => new Certificate(__DIR__ . '/tls/www.amphp.org.pem'),
+            ])
+            ->withCaFile(__DIR__ . '/tls/amphp.org.crt')
+            ->withApplicationLayerProtocols(['h2', 'http/1.1'])
+            ->withPeerVerification()
+            ->withPeerCapturing()
+            ->withMinimumVersion(ServerTlsContext::TLSv1_2);
+
+        $resource = \stream_context_create($context->toStreamContextArray());
+
+        $rebuilt = ServerTlsContext::fromServerResource($resource);
+
+        self::assertNotNull($rebuilt);
+        self::assertEquals($context->toStreamContextArray(), $rebuilt->toStreamContextArray());
+    }
 }
