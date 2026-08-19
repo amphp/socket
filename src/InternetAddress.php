@@ -29,7 +29,7 @@ final class InternetAddress implements SocketAddress
 
         $ip = \substr($address, 0, $colon);
         $port = \substr($address, $colon + 1);
-        if (!\ctype_digit($port)) {
+        if (!\preg_match('[^\d+$]', $port)) {
             return null;
         }
 
