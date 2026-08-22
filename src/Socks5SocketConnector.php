@@ -56,7 +56,9 @@ final class Socks5SocketConnector implements SocketConnector
 
         $payload = \pack('C3', 0x5, 0x1, 0x0);
 
-        $ip = \inet_pton($host);
+        // League returns IPv6 hosts in the bracketed IP-literal form (e.g. "[::1]"); strip the brackets so the
+        // address is recognized and encoded as an IPv6 literal rather than a domain name.
+        $ip = \inet_pton(\str_starts_with($host, '[') ? \substr($host, 1, -1) : $host);
         if ($ip !== false) {
             $payload .= \chr(\strlen($ip) === 4 ? 0x1 : 0x4) . $ip;
         } else {
@@ -86,7 +88,18 @@ final class Socks5SocketConnector implements SocketConnector
             throw new \Error("Both or neither username and password must be provided!");
         }
 
-        $uri = Uri::new($target);
+        $scheme = \strstr($target, '://', true);
+        $target = match ($scheme) {
+            'tcp' => $target,
+            false => 'tcp://' . $target,
+            default => throw new \ValueError('Only tcp allowed for target scheme; got ' . $scheme),
+        };
+
+        try {
+            $uri = Uri::new($target);
+        } catch (\Exception $exception) {
+            throw new SocketException('Invalid SOCKS5 target: ' . $target, previous: $exception);
+        }
 
         $read = function (int $length) use ($socket, $cancellation): string {
             \assert($length > 0);
