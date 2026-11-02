@@ -58,6 +58,9 @@ final class RetrySocketConnector implements SocketConnector
 
                 $failures[] = $e->getMessage();
 
+                // A trace spans every fiber resumed in the same tick: don't hold it during the delay.
+                unset($e);
+
                 delay($this->exponentialBackoffBase ** $attempts);
             }
         } while (true);
