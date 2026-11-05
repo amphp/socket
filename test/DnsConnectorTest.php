@@ -232,15 +232,15 @@ class DnsConnectorTest extends AsyncTestCase
     public function provideInvalidIpAddresses(): array
     {
         return [
-            ['localhost', 80, 'Connection to tcp://example.com:80 @ localhost:80 failed: invalid IP address'],
-            ['127.0.0.1', 65536, 'Connection to tcp://example.com:65536 @ 127.0.0.1:65536 failed: invalid IP address'],
+            ['localhost', 'Connection to tcp://example.com:80 @ localhost:80 failed: invalid IP address'],
+            ['bad host', 'Connection to tcp://example.com:80 @ bad host:80 failed: invalid IP address'],
         ];
     }
 
     /**
      * @dataProvider provideInvalidIpAddresses
      */
-    public function testConnectFailsWhenNoAddressIsValid(string $value, int $port, string $expected): \Generator
+    public function testConnectFailsWhenNoAddressIsValid(string $value, string $expected): \Generator
     {
         $connectPolicy = $this->createConnectPolicy(function (): bool {
             $this->fail('The connect policy should not be called with an invalid IP address');
@@ -251,7 +251,34 @@ class DnsConnectorTest extends AsyncTestCase
         $this->expectException(ConnectException::class);
         $this->expectExceptionMessage($expected);
 
-        yield (new DnsConnector($resolver, $connectPolicy))->connect('tcp://example.com:' . $port);
+        yield (new DnsConnector($resolver, $connectPolicy))->connect('tcp://example.com:80');
+    }
+
+    public function provideUrisWithAnInvalidPort(): array
+    {
+        return [
+            ['tcp://127.0.0.1:65536'],
+            ['tcp://example.com:65536'],
+        ];
+    }
+
+    /**
+     * @dataProvider provideUrisWithAnInvalidPort
+     */
+    public function testConnectFailsWhenThePortIsInvalid(string $uri): \Generator
+    {
+        $connectPolicy = $this->createConnectPolicy(function (): bool {
+            $this->fail('The connect policy should not be called with an invalid port');
+        });
+
+        $resolver = $this->createMock(Dns\Resolver::class);
+        $resolver->expects($this->never())
+            ->method('resolve');
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Connection to ' . $uri . ' failed: invalid port');
+
+        yield (new DnsConnector($resolver, $connectPolicy))->connect($uri);
     }
 
     public function testConnectPolicyDoesNotCheckUnixSockets(): \Generator

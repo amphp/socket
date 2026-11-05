@@ -32,6 +32,7 @@ final class DnsConnector implements Connector
             $token = $token ?? new NullCancellationToken;
             $attempt = 0;
             $uris = [];
+            $addresses = [];
             $failures = [];
 
             [$scheme, $host, $port] = Internal\parseUri($uri);
@@ -40,9 +41,20 @@ final class DnsConnector implements Connector
                 $host = \substr($host, 1, -1);
             }
 
+            if ($connectPolicy && $port > 65535) {
+                throw new ConnectException(\sprintf('Connection to %s failed: invalid port', $uri));
+            }
+
+            // The connect policy doesn't check Unix sockets.
+            $connectPolicy = $port === 0 ? null : $connectPolicy;
+
             if ($port === 0 || @\inet_pton($host)) {
                 // Host is already an IP address or file path.
                 $uris = [$uri];
+
+                if ($connectPolicy) {
+                    $addresses = [new SocketAddress($host, $port)];
+                }
             } else {
                 // Host is not an IP address, so resolve the domain name.
                 $records = yield ($resolver ?? Dns\resolver())->resolve($host, $context->getDnsTypeRestriction());
@@ -60,32 +72,36 @@ final class DnsConnector implements Connector
                     } else {
                         $uris[] = \sprintf('%s://%s:%d', $scheme, $record->getValue(), $port);
                     }
+
+                    if ($connectPolicy) {
+                        $addresses[] = new SocketAddress($record->getValue(), $port);
+                    }
                 }
             }
 
             $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
             $timeout = $context->getConnectTimeout();
 
-            foreach ($uris as $builtUri) {
-                if ($connectPolicy && $port !== 0) {
-                    [, $builtHost, $builtPort] = Internal\parseUri($builtUri);
-                    $address = null;
+            foreach ($uris as $i => $builtUri) {
+                if ($connectPolicy) {
+                    $address = $addresses[$i];
+                    $reason = null;
 
-                    if (@\inet_pton(\trim($builtHost, '[]')) && $builtPort <= 65535) {
-                        $address = new SocketAddress($builtHost, $builtPort);
+                    if (!@\inet_pton($address->getHost())) {
+                        $reason = 'invalid IP address';
+                    } elseif (!$connectPolicy->isAllowed($address)) {
+                        $reason = 'denied by the connect policy';
                     }
 
-                    if (!$address || !$connectPolicy->isAllowed($address)) {
-                        $reason = $address ? 'denied by the connect policy' : 'invalid IP address';
+                    if ($reason !== null) {
                         $e = new ConnectException(\sprintf(
-                            'Connection to %s @ %s:%d failed: %s%s',
+                            'Connection to %s @ %s failed: %s%s',
                             $uri,
-                            $builtHost,
-                            $builtPort,
+                            $address->toString(),
                             $reason,
                             $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
                         ));
-                        $failures[] = "{$uri} @ {$builtHost}:{$builtPort} ({$reason})";
+                        $failures[] = "{$uri} @ {$address->toString()} ({$reason})";
 
                         continue; // Skipped addresses don't count as connection attempts.
                     }
