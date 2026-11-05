@@ -3,7 +3,9 @@
 namespace Amp\Socket;
 
 /**
- * Decides whether {@see DnsConnector} can connect to an IP address, before the connection is opened.
+ * Decides whether {@see DnsConnector} can connect to an address, before the connection is opened.
+ *
+ * The address is an IP address and a port, or the path of a Unix socket with a null port.
  */
 interface ConnectPolicy
 {

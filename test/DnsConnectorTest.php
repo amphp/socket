@@ -41,7 +41,7 @@ class DnsConnectorTest extends AsyncTestCase
         });
 
         $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('@ ' . $expected . ' failed: denied by the connect policy');
+        $this->expectExceptionMessage($expected . ' failed: denied by the connect policy');
 
         try {
             yield (new DnsConnector(null, $connectPolicy))->connect($uri);
@@ -119,9 +119,9 @@ class DnsConnectorTest extends AsyncTestCase
 
         $this->expectException(ConnectException::class);
         $this->expectExceptionMessage(
-            'Connection to tcp://example.com:80 @ 192.0.2.3:80 failed: denied by the connect policy; previous attempts: '
-            . 'tcp://example.com:80 @ 192.0.2.1:80 (denied by the connect policy), '
-            . 'tcp://example.com:80 @ 192.0.2.2:80 (denied by the connect policy)'
+            'Connection to tcp://example.com:80 @ tcp://192.0.2.3:80 failed: denied by the connect policy; previous attempts: '
+            . 'tcp://example.com:80 @ tcp://192.0.2.1:80 (denied by the connect policy), '
+            . 'tcp://example.com:80 @ tcp://192.0.2.2:80 (denied by the connect policy)'
         );
 
         yield (new DnsConnector($resolver, $connectPolicy))->connect('tcp://example.com:80');
@@ -233,8 +233,8 @@ class DnsConnectorTest extends AsyncTestCase
     public function provideInvalidIpAddresses(): array
     {
         return [
-            ['localhost', 'Connection to tcp://example.com:80 @ localhost:80 failed: invalid IP address'],
-            ['bad host', 'Connection to tcp://example.com:80 @ bad host:80 failed: invalid IP address'],
+            ['localhost', 'Connection to tcp://example.com:80 @ tcp://localhost:80 failed: invalid IP address'],
+            ['bad host', 'Connection to tcp://example.com:80 @ tcp://bad host:80 failed: invalid IP address'],
         ];
     }
 
@@ -282,7 +282,7 @@ class DnsConnectorTest extends AsyncTestCase
         yield (new DnsConnector($resolver, $connectPolicy))->connect($uri);
     }
 
-    public function testConnectPolicyDoesNotCheckUnixSockets(): \Generator
+    public function testConnectPolicyChecksUnixSockets(): \Generator
     {
         if (\stripos(\PHP_OS, 'win') === 0) {
             $this->markTestSkipped('Unix sockets are not supported on Windows');
@@ -291,8 +291,49 @@ class DnsConnectorTest extends AsyncTestCase
         $path = \sys_get_temp_dir() . '/amphp-socket-test-' . \getmypid() . '.sock';
         $server = Server::listen('unix://' . $path);
 
-        $connectPolicy = $this->createConnectPolicy(function (): bool {
-            $this->fail('The connect policy should not be called for Unix sockets');
+        $addresses = [];
+        $connectPolicy = $this->createConnectPolicy(static function (SocketAddress $address) use (&$addresses): bool {
+            $addresses[] = [$address->getHost(), $address->getPort()];
+
+            return false;
+        });
+
+        try {
+            try {
+                yield (new DnsConnector(null, $connectPolicy))->connect('unix://' . $path);
+                $this->fail('The connection should have been denied');
+            } catch (ConnectException $e) {
+                $this->assertSame('Connection to unix://' . $path . ' @ unix://' . $path . ' failed: denied by the connect policy', $e->getMessage());
+            }
+
+            $this->assertSame([[$path, null]], $addresses);
+
+            try {
+                yield Promise\timeout($server->accept(), 100);
+                $this->fail('No connection should have been opened');
+            } catch (TimeoutException $e) {
+                // No connection has been opened
+            }
+        } finally {
+            $server->close();
+            @\unlink($path);
+        }
+    }
+
+    public function testConnectPolicyCanAllowUnixSockets(): \Generator
+    {
+        if (\stripos(\PHP_OS, 'win') === 0) {
+            $this->markTestSkipped('Unix sockets are not supported on Windows');
+        }
+
+        $path = \sys_get_temp_dir() . '/amphp-socket-test-' . \getmypid() . '.sock';
+        $server = Server::listen('unix://' . $path);
+
+        $addresses = [];
+        $connectPolicy = $this->createConnectPolicy(static function (SocketAddress $address) use (&$addresses): bool {
+            $addresses[] = [$address->getHost(), $address->getPort()];
+
+            return true;
         });
 
         try {
@@ -303,6 +344,7 @@ class DnsConnectorTest extends AsyncTestCase
         }
 
         $this->assertInstanceOf(EncryptableSocket::class, $socket);
+        $this->assertSame([[$path, null]], $addresses);
     }
 
     private function createConnectPolicy(callable $isAllowed): ConnectPolicy
