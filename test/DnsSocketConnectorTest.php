@@ -217,7 +217,30 @@ class DnsSocketConnectorTest extends AsyncTestCase
         $server->close();
     }
 
-    public function testConnectPolicyIsNotUsedForUnixSockets(): void
+    public function testConnectPolicyChecksUnixSockets(): void
+    {
+        $addresses = [];
+
+        $policy = $this->createPolicy(static function (SocketAddress $address) use (&$addresses): bool {
+            $addresses[] = $address;
+
+            return false;
+        });
+
+        try {
+            (new DnsSocketConnector(connectPolicy: $policy))->connect('unix:///run/amphp.sock');
+            self::fail('The connection should have been denied');
+        } catch (ConnectException $e) {
+            self::assertSame(
+                'Connection to unix:///run/amphp.sock @ unix:///run/amphp.sock failed: denied by the connect policy',
+                $e->getMessage(),
+            );
+        }
+
+        self::assertEquals([new UnixAddress('/run/amphp.sock')], $addresses);
+    }
+
+    public function testConnectPolicyConnectsToAllowedUnixSockets(): void
     {
         if (IS_WINDOWS) {
             self::markTestSkipped('Unix sockets are not supported on Windows');
@@ -225,15 +248,36 @@ class DnsSocketConnectorTest extends AsyncTestCase
 
         $path = __DIR__ . '/socket.sock';
         $server = listen('unix://' . $path);
+        $allowed = false;
+        $addresses = [];
+
+        $policy = $this->createPolicy(static function (SocketAddress $address) use (&$allowed, &$addresses): bool {
+            $addresses[] = $address;
+
+            return $allowed;
+        });
+
+        $connector = new DnsSocketConnector(connectPolicy: $policy);
 
         try {
-            $policy = $this->createMock(ConnectPolicy::class);
-            $policy->expects(self::never())
-                ->method('isAllowed');
+            try {
+                $connector->connect('unix://' . $path);
+                self::fail('The connection should have been denied');
+            } catch (ConnectException $e) {
+                self::assertStringEndsWith('failed: denied by the connect policy', $e->getMessage());
+            }
 
-            $socket = (new DnsSocketConnector(connectPolicy: $policy))->connect('unix://' . $path);
+            try {
+                $server->accept(new TimeoutCancellation(0.1));
+                self::fail('No connection should have been opened');
+            } catch (CancelledException) {
+                $allowed = true;
+            }
+
+            $socket = $connector->connect('unix://' . $path);
 
             self::assertSame(SocketAddressType::Unix, $socket->getRemoteAddress()->getType());
+            self::assertEquals([new UnixAddress($path), new UnixAddress($path)], $addresses);
 
             $socket->close();
         } finally {
