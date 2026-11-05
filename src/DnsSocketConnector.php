@@ -171,7 +171,8 @@ final class DnsSocketConnector implements SocketConnector
      */
     private function resolve(string $uri, ConnectContext $context): array
     {
-        [$scheme, $host, $port] = Internal\parseUri($uri);
+        // PHP and the URI parser read the userinfo differently, so it's rejected when a connect policy is set.
+        [$scheme, $host, $port] = Internal\parseUri($uri, $this->connectPolicy === null);
 
         if ($host[0] === '[') {
             $host = \substr($host, 1, -1);
@@ -181,7 +182,7 @@ final class DnsSocketConnector implements SocketConnector
         $checkAddresses = $this->connectPolicy && \stripos($uri, 'unix://') !== 0;
 
         if ($checkAddresses && $port > 65535) {
-            // Every address shares the port, so there's no need to resolve the host.
+            // All addresses use the same port, so there's no need to resolve the host.
             throw new ConnectException(\sprintf('Connection to %s failed: invalid port', $uri));
         }
 

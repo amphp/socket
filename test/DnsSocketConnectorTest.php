@@ -128,29 +128,31 @@ class DnsSocketConnectorTest extends AsyncTestCase
         }
     }
 
-    public function testConnectPolicyChecksTheAddressThatIsConnected(): void
+    public function testConnectPolicyRejectsUserInfo(): void
     {
         $serverA = listen('127.0.0.1:0');
         $serverB = listen('127.0.0.1:0');
-        $portA = $this->getPort($serverA);
-        $portB = $this->getPort($serverB);
-        $addresses = [];
+        $uri = 'tcp://127.0.0.1:' . $this->getPort($serverA) . '@127.0.0.1:' . $this->getPort($serverB);
 
-        $policy = $this->createPolicy(static function (InternetAddress $address) use (&$addresses): bool {
-            $addresses[] = $address->toString();
+        $policy = $this->createMock(ConnectPolicy::class);
+        $policy->expects(self::never())
+            ->method('isAllowed');
 
-            return true;
-        });
+        try {
+            (new DnsSocketConnector(connectPolicy: $policy))->connect($uri);
+            self::fail('The URI should have been rejected');
+        } catch (\Error $e) {
+            self::assertSame('Invalid URI: ' . $uri . '; userinfo component not allowed', $e->getMessage());
+        }
 
-        $connector = new DnsSocketConnector(connectPolicy: $policy);
-        $socket = $connector->connect('tcp://127.0.0.1:' . $portA . '@127.0.0.1:' . $portB);
-
-        self::assertSame(['127.0.0.1:' . $portB], $addresses);
-        self::assertSame('127.0.0.1:' . $portB, $socket->getRemoteAddress()->toString());
-
-        $socket->close();
-        $serverA->close();
-        $serverB->close();
+        foreach ([$serverA, $serverB] as $server) {
+            try {
+                $server->accept(new TimeoutCancellation(0.1));
+                self::fail('No connection should have been opened');
+            } catch (CancelledException) {
+                $server->close();
+            }
+        }
     }
 
     public function testConnectPolicySkipsInvalidIpAddresses(): void
