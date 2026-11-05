@@ -166,7 +166,7 @@ final class DnsSocketConnector implements SocketConnector
     }
 
     /**
-     * @return non-empty-list<array{string, InternetAddress|null, string|null}> For each connection attempt, the URI to
+     * @return non-empty-list<array{string, SocketAddress|null, string|null}> For each connection attempt, the URI to
      *     connect to, the address to check with the connect policy, and the reason to skip the attempt.
      */
     private function resolve(string $uri, ConnectContext $context): array
@@ -174,21 +174,23 @@ final class DnsSocketConnector implements SocketConnector
         // PHP and the URI parser read the userinfo differently, so it's rejected when a connect policy is set.
         [$scheme, $host, $port] = Internal\parseUri($uri, $this->connectPolicy === null);
 
+        if ($this->connectPolicy && \stripos($uri, 'unix://') === 0) {
+            // The path is what follows the scheme, as PHP reads it.
+            return [[$uri, new UnixAddress(\substr($uri, \strlen('unix://'))), null]];
+        }
+
         if ($host[0] === '[') {
             $host = \substr($host, 1, -1);
         }
 
-        // The connect policy doesn't check Unix sockets.
-        $checkAddresses = $this->connectPolicy && \stripos($uri, 'unix://') !== 0;
-
-        if ($checkAddresses && $port > 65535) {
+        if ($this->connectPolicy && $port > 65535) {
             // All addresses use the same port, so there's no need to resolve the host.
             throw new ConnectException(\sprintf('Connection to %s failed: invalid port', $uri));
         }
 
         if ($port === 0 || \inet_pton($host)) {
             // Host is already an IP address or file path.
-            return [$checkAddresses ? self::createAttempt($scheme, $host, $port) : [$uri, null, null]];
+            return [$this->connectPolicy ? self::createAttempt($scheme, $host, $port) : [$uri, null, null]];
         }
 
         $resolver = $this->dnsResolver ?? dnsResolver();
@@ -212,7 +214,7 @@ final class DnsSocketConnector implements SocketConnector
 
         $attempts = [];
         foreach ($records as $record) {
-            if ($checkAddresses) {
+            if ($this->connectPolicy) {
                 $attempts[] = self::createAttempt($scheme, $record->getValue(), $port);
             } elseif ($record->getType() === DnsRecord::AAAA) {
                 $attempts[] = [\sprintf('%s://[%s]:%d', $scheme, $record->getValue(), $port), null, null];
