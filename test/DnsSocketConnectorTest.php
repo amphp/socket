@@ -40,7 +40,7 @@ class DnsSocketConnectorTest extends AsyncTestCase
             (new DnsSocketConnector(connectPolicy: $policy))->connect($uri);
             self::fail('The connection should have been denied');
         } catch (ConnectException $e) {
-            self::assertStringContainsString('skipped: denied by the connect policy', $e->getMessage());
+            self::assertStringContainsString('failed: denied by the connect policy', $e->getMessage());
         }
 
         self::assertSame([$expected], $addresses);
@@ -89,7 +89,7 @@ class DnsSocketConnectorTest extends AsyncTestCase
 
         $this->expectException(ConnectException::class);
         $this->expectExceptionMessage(
-            'Connection to example.com:80 @ tcp://192.0.2.2:80 skipped: denied by the connect policy;'
+            'Connection to example.com:80 @ tcp://192.0.2.2:80 failed: denied by the connect policy;'
             . ' previous attempts: example.com:80 @ tcp://192.0.2.1:80 (denied by the connect policy)'
         );
 
@@ -160,9 +160,58 @@ class DnsSocketConnectorTest extends AsyncTestCase
             ->method('isAllowed');
 
         $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('Connection to localhost:0 @ localhost:0 skipped: invalid IP address');
+        $this->expectExceptionMessage('Connection to localhost:0 @ tcp://localhost:0 failed: invalid IP address');
 
         (new DnsSocketConnector(connectPolicy: $policy))->connect('localhost:0');
+    }
+
+    public function provideInvalidPorts(): array
+    {
+        return [
+            ['127.0.0.1:65536'],
+            ['example.com:65536'],
+        ];
+    }
+
+    /**
+     * @dataProvider provideInvalidPorts
+     */
+    public function testConnectPolicyRejectsInvalidPortsBeforeResolving(string $uri): void
+    {
+        $resolver = $this->createMock(DnsResolver::class);
+        $resolver->expects(self::never())
+            ->method('resolve');
+
+        $policy = $this->createMock(ConnectPolicy::class);
+        $policy->expects(self::never())
+            ->method('isAllowed');
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Connection to ' . $uri . ' failed: invalid port');
+
+        (new DnsSocketConnector($resolver, $policy))->connect($uri);
+    }
+
+    public function testConnectPolicySkipsRecordsThatAreNotIpAddresses(): void
+    {
+        $server = listen('127.0.0.1:0');
+        $port = $this->getPort($server);
+        $addresses = [];
+
+        $policy = $this->createPolicy(static function (InternetAddress $address) use (&$addresses): bool {
+            $addresses[] = $address->toString();
+
+            return true;
+        });
+
+        $connector = new DnsSocketConnector($this->createResolver('localhost', '127.0.0.1'), $policy);
+        $socket = $connector->connect('example.com:' . $port);
+
+        self::assertSame(['127.0.0.1:' . $port], $addresses);
+        self::assertSame('127.0.0.1:' . $port, $socket->getRemoteAddress()->toString());
+
+        $socket->close();
+        $server->close();
     }
 
     public function testConnectPolicyIsNotUsedForUnixSockets(): void
