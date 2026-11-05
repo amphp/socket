@@ -14,17 +14,20 @@ use function Amp\call;
 final class DnsConnector implements Connector
 {
     private $resolver;
+    private $connectPolicy;
 
-    public function __construct(?Dns\Resolver $resolver = null)
+    public function __construct(?Dns\Resolver $resolver = null, ?ConnectPolicy $connectPolicy = null)
     {
         $this->resolver = $resolver;
+        $this->connectPolicy = $connectPolicy;
     }
 
     public function connect(string $uri, ?ConnectContext $context = null, ?CancellationToken $token = null): Promise
     {
         $resolver = $this->resolver;
+        $connectPolicy = $this->connectPolicy;
 
-        return call(static function () use ($uri, $context, $token, $resolver) {
+        return call(static function () use ($uri, $context, $token, $resolver, $connectPolicy) {
             $context = $context ?? new ConnectContext;
             $token = $token ?? new NullCancellationToken;
             $attempt = 0;
@@ -64,6 +67,33 @@ final class DnsConnector implements Connector
             $timeout = $context->getConnectTimeout();
 
             foreach ($uris as $builtUri) {
+                if ($connectPolicy && $port !== 0) {
+                    [, $builtHost, $builtPort] = Internal\parseUri($builtUri);
+                    $address = null;
+
+                    if (@\inet_pton(\trim($builtHost, '[]')) && $builtPort <= 65535) {
+                        $address = new SocketAddress($builtHost, $builtPort);
+                    }
+
+                    if (!$address || !$connectPolicy->isAllowed($address)) {
+                        $reason = $address ? 'denied by the connect policy' : 'invalid IP address';
+                        $e = new ConnectException(\sprintf(
+                            'Connection to %s @ %s:%d failed: %s%s',
+                            $uri,
+                            $builtHost,
+                            $builtPort,
+                            $reason,
+                            $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
+                        ));
+                        $failures[] = "{$uri} @ {$builtHost}:{$builtPort} ({$reason})";
+
+                        continue; // Skipped addresses don't count as connection attempts.
+                    }
+
+                    // Connect to the checked address, since PHP can parse the original URI differently.
+                    $builtUri = $scheme . '://' . $address->toString();
+                }
+
                 try {
                     $streamContext = \stream_context_create($context->withoutTlsContext()->toStreamContextArray());
 
@@ -74,7 +104,7 @@ final class DnsConnector implements Connector
                             $uri,
                             $errno,
                             $errstr,
-                            $failures ? '; previous attempts: ' . \implode($failures) : ''
+                            $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
                         ), $errno);
                     }
 
@@ -94,7 +124,7 @@ final class DnsConnector implements Connector
                             'Connecting to %s failed: timeout exceeded (%d ms)%s',
                             $uri,
                             $timeout,
-                            $failures ? '; previous attempts: ' . \implode($failures) : ''
+                            $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
                         ), 110); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
                     } finally {
                         Loop::cancel($watcher);
@@ -108,7 +138,7 @@ final class DnsConnector implements Connector
                         throw new ConnectException(\sprintf(
                             'Connection to %s refused%s',
                             $uri,
-                            $failures ? '; previous attempts: ' . \implode($failures) : ''
+                            $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
                         ), 111); // See ECONNREFUSED in http://www.virtsync.com/c-error-codes-include-errno
                     }
                 } catch (ConnectException $e) {
@@ -135,7 +165,7 @@ final class DnsConnector implements Connector
             }
 
             /**
-             * This is reached if either all URIs failed or the maximum number of attempts is reached.
+             * This is reached if all URIs failed or were skipped, or if the maximum number of attempts is reached.
              *
              * @noinspection PhpUndefinedVariableInspection
              * @psalm-suppress PossiblyUndefinedVariable
