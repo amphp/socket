@@ -20,8 +20,10 @@ final class DnsSocketConnector implements SocketConnector
     use ForbidCloning;
     use ForbidSerialization;
 
-    public function __construct(private readonly ?DnsResolver $dnsResolver = null)
-    {
+    public function __construct(
+        private readonly ?DnsResolver $dnsResolver = null,
+        private readonly ?ConnectPolicy $connectPolicy = null,
+    ) {
     }
 
     #[\Override]
@@ -47,6 +49,30 @@ final class DnsSocketConnector implements SocketConnector
 
         $failures = [];
         foreach ($uris as $builtUri) {
+            if ($this->connectPolicy && \stripos($builtUri, 'unix://') !== 0) {
+                [$scheme, $host, $port] = Internal\parseUri($builtUri);
+                $address = InternetAddress::tryFromString($host . ':' . $port);
+
+                if (!$address || !$this->connectPolicy->isAllowed($address)) {
+                    $reason = $address ? 'denied by the connect policy' : 'invalid IP address';
+
+                    $e = new ConnectException(\sprintf(
+                        'Connection to %s @ %s skipped: %s%s',
+                        $uri,
+                        $builtUri,
+                        $reason,
+                        $failures ? '; previous attempts: ' . \implode($failures) : ''
+                    ));
+
+                    $failures[] = "$uri @ $builtUri ($reason)";
+
+                    continue; // Try the next address.
+                }
+
+                // Connect to the checked address, since PHP can parse the original URI differently.
+                $builtUri = $scheme . '://' . $address->toString();
+            }
+
             try {
                 $streamContext = \stream_context_create($context->withoutTlsContext()->toStreamContextArray());
 
