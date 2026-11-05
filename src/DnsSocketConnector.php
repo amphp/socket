@@ -59,7 +59,7 @@ final class DnsSocketConnector implements SocketConnector
                     $uri,
                     $builtUri,
                     $reason,
-                    $failures ? '; previous attempts: ' . \implode($failures) : ''
+                    $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
                 ));
 
                 $failures[] = "$uri @ $builtUri ($reason)";
@@ -82,7 +82,7 @@ final class DnsSocketConnector implements SocketConnector
                         $authority,
                         $errno,
                         $errstr,
-                        $failures ? '; previous attempts: ' . \implode($failures) : ''
+                        $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
                     ), $errno);
                 });
 
@@ -117,7 +117,7 @@ final class DnsSocketConnector implements SocketConnector
                         $uri,
                         $builtUri,
                         $timeout,
-                        $failures ? '; previous attempts: ' . \implode($failures) : ''
+                        $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
                     ), Internal\CONNECTION_TIMEOUT); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
                 } finally {
                     EventLoop::cancel($watcher);
@@ -132,7 +132,7 @@ final class DnsSocketConnector implements SocketConnector
                         'Connection to %s @ %s refused%s',
                         $uri,
                         $builtUri,
-                        $failures ? '; previous attempts: ' . \implode($failures) : ''
+                        $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
                     ), Internal\CONNECTION_REFUSED); // See ECONNREFUSED in http://www.virtsync.com/c-error-codes-include-errno
                 }
             } catch (ConnectException $e) {

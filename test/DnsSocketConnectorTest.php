@@ -89,11 +89,12 @@ class DnsSocketConnectorTest extends AsyncTestCase
 
         $this->expectException(ConnectException::class);
         $this->expectExceptionMessage(
-            'Connection to example.com:80 @ tcp://192.0.2.2:80 failed: denied by the connect policy;'
-            . ' previous attempts: example.com:80 @ tcp://192.0.2.1:80 (denied by the connect policy)'
+            'Connection to example.com:80 @ tcp://192.0.2.3:80 failed: denied by the connect policy;'
+            . ' previous attempts: example.com:80 @ tcp://192.0.2.1:80 (denied by the connect policy),'
+            . ' example.com:80 @ tcp://192.0.2.2:80 (denied by the connect policy)'
         );
 
-        $connector = new DnsSocketConnector($this->createResolver('192.0.2.1', '192.0.2.2'), $policy);
+        $connector = new DnsSocketConnector($this->createResolver('192.0.2.1', '192.0.2.2', '192.0.2.3'), $policy);
         $connector->connect('example.com:80', (new ConnectContext)->withConnectTimeout(1));
     }
 
