@@ -35,7 +35,8 @@ final class DnsConnector implements Connector
             $addresses = [];
             $failures = [];
 
-            [$scheme, $host, $port] = Internal\parseUri($uri);
+            // PHP and the URI parser read the userinfo differently, so it's rejected when a connect policy is set.
+            [$scheme, $host, $port] = Internal\parseUri($uri, $connectPolicy === null);
 
             if ($host[0] === '[') {
                 $host = \substr($host, 1, -1);

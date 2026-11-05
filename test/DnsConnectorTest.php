@@ -172,30 +172,31 @@ class DnsConnectorTest extends AsyncTestCase
         }
     }
 
-    public function testConnectPolicyChecksTheAddressThatIsConnected(): \Generator
+    public function testConnectPolicyRejectsUrisWithUserInfo(): \Generator
     {
         $serverA = Server::listen('127.0.0.1:0');
         $serverB = Server::listen('127.0.0.1:0');
-        $portA = $serverA->getAddress()->getPort();
-        $portB = $serverB->getAddress()->getPort();
+        $uri = 'tcp://' . $serverA->getAddress() . '@' . $serverB->getAddress();
 
-        $addresses = [];
-        $connectPolicy = $this->createConnectPolicy(static function (SocketAddress $address) use (&$addresses): bool {
-            $addresses[] = $address->toString();
-
-            return true;
+        $connectPolicy = $this->createConnectPolicy(function (): bool {
+            $this->fail('The connect policy should not be called for a URI with userinfo');
         });
 
         try {
-            /** @var EncryptableSocket $socket */
-            $socket = yield (new DnsConnector(null, $connectPolicy))->connect('tcp://127.0.0.1:' . $portA . '@127.0.0.1:' . $portB);
-        } finally {
-            $serverA->close();
-            $serverB->close();
+            yield (new DnsConnector(null, $connectPolicy))->connect($uri);
+            $this->fail('The connection should have been rejected');
+        } catch (\Error $e) {
+            $this->assertSame('Invalid URI: ' . $uri . '; userinfo component not allowed', $e->getMessage());
         }
 
-        $this->assertSame(['127.0.0.1:' . $portB], $addresses);
-        $this->assertSame('127.0.0.1:' . $portB, $socket->getRemoteAddress()->toString());
+        foreach ([$serverA, $serverB] as $server) {
+            try {
+                yield Promise\timeout($server->accept(), 100);
+                $this->fail('No connection should have been opened');
+            } catch (TimeoutException $e) {
+                $server->close();
+            }
+        }
     }
 
     public function testInvalidIpAddressesAreSkipped(): \Generator
