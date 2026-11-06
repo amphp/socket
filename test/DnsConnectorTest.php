@@ -282,6 +282,21 @@ class DnsConnectorTest extends AsyncTestCase
         yield (new DnsConnector($resolver, $connectPolicy))->connect($uri);
     }
 
+    /**
+     * @dataProvider provideUrisWithAnInvalidPort
+     */
+    public function testInvalidPortsAreRejectedWithoutConnectPolicy(string $uri): \Generator
+    {
+        $resolver = $this->createMock(Dns\Resolver::class);
+        $resolver->expects($this->never())
+            ->method('resolve');
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Connection to ' . $uri . ' failed: invalid port');
+
+        yield (new DnsConnector($resolver))->connect($uri);
+    }
+
     public function testConnectPolicyChecksUnixSockets(): \Generator
     {
         if (\stripos(\PHP_OS, 'win') === 0) {

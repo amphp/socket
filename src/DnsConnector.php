@@ -41,8 +41,7 @@ final class DnsConnector implements Connector
                 $host = \substr($host, 1, -1);
             }
 
-            if ($connectPolicy && $port > 65535) {
-                // All addresses use the same port, so there's no need to resolve the host.
+            if ($port > 65535) {
                 throw new ConnectException(\sprintf('Connection to %s failed: invalid port', $uri));
             }
 
