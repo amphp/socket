@@ -26,6 +26,10 @@ class FunctionsTest extends TestCase
                 'tcp://[2001:db8:85a3:8d3:1319:8a2e:370:7348]:443',
                 ['tcp', '[2001:db8:85a3:8d3:1319:8a2e:370:7348]', 443],
             ],
+            [
+                'tcp://user:pass@test:1234',
+                ['tcp', 'test', 1234],
+            ],
         ];
     }
 
@@ -53,6 +57,27 @@ class FunctionsTest extends TestCase
         $this->expectExceptionMessage('Invalid URI:');
 
         Internal\parseUri($uri);
+    }
+
+    public function parseUriUserInfoDataProvider(): array
+    {
+        return [
+            ['tcp://user@test:1234'],
+            ['tcp://user:pass@test:1234'],
+            ['tcp://@test:1234'],
+            ['udp://user@[::1]:53'],
+        ];
+    }
+
+    /**
+     * @dataProvider parseUriUserInfoDataProvider
+     */
+    public function testParseUriRejectsUserInfoWhenNotAllowed(string $uri): void
+    {
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Invalid URI: ' . $uri . '; userinfo component not allowed');
+
+        Internal\parseUri($uri, allowUserInfo: false);
     }
 
     public function parseUriInvalidSchemeDataProvider(): array
