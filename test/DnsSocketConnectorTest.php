@@ -195,6 +195,21 @@ class DnsSocketConnectorTest extends AsyncTestCase
         (new DnsSocketConnector($resolver, $policy))->connect($uri);
     }
 
+    /**
+     * @dataProvider provideInvalidPorts
+     */
+    public function testInvalidPortsAreRejectedWithoutConnectPolicy(string $uri): void
+    {
+        $resolver = $this->createMock(DnsResolver::class);
+        $resolver->expects(self::never())
+            ->method('resolve');
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Connection to ' . $uri . ' failed: invalid port');
+
+        (new DnsSocketConnector($resolver))->connect($uri);
+    }
+
     public function testConnectPolicySkipsRecordsThatAreNotIpAddresses(): void
     {
         $server = listen('127.0.0.1:0');
