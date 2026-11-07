@@ -17,6 +17,7 @@ use function Amp\call;
  * Parse an URI into [scheme, host, port].
  *
  * @param string $uri
+ * @param bool   $allowUserInfo Whether the URI can contain a userinfo component, which is then ignored.
  *
  * @return array
  *
@@ -24,7 +25,7 @@ use function Amp\call;
  *
  * @internal
  */
-function parseUri(string $uri): array
+function parseUri(string $uri, bool $allowUserInfo = true): array
 {
     if (\stripos($uri, 'unix://') === 0 || \stripos($uri, 'udg://') === 0) {
         [$scheme, $path] = \explode('://', $uri, 2);
@@ -55,6 +56,12 @@ function parseUri(string $uri): array
     if ($host === '' || $port === 0) {
         throw new \Error(
             "Invalid URI: {$uri}; host and port components required"
+        );
+    }
+
+    if (!$allowUserInfo && $uriParts['user'] !== null) {
+        throw new \Error(
+            "Invalid URI: {$uri}; userinfo component not allowed"
         );
     }
 
