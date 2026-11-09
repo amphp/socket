@@ -18,9 +18,55 @@ class DnsSocketConnectorTest extends AsyncTestCase
             ['tcp://127.0.0.1:80', '127.0.0.1:80'],
             ['udp://127.0.0.1:53', '127.0.0.1:53'],
             ['[::1]:80', '[::1]:80'],
+            ['tcp://[0:0:0:0:0:0:0:1]:80', '[::1]:80'],
             ['tcp://[::ffff:127.0.0.1]:80', '[::ffff:127.0.0.1]:80'],
             [new InternetAddress('127.0.0.1', 80), '127.0.0.1:80'],
         ];
+    }
+
+    public function provideUnixPathsWithNulBytes(): array
+    {
+        return [
+            ["unix:///run/amphp.sock\0suffix"],
+            ["UNIX:///run/amphp.sock\0suffix"],
+            [new UnixAddress("/run/amphp.sock\0suffix")],
+            ["unix://\0abstract\0suffix"],
+        ];
+    }
+
+    /**
+     * @dataProvider provideUnixPathsWithNulBytes
+     */
+    public function testConnectPolicyRejectsNulBytesInUnixPaths(SocketAddress|string $uri): void
+    {
+        $policy = $this->createMock(ConnectPolicy::class);
+        $policy->expects(self::never())
+            ->method('isAllowed');
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('failed: path contains a NUL byte');
+
+        (new DnsSocketConnector(connectPolicy: $policy))->connect($uri);
+    }
+
+    public function testConnectPolicyChecksAbstractUnixSockets(): void
+    {
+        $addresses = [];
+
+        $policy = $this->createPolicy(static function (SocketAddress $address) use (&$addresses): bool {
+            $addresses[] = $address;
+
+            return false;
+        });
+
+        try {
+            (new DnsSocketConnector(connectPolicy: $policy))->connect("unix://\0abstract");
+            self::fail('The connection should have been denied');
+        } catch (ConnectException $e) {
+            self::assertStringEndsWith('failed: denied by the connect policy', $e->getMessage());
+        }
+
+        self::assertEquals([new UnixAddress("\0abstract")], $addresses);
     }
 
     /**
@@ -166,6 +212,14 @@ class DnsSocketConnectorTest extends AsyncTestCase
         $this->expectExceptionMessage('Connection to localhost:0 @ tcp://localhost:0 failed: invalid IP address');
 
         (new DnsSocketConnector(connectPolicy: $policy))->connect('localhost:0');
+    }
+
+    public function testNulBytesInUnixPathsAreRejectedWithoutConnectPolicy(): void
+    {
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('failed: path contains a NUL byte');
+
+        (new DnsSocketConnector())->connect("unix:///run/amphp.sock\0suffix");
     }
 
     public function provideInvalidPorts(): array

@@ -174,9 +174,19 @@ final class DnsSocketConnector implements SocketConnector
         // PHP and the URI parser read the userinfo differently, so it's rejected when a connect policy is set.
         [$scheme, $host, $port] = Internal\parseUri($uri, $this->connectPolicy === null);
 
-        if ($this->connectPolicy && \stripos($uri, 'unix://') === 0) {
+        if (\stripos($uri, 'unix://') === 0) {
             // The path is what follows the scheme, as PHP reads it.
-            return [[$uri, new UnixAddress(\substr($uri, \strlen('unix://'))), null]];
+            $path = \substr($uri, \strlen('unix://'));
+
+            // The OS ends the path at a NUL byte, so another path than the given one would be used. Only a leading NUL
+            // byte is allowed, as it marks an abstract socket.
+            if (\str_contains(\substr($path, 1), "\0")) {
+                throw new ConnectException(\sprintf('Connection to %s failed: path contains a NUL byte', $uri));
+            }
+
+            if ($this->connectPolicy) {
+                return [[$uri, new UnixAddress($path), null]];
+            }
         }
 
         if ($host[0] === '[') {
