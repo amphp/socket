@@ -26,10 +26,6 @@ class FunctionsTest extends TestCase
                 'tcp://[2001:db8:85a3:8d3:1319:8a2e:370:7348]:443',
                 ['tcp', '[2001:db8:85a3:8d3:1319:8a2e:370:7348]', 443],
             ],
-            [
-                'tcp://user:pass@test:1234',
-                ['tcp', 'test', 1234],
-            ],
         ];
     }
 
@@ -72,12 +68,17 @@ class FunctionsTest extends TestCase
     /**
      * @dataProvider parseUriUserInfoDataProvider
      */
-    public function testParseUriRejectsUserInfoWhenNotAllowed(string $uri): void
+    public function testParseUriRejectsUserInfo(string $uri): void
     {
         $this->expectException(\Error::class);
         $this->expectExceptionMessage('Invalid URI: ' . $uri . '; userinfo component not allowed');
 
-        Internal\parseUri($uri, allowUserInfo: false);
+        Internal\parseUri($uri);
+    }
+
+    public function testParseUriAllowsAtSignInUnixPath(): void
+    {
+        self::assertSame(['unix', 'tmp/user@test', 0], Internal\parseUri('unix:///tmp/user@test'));
     }
 
     public function parseUriInvalidSchemeDataProvider(): array

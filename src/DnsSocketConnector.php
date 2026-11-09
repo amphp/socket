@@ -42,8 +42,7 @@ final class DnsSocketConnector implements SocketConnector
             };
         }
 
-        // PHP and the URI parser read the userinfo differently, so it's rejected when a connect policy is set.
-        [$scheme, $host, $port] = Internal\parseUri($uri, $this->connectPolicy === null);
+        [$scheme, $host, $port] = Internal\parseUri($uri);
 
         $addresses = $this->resolve($uri, $host, $port, $context);
 

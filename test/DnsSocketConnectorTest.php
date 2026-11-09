@@ -318,6 +318,31 @@ class DnsSocketConnectorTest extends AsyncTestCase
         }
     }
 
+    public function provideUrisWithUserInfo(): array
+    {
+        return [
+            ['tcp://127.0.0.1:1@127.0.0.1:2'],
+            ['127.0.0.1:1@127.0.0.1:2'],
+            ['tcp://user:pass@127.0.0.1:1'],
+            ['tcp://user@example.com:80'],
+        ];
+    }
+
+    /**
+     * @dataProvider provideUrisWithUserInfo
+     */
+    public function testUserInfoIsRejectedWithoutConnectPolicy(string $uri): void
+    {
+        $resolver = $this->createMock(DnsResolver::class);
+        $resolver->expects(self::never())
+            ->method('resolve');
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('userinfo component not allowed');
+
+        (new DnsSocketConnector($resolver))->connect($uri);
+    }
+
     public function provideUrisToRebuild(): array
     {
         return [

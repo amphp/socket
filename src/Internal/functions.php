@@ -17,13 +17,11 @@ use Revolt\EventLoop;
 /**
  * Parse an URI into [scheme, host, port].
  *
- * @param bool $allowUserInfo Whether the URI can contain a userinfo component, which is then ignored.
- *
  * @throws \Error If an invalid URI has been passed.
  *
  * @internal
  */
-function parseUri(string $uri, bool $allowUserInfo = true): array
+function parseUri(string $uri): array
 {
     if (\stripos($uri, 'unix://') === 0) {
         /** @psalm-suppress PossiblyUndefinedArrayOffset */
@@ -58,7 +56,8 @@ function parseUri(string $uri, bool $allowUserInfo = true): array
         );
     }
 
-    if (!$allowUserInfo && $uriParts['user'] !== null) {
+    // PHP and the URI parser read the userinfo differently, so the host and port would be ambiguous.
+    if ($uriParts['user'] !== null) {
         throw new \Error(
             "Invalid URI: $uri; userinfo component not allowed"
         );
