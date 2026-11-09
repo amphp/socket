@@ -42,18 +42,22 @@ final class DnsSocketConnector implements SocketConnector
             };
         }
 
-        $attempts = $this->resolve($uri, $context);
+        // PHP and the URI parser read the userinfo differently, so it's rejected when a connect policy is set.
+        [$scheme, $host, $port] = Internal\parseUri($uri, $this->connectPolicy === null);
+
+        $addresses = $this->resolve($uri, $host, $port, $context);
 
         $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
         $timeout = $context->getConnectTimeout();
 
         $failures = [];
-        foreach ($attempts as [$builtUri, $address, $reason]) {
-            if ($address && !$this->connectPolicy?->isAllowed($address)) {
-                $reason = 'denied by the connect policy';
-            }
+        foreach ($addresses as $address) {
+            // Connect to the resolved address, since PHP can parse the original URI differently.
+            $builtUri = $scheme . '://' . $address->toString();
 
-            if ($reason !== null) {
+            if ($this->connectPolicy?->isAllowed($address) === false) {
+                $reason = 'denied by the connect policy';
+
                 $e = new ConnectException(\sprintf(
                     'Connection to %s @ %s failed: %s%s',
                     $uri,
@@ -166,14 +170,10 @@ final class DnsSocketConnector implements SocketConnector
     }
 
     /**
-     * @return non-empty-list<array{string, SocketAddress|null, string|null}> For each connection attempt, the URI to
-     *     connect to, the address to check with the connect policy, and the reason to skip the attempt.
+     * @return non-empty-list<SocketAddress> The addresses to try, in order.
      */
-    private function resolve(string $uri, ConnectContext $context): array
+    private function resolve(string $uri, string $host, int $port, ConnectContext $context): array
     {
-        // PHP and the URI parser read the userinfo differently, so it's rejected when a connect policy is set.
-        [$scheme, $host, $port] = Internal\parseUri($uri, $this->connectPolicy === null);
-
         if (\stripos($uri, 'unix://') === 0) {
             // The path is what follows the scheme, as PHP reads it.
             $path = \substr($uri, \strlen('unix://'));
@@ -184,9 +184,7 @@ final class DnsSocketConnector implements SocketConnector
                 throw new ConnectException(\sprintf('Connection to %s failed: path contains a NUL byte', $uri));
             }
 
-            if ($this->connectPolicy) {
-                return [[$uri, new UnixAddress($path), null]];
-            }
+            return [new UnixAddress($path)];
         }
 
         if ($host[0] === '[') {
@@ -197,9 +195,14 @@ final class DnsSocketConnector implements SocketConnector
             throw new ConnectException(\sprintf('Connection to %s failed: invalid port', $uri));
         }
 
-        if ($port === 0 || \inet_pton($host)) {
-            // Host is already an IP address or file path.
-            return [$this->connectPolicy ? self::createAttempt($scheme, $host, $port) : [$uri, null, null]];
+        $address = self::createAddress($host, $port);
+        if ($address) {
+            // Host is already an IP address.
+            return [$address];
+        }
+
+        if ($port === 0) {
+            throw new ConnectException(\sprintf('Connection to %s failed: port required', $uri));
         }
 
         $resolver = $this->dnsResolver ?? dnsResolver();
@@ -221,35 +224,29 @@ final class DnsSocketConnector implements SocketConnector
         // support, so we always prefer IPv4 here.
         \usort($records, static fn (DnsRecord $a, DnsRecord $b) => $a->getType() - $b->getType());
 
-        $attempts = [];
+        $addresses = [];
         foreach ($records as $record) {
-            if ($this->connectPolicy) {
-                $attempts[] = self::createAttempt($scheme, $record->getValue(), $port);
-            } elseif ($record->getType() === DnsRecord::AAAA) {
-                $attempts[] = [\sprintf('%s://[%s]:%d', $scheme, $record->getValue(), $port), null, null];
-            } else {
-                $attempts[] = [\sprintf('%s://%s:%d', $scheme, $record->getValue(), $port), null, null];
+            $address = self::createAddress($record->getValue(), $port);
+            if ($address) {
+                $addresses[] = $address;
             }
         }
 
-        return $attempts;
+        if (!$addresses) {
+            throw new ConnectException(\sprintf('Connection to %s failed: DNS returned no valid IP address', $uri));
+        }
+
+        return $addresses;
     }
 
     /**
      * @param int<0, 65535> $port
      *
-     * @return array{string, InternetAddress|null, string|null}
+     * @return InternetAddress|null Returns null if the host is not an IP address.
      */
-    private static function createAttempt(string $scheme, string $host, int $port): array
+    private static function createAddress(string $host, int $port): ?InternetAddress
     {
-        if (!\inet_pton($host)) {
-            return [$scheme . '://' . $host . ':' . $port, null, 'invalid IP address'];
-        }
-
-        $address = new InternetAddress($host, $port);
-
-        // Connect to the checked address, since PHP can parse the original URI differently.
-        return [$scheme . '://' . $address->toString(), $address, null];
+        return \inet_pton($host) ? new InternetAddress($host, $port) : null;
     }
 
     private function getDnsTypeRestrictionFromBindTo(ConnectContext $context): ?int

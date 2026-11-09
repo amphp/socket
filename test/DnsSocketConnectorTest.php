@@ -20,8 +20,76 @@ class DnsSocketConnectorTest extends AsyncTestCase
             ['[::1]:80', '[::1]:80'],
             ['tcp://[0:0:0:0:0:0:0:1]:80', '[::1]:80'],
             ['tcp://[::ffff:127.0.0.1]:80', '[::ffff:127.0.0.1]:80'],
+            ['tcp://[::FFFF:127.0.0.1]:80', '[::ffff:127.0.0.1]:80'],
+            ['tcp://[0:0:0:0:0:ffff:7f00:1]:80', '[::ffff:127.0.0.1]:80'],
+            ['udp://[::ffff:127.0.0.1]:53', '[::ffff:127.0.0.1]:53'],
+            [new InternetAddress('::ffff:127.0.0.1', 80), '[::ffff:127.0.0.1]:80'],
             [new InternetAddress('127.0.0.1', 80), '127.0.0.1:80'],
         ];
+    }
+
+    public function testConnectPolicySeesIpv4MappedRecords(): void
+    {
+        $resolver = $this->createMock(DnsResolver::class);
+        $resolver->method('resolve')
+            ->willReturn([new DnsRecord('::ffff:127.0.0.1', DnsRecord::AAAA)]);
+
+        $addresses = [];
+
+        $policy = $this->createPolicy(static function (InternetAddress $address) use (&$addresses): bool {
+            $addresses[] = $address->toString();
+
+            return false;
+        });
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Connection to example.com:80 @ tcp://[::ffff:127.0.0.1]:80 failed: denied by the connect policy');
+
+        try {
+            (new DnsSocketConnector($resolver, $policy))->connect('example.com:80');
+        } finally {
+            self::assertSame(['[::ffff:127.0.0.1]:80'], $addresses);
+        }
+    }
+
+    public function provideEmbeddedIpv4Addresses(): array
+    {
+        return [
+            'mapped loopback' => ['::ffff:127.0.0.1', '::ffff:7f00:1'],
+            'mapped loopback in hex' => ['::ffff:7f00:1', '::ffff:7f00:1'],
+            'mapped loopback, expanded' => ['0:0:0:0:0:ffff:7f00:1', '::ffff:7f00:1'],
+            'mapped private 10/8' => ['::ffff:10.0.0.1', '::ffff:a00:1'],
+            'mapped public' => ['::ffff:8.8.8.8', '::ffff:808:808'],
+            'compatible loopback' => ['::127.0.0.1', '::7f00:1'],
+            'compatible loopback in hex' => ['::7f00:1', '::7f00:1'],
+            'compatible loopback, expanded' => ['0:0:0:0:0:0:7f00:1', '::7f00:1'],
+            'compatible private 10/8' => ['::10.0.0.1', '::a00:1'],
+            'compatible public' => ['::8.8.8.8', '::808:808'],
+        ];
+    }
+
+    /**
+     * @dataProvider provideEmbeddedIpv4Addresses
+     */
+    public function testConnectPolicySeesAddressesWithEmbeddedIpv4InCanonicalForm(string $ip, string $expected): void
+    {
+        $addresses = [];
+
+        $policy = $this->createPolicy(static function (InternetAddress $address) use (&$addresses): bool {
+            $addresses[] = $address->getAddress();
+
+            return false;
+        });
+
+        try {
+            (new DnsSocketConnector(connectPolicy: $policy))->connect('tcp://[' . $ip . ']:80');
+            self::fail('The connection should have been denied');
+        } catch (ConnectException $e) {
+            self::assertStringEndsWith('failed: denied by the connect policy', $e->getMessage());
+        }
+
+        // The textual form of addresses with an embedded IPv4 address depends on the platform's inet_ntop().
+        self::assertSame([\inet_ntop(\inet_pton($expected))], $addresses);
     }
 
     public function provideUnixPathsWithNulBytes(): array
@@ -202,16 +270,71 @@ class DnsSocketConnectorTest extends AsyncTestCase
         }
     }
 
-    public function testConnectPolicySkipsInvalidIpAddresses(): void
+    public function testConnectPolicyIsNotCalledForHostnamesWithoutPort(): void
     {
         $policy = $this->createMock(ConnectPolicy::class);
         $policy->expects(self::never())
             ->method('isAllowed');
 
         $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('Connection to localhost:0 @ tcp://localhost:0 failed: invalid IP address');
+        $this->expectExceptionMessage('Connection to localhost:0 failed: port required');
 
         (new DnsSocketConnector(connectPolicy: $policy))->connect('localhost:0');
+    }
+
+    public function testHostnamesRequireAPortWithoutConnectPolicy(): void
+    {
+        $resolver = $this->createMock(DnsResolver::class);
+        $resolver->expects(self::never())
+            ->method('resolve');
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Connection to tcp://example.com failed: port required');
+
+        (new DnsSocketConnector($resolver))->connect('tcp://example.com');
+    }
+
+    public function provideRecordsWithoutValidAddress(): array
+    {
+        return [
+            [[]],
+            [['localhost']],
+            [['localhost', '']],
+        ];
+    }
+
+    /**
+     * @dataProvider provideRecordsWithoutValidAddress
+     */
+    public function testConnectFailsWhenNoRecordIsAnIpAddress(array $records): void
+    {
+        foreach ([null, $this->createMock(ConnectPolicy::class)] as $policy) {
+            try {
+                (new DnsSocketConnector($this->createResolver(...$records), $policy))->connect('example.com:80');
+                self::fail('The connection should have failed');
+            } catch (ConnectException $e) {
+                self::assertSame('Connection to example.com:80 failed: DNS returned no valid IP address', $e->getMessage());
+            }
+        }
+    }
+
+    public function provideUrisToRebuild(): array
+    {
+        return [
+            ['tcp://[0:0:0:0:0:ffff:7f00:1]:1', 'tcp://[::ffff:127.0.0.1]:1'],
+            ['tcp://127.0.0.1:1/path', 'tcp://127.0.0.1:1'],
+        ];
+    }
+
+    /**
+     * @dataProvider provideUrisToRebuild
+     */
+    public function testConnectsToTheRebuiltUriWithoutConnectPolicy(string $uri, string $expected): void
+    {
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage($uri . ' @ ' . $expected);
+
+        (new DnsSocketConnector())->connect($uri, (new ConnectContext)->withConnectTimeout(1));
     }
 
     public function testNulBytesInUnixPathsAreRejectedWithoutConnectPolicy(): void
