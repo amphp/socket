@@ -24,7 +24,7 @@ final class Socks5SocketConnector implements SocketConnector
     ];
 
     /**
-     * @throws StreamException
+     * @throws SocketException
      * @see https://datatracker.ietf.org/doc/html/rfc1928#section-3
      */
     private static function writeHello(?string $username, ?string $password, Socket $socket): void
@@ -34,12 +34,15 @@ final class Socks5SocketConnector implements SocketConnector
             $methods .= \chr(2);
         }
 
-        $socket->write(\chr(5) . \chr(\strlen($methods)) . $methods);
+        try {
+            $socket->write(\chr(5) . \chr(\strlen($methods)) . $methods);
+        } catch (StreamException $exception) {
+            throw new SocketException('Failed to write hello: ' . $exception->getMessage(), previous: $exception);
+        }
     }
 
     /**
      * @throws SocketException
-     * @throws StreamException
      * @see https://datatracker.ietf.org/doc/html/rfc1928#section-4
      */
     private static function writeConnectRequest(Uri $uri, Socket $socket): void
@@ -71,18 +74,28 @@ final class Socks5SocketConnector implements SocketConnector
 
         $payload .= \pack('n', $port);
 
-        $socket->write($payload);
+        try {
+            $socket->write($payload);
+        } catch (StreamException $exception) {
+            throw new SocketException(
+                'Failed to write connect request: ' . $exception->getMessage(),
+                previous: $exception,
+            );
+        }
     }
 
     use ForbidCloning;
     use ForbidSerialization;
 
+    /**
+     * @throws SocketException
+     */
     public static function tunnel(
         Socket $socket,
         string $target,
         ?string $username,
         ?string $password,
-        ?Cancellation $cancellation
+        ?Cancellation $cancellation,
     ): void {
         if (($username === null) !== ($password === null)) {
             throw new \Error("Both or neither username and password must be provided!");
@@ -134,13 +147,17 @@ final class Socks5SocketConnector implements SocketConnector
                 throw new SocketException("Unexpected method: $method");
             }
 
-            $socket->write(
-                \chr(1) .
-                \chr(\strlen($username)) .
-                $username .
-                \chr(\strlen($password)) .
-                $password
-            );
+            try {
+                $socket->write(
+                    \chr(1) .
+                    \chr(\strlen($username)) .
+                    $username .
+                    \chr(\strlen($password)) .
+                    $password
+                );
+            } catch (StreamException $exception) {
+                throw new SocketException('Failed to write data: ' . $exception->getMessage(), previous: $exception);
+            }
 
             $version = \ord($read(1));
             if ($version !== 1) {
@@ -187,7 +204,7 @@ final class Socks5SocketConnector implements SocketConnector
         private readonly SocketAddress|string $proxyAddress,
         private readonly ?string $username = null,
         private readonly ?string $password = null,
-        private readonly ?SocketConnector $socketConnector = null
+        private readonly ?SocketConnector $socketConnector = null,
     ) {
         if (($username === null) !== ($password === null)) {
             throw new \Error("Both or neither username and password must be provided!");

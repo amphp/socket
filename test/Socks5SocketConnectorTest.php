@@ -123,13 +123,13 @@ class Socks5SocketConnectorTest extends AsyncTestCase
         $future->await();
     }
 
-    public function testInvalidTargetThrowsSocketException(): void
+    public function testInvalidTarget(): void
     {
         [$client] = createSocketPair();
 
         $future = async(fn () => Socks5SocketConnector::tunnel(
             $client,
-            'tcp://exa mple:80',
+            'tcp:127.0.0.1:80',
             username: null,
             password: null,
             cancellation: null,
@@ -137,6 +137,23 @@ class Socks5SocketConnectorTest extends AsyncTestCase
 
         $this->expectException(SocketException::class);
         $this->expectExceptionMessage('Invalid SOCKS5 target');
+
+        $future->await();
+    }
+
+    public function testNonSocksTarget(): void
+    {
+        [$client] = createSocketPair();
+
+        $future = async(fn () => Socks5SocketConnector::tunnel(
+            $client,
+            'tcp://127.0.0.1:80',
+            username: null,
+            password: null,
+            cancellation: null,
+        ));
+
+        $this->expectException(SocketException::class);
 
         $future->await();
     }
