@@ -98,7 +98,6 @@ class DnsSocketConnectorTest extends AsyncTestCase
             ["unix:///run/amphp.sock\0suffix"],
             ["UNIX:///run/amphp.sock\0suffix"],
             [new UnixAddress("/run/amphp.sock\0suffix")],
-            ["unix://\0abstract\0suffix"],
         ];
     }
 
@@ -117,7 +116,18 @@ class DnsSocketConnectorTest extends AsyncTestCase
         (new DnsSocketConnector(connectPolicy: $policy))->connect($uri);
     }
 
-    public function testConnectPolicyChecksAbstractUnixSockets(): void
+    public function provideAbstractUnixSockets(): array
+    {
+        return [
+            ["\0abstract"],
+            ["\0abstract\0suffix"],
+        ];
+    }
+
+    /**
+     * @dataProvider provideAbstractUnixSockets
+     */
+    public function testConnectPolicyChecksAbstractUnixSockets(string $name): void
     {
         $addresses = [];
 
@@ -128,13 +138,13 @@ class DnsSocketConnectorTest extends AsyncTestCase
         });
 
         try {
-            (new DnsSocketConnector(connectPolicy: $policy))->connect("unix://\0abstract");
+            (new DnsSocketConnector(connectPolicy: $policy))->connect('unix://' . $name);
             self::fail('The connection should have been denied');
         } catch (ConnectException $e) {
             self::assertStringEndsWith('failed: denied by the connect policy', $e->getMessage());
         }
 
-        self::assertEquals([new UnixAddress("\0abstract")], $addresses);
+        self::assertEquals([new UnixAddress($name)], $addresses);
     }
 
     /**

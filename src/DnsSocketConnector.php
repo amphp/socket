@@ -181,9 +181,9 @@ final class DnsSocketConnector implements SocketConnector
             // The path is what follows the scheme, as PHP reads it.
             $path = \substr($uri, \strlen('unix://'));
 
-            // The OS ends the path at a NUL byte, so another path than the given one would be used. Only a leading NUL
-            // byte is allowed, as it marks an abstract socket.
-            if (\str_contains(\substr($path, 1), "\0")) {
+            // The OS ends a path at a NUL byte, so another path than the given one would be used. A leading NUL byte
+            // marks an abstract socket instead, whose name is used with its full length, so it may contain NUL bytes.
+            if (!\str_starts_with($path, "\0") && \str_contains($path, "\0")) {
                 throw new ConnectException(\sprintf('Connection to %s failed: path contains a NUL byte', $uri));
             }
 
