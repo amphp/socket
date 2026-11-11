@@ -40,6 +40,7 @@ final class RetrySocketConnector implements SocketConnector
         ?Cancellation $cancellation = null
     ): Socket {
         $attempts = 0;
+        /** @var list<string> $failures Psalm only sees the first iteration, where it's empty. */
         $failures = [];
         $context ??= new ConnectContext;
 

@@ -196,7 +196,7 @@ final class DnsSocketConnector implements SocketConnector
             $host = \substr($host, 1, -1);
         }
 
-        if ($port > 65535) {
+        if ($port < 0 || $port > 65535) {
             throw new ConnectException(\sprintf('Connection to %s failed: invalid port', $uri));
         }
 
