@@ -17,6 +17,11 @@ namespace Amp\Socket;
  * to treat them like the IPv4 address. {@see CidrMatcher} does this: 127.0.0.0/8 matches ::ffff:127.0.0.1. Comparing
  * strings does not.
  *
+ * PHP shortens Unix socket paths that don't fit into sun_path (108 bytes on Linux, 104 on macOS and BSD) and connects
+ * to the shortened path, which is a prefix of the checked one. The connect fails with an exception afterwards, but the
+ * socket at the shortened path has already received the connection. Check Unix sockets with an allow-list of the
+ * exact paths that may be used, as these are short enough to exist. A deny-list of exact paths can be bypassed.
+ *
  * Only {@see DnsSocketConnector} enforces the policy. With a proxy such as {@see Socks5SocketConnector}, the proxy
  * resolves and connects to the target, so a policy on the connector used to reach the proxy only checks the address of
  * the proxy. Restrict the targets at the proxy instead.

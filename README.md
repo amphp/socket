@@ -50,6 +50,9 @@ $connector = new Amp\Socket\RetrySocketConnector(
 
 If every address is denied, a `ConnectPolicyException` is thrown, which `RetrySocketConnector` doesn't retry.
 
+Check Unix sockets with an allow-list of the exact paths that may be used.
+PHP shortens paths that don't fit into `sun_path` (108 bytes on Linux, 104 on macOS and BSD) and connects to the shortened path before failing, so a deny-list of exact paths can be bypassed with a longer path.
+
 The policy only applies to connections the connector opens itself.
 When connecting through a proxy such as `Socks5SocketConnector`, the proxy connects to the target, so restrict the targets at the proxy.
 
