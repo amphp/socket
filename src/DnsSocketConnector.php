@@ -50,6 +50,8 @@ final class DnsSocketConnector implements SocketConnector
         $timeout = $context->getConnectTimeout();
 
         $failures = [];
+        $lastMessage = '';
+        $lastCode = 0;
         $onlyDenied = true;
         foreach ($addresses as $address) {
             // Connect to the resolved address, since PHP can parse the original URI differently.
@@ -61,15 +63,13 @@ final class DnsSocketConnector implements SocketConnector
             if ($this->connectPolicy?->isAllowed($address) === false) {
                 $reason = 'denied by the connect policy';
 
-                $message = \sprintf(
+                $lastMessage = \sprintf(
                     'Connection to %s failed: %s%s',
                     $authority,
                     $reason,
                     $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
                 );
-
-                // Only a denial of every address is final, otherwise a retry could reach the address that failed.
-                $e = $onlyDenied ? new ConnectPolicyException($message) : new ConnectException($message);
+                $lastCode = 0;
 
                 $failures[] = "$authority ($reason)";
 
@@ -150,8 +150,10 @@ final class DnsSocketConnector implements SocketConnector
                     Internal\CONNECTION_REFUSED => 'connection refused',
                 ];
 
-                $code = $e->getCode();
-                $reason = $knownReasons[$code] ?? ('Error #' . $code);
+                $lastMessage = $e->getMessage();
+                $lastCode = $e->getCode();
+
+                $reason = $knownReasons[$lastCode] ?? ('Error #' . $lastCode);
 
                 $failures[] = "$authority ($reason)";
 
@@ -162,13 +164,13 @@ final class DnsSocketConnector implements SocketConnector
             return ResourceSocket::fromClientSocket($socket, $context->getTlsContext());
         }
 
-        /**
-         * This is reached if either all URIs failed or the maximum number of attempts is reached.
-         *
-         * @noinspection PhpUndefinedVariableInspection
-         * @psalm-suppress UndefinedVariable
-         */
-        throw $e;
+        // Every address failed. Only a denial of every address is final,
+        // otherwise a retry could reach an address that failed.
+        if ($onlyDenied) {
+            throw new ConnectPolicyException($lastMessage);
+        }
+
+        throw new ConnectException($lastMessage, $lastCode);
     }
 
     /**
