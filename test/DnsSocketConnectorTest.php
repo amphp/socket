@@ -230,7 +230,11 @@ class DnsSocketConnectorTest extends AsyncTestCase
             self::fail('The connection should have failed');
         } catch (ConnectException $e) {
             self::assertNotInstanceOf(ConnectPolicyException::class, $e);
-            self::assertStringEndsWith('(connection refused)', $e->getMessage());
+            // Windows reports a timeout instead of a refused connection, as it retries the connection first.
+            self::assertStringContainsString(
+                'previous attempts: example.com:' . $port . ' @ tcp://127.0.0.1:' . $port . ' (connection ',
+                $e->getMessage(),
+            );
         }
     }
 
