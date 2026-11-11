@@ -119,7 +119,7 @@ final class DnsSocketConnector implements SocketConnector
                     $cancellation->throwIfRequested(); // Rethrow if cancelled from user-provided token.
 
                     throw new ConnectException(\sprintf(
-                        'Connecting to %s failed: timeout exceeded (%0.3f s)%s',
+                        'Connection to %s failed: timeout exceeded (%0.3f s)%s',
                         $authority,
                         $timeout,
                         self::formatPreviousAttempts($failures)
