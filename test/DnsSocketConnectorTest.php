@@ -42,7 +42,7 @@ class DnsSocketConnectorTest extends AsyncTestCase
             return false;
         });
 
-        $this->expectException(ConnectException::class);
+        $this->expectException(ConnectPolicyException::class);
         $this->expectExceptionMessage('Connection to example.com:80 @ tcp://[::ffff:127.0.0.1]:80 failed: denied by the connect policy');
 
         try {
@@ -190,18 +190,45 @@ class DnsSocketConnectorTest extends AsyncTestCase
 
         $policy = $this->createPolicy(static fn (InternetAddress $address): bool => $address->getAddress() === '127.0.0.1');
 
-        $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('previous attempts: example.com:' . $port . ' @ tcp://192.0.2.1:' . $port . ' (denied by the connect policy)');
-
         $connector = new DnsSocketConnector($this->createResolver('192.0.2.1', '127.0.0.1'), $policy);
-        $connector->connect('example.com:' . $port, (new ConnectContext)->withConnectTimeout(1));
+
+        try {
+            $connector->connect('example.com:' . $port, (new ConnectContext)->withConnectTimeout(1));
+            self::fail('The connection should have failed');
+        } catch (ConnectException $e) {
+            // The last address may be reachable on a retry, so it's not a denial.
+            self::assertNotInstanceOf(ConnectPolicyException::class, $e);
+            self::assertStringContainsString(
+                'previous attempts: example.com:' . $port . ' @ tcp://192.0.2.1:' . $port . ' (denied by the connect policy)',
+                $e->getMessage(),
+            );
+        }
+    }
+
+    public function testConnectPolicyDenialAfterAFailureIsNotFinal(): void
+    {
+        $server = listen('127.0.0.1:0');
+        $port = $this->getPort($server);
+        $server->close();
+
+        $policy = $this->createPolicy(static fn (InternetAddress $address): bool => $address->getAddress() === '127.0.0.1');
+
+        $connector = new DnsSocketConnector($this->createResolver('127.0.0.1', '192.0.2.1'), $policy);
+
+        try {
+            $connector->connect('example.com:' . $port, (new ConnectContext)->withConnectTimeout(1));
+            self::fail('The connection should have failed');
+        } catch (ConnectException $e) {
+            self::assertNotInstanceOf(ConnectPolicyException::class, $e);
+            self::assertStringEndsWith('(connection refused)', $e->getMessage());
+        }
     }
 
     public function testConnectFailsWhenThePolicyDeniesAllAddresses(): void
     {
         $policy = $this->createPolicy(static fn (InternetAddress $address): bool => false);
 
-        $this->expectException(ConnectException::class);
+        $this->expectException(ConnectPolicyException::class);
         $this->expectExceptionMessage(
             'Connection to example.com:80 @ tcp://192.0.2.3:80 failed: denied by the connect policy;'
             . ' previous attempts: example.com:80 @ tcp://192.0.2.1:80 (denied by the connect policy),'
@@ -357,7 +384,7 @@ class DnsSocketConnectorTest extends AsyncTestCase
     public function testConnectsToTheRebuiltUriWithoutConnectPolicy(string $uri, string $expected): void
     {
         $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage($uri . ' @ ' . $expected);
+        $this->expectExceptionMessage('Connection to ' . $expected . ' ');
 
         (new DnsSocketConnector())->connect($uri, (new ConnectContext)->withConnectTimeout(1));
     }
@@ -449,7 +476,7 @@ class DnsSocketConnectorTest extends AsyncTestCase
             self::fail('The connection should have been denied');
         } catch (ConnectException $e) {
             self::assertSame(
-                'Connection to unix:///run/amphp.sock @ unix:///run/amphp.sock failed: denied by the connect policy',
+                'Connection to unix:///run/amphp.sock failed: denied by the connect policy',
                 $e->getMessage(),
             );
         }

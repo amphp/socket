@@ -11,6 +11,7 @@ interface SocketConnector
      * Establish a socket connection to the specified URI.
      *
      * @param SocketAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ *     URIs with userinfo (user@host) are rejected.
      * @param ConnectContext|null $context Socket connect context to use when connecting.
      *
      * @throws ConnectException

@@ -69,8 +69,16 @@ final class CidrMatcher
             throw new ValueError('Invalid IP address: ' . $ip);
         }
 
-        $networkAddress = self::toIPv6($inAddr);
+        return $this->matchBytes($inAddr);
+    }
 
-        return ($networkAddress & $this->mask) === $this->address;
+    public function matchAddress(InternetAddress $address): bool
+    {
+        return $this->matchBytes($address->getAddressBytes());
+    }
+
+    private function matchBytes(string $inAddr): bool
+    {
+        return (self::toIPv6($inAddr) & $this->mask) === $this->address;
     }
 }

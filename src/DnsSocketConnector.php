@@ -44,28 +44,34 @@ final class DnsSocketConnector implements SocketConnector
 
         [$scheme, $host, $port] = Internal\parseUri($uri);
 
-        $addresses = $this->resolve($uri, $host, $port, $context);
+        [$addresses, $resolved] = $this->resolve($uri, $host, $port, $context);
 
         $flags = \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT;
         $timeout = $context->getConnectTimeout();
 
         $failures = [];
+        $onlyDenied = true;
         foreach ($addresses as $address) {
             // Connect to the resolved address, since PHP can parse the original URI differently.
             $builtUri = $scheme . '://' . $address->toString();
 
+            // Only name the address if it was resolved from a name, otherwise it's the address that was given.
+            $authority = $resolved ? $uri . ' @ ' . $builtUri : $builtUri;
+
             if ($this->connectPolicy?->isAllowed($address) === false) {
                 $reason = 'denied by the connect policy';
 
-                $e = new ConnectException(\sprintf(
-                    'Connection to %s @ %s failed: %s%s',
-                    $uri,
-                    $builtUri,
+                $message = \sprintf(
+                    'Connection to %s failed: %s%s',
+                    $authority,
                     $reason,
                     $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
-                ));
+                );
 
-                $failures[] = "$uri @ $builtUri ($reason)";
+                // Only a denial of every address is final, otherwise a retry could reach the address that failed.
+                $e = $onlyDenied ? new ConnectPolicyException($message) : new ConnectException($message);
+
+                $failures[] = "$authority ($reason)";
 
                 continue; // Try the next address.
             }
@@ -75,11 +81,8 @@ final class DnsSocketConnector implements SocketConnector
 
                 \set_error_handler(static function (int $errno, string $errstr) use (
                     &$failures,
-                    $uri,
-                    $builtUri,
+                    $authority,
                 ): never {
-                    $authority = $uri === $builtUri ? $builtUri : $uri . ' @ ' . $builtUri;
-
                     throw new ConnectException(\sprintf(
                         'Connection to %s failed: (Error #%d) %s%s',
                         $authority,
@@ -116,9 +119,8 @@ final class DnsSocketConnector implements SocketConnector
                     $cancellation->throwIfRequested(); // Rethrow if cancelled from user-provided token.
 
                     throw new ConnectException(\sprintf(
-                        'Connecting to %s @ %s failed: timeout exceeded (%0.3f s)%s',
-                        $uri,
-                        $builtUri,
+                        'Connecting to %s failed: timeout exceeded (%0.3f s)%s',
+                        $authority,
                         $timeout,
                         $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
                     ), Internal\CONNECTION_TIMEOUT); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
@@ -132,13 +134,14 @@ final class DnsSocketConnector implements SocketConnector
                 if (\stream_socket_get_name($socket, true) === false) {
                     \fclose($socket);
                     throw new ConnectException(\sprintf(
-                        'Connection to %s @ %s refused%s',
-                        $uri,
-                        $builtUri,
+                        'Connection to %s refused%s',
+                        $authority,
                         $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
                     ), Internal\CONNECTION_REFUSED); // See ECONNREFUSED in http://www.virtsync.com/c-error-codes-include-errno
                 }
             } catch (ConnectException $e) {
+                $onlyDenied = false;
+
                 // Includes only error codes used in this file, as error codes on other OS families might be different.
                 // In fact, this might show a confusing error message on OS families that return 110 or 111 by itself.
                 $knownReasons = [
@@ -150,7 +153,7 @@ final class DnsSocketConnector implements SocketConnector
                 $code = $e->getCode();
                 $reason = $knownReasons[$code] ?? ('Error #' . $code);
 
-                $failures[] = "$uri @ $builtUri ($reason)";
+                $failures[] = "$authority ($reason)";
 
                 continue; // Could not connect to host, try next host in the list.
             }
@@ -169,7 +172,8 @@ final class DnsSocketConnector implements SocketConnector
     }
 
     /**
-     * @return non-empty-list<SocketAddress> The addresses to try, in order.
+     * @return array{non-empty-list<SocketAddress>, bool} The addresses to try, in order, and whether they were
+     *     resolved from a name.
      */
     private function resolve(string $uri, string $host, int $port, ConnectContext $context): array
     {
@@ -183,7 +187,7 @@ final class DnsSocketConnector implements SocketConnector
                 throw new ConnectException(\sprintf('Connection to %s failed: path contains a NUL byte', $uri));
             }
 
-            return [new UnixAddress($path)];
+            return [[new UnixAddress($path)], false];
         }
 
         if ($host[0] === '[') {
@@ -197,7 +201,7 @@ final class DnsSocketConnector implements SocketConnector
         $address = self::createAddress($host, $port);
         if ($address) {
             // Host is already an IP address.
-            return [$address];
+            return [[$address], false];
         }
 
         if ($port === 0) {
@@ -235,7 +239,7 @@ final class DnsSocketConnector implements SocketConnector
             throw new ConnectException(\sprintf('Connection to %s failed: DNS returned no valid IP address', $uri));
         }
 
-        return $addresses;
+        return [$addresses, true];
     }
 
     /**

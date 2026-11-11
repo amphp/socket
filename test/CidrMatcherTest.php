@@ -64,6 +64,12 @@ class CidrMatcherTest extends TestCase
                     $matcher->match($ip),
                     "$ip against " . $test['cidr']
                 );
+
+                $this->assertSame(
+                    $expectedResult,
+                    $matcher->matchAddress(new InternetAddress($ip, 0)),
+                    "$ip as address against " . $test['cidr']
+                );
             }
         }
     }

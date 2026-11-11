@@ -89,7 +89,7 @@ final class PublicAddressConnectPolicy implements ConnectPolicy
         }
 
         foreach ($this->deniedRanges as $range) {
-            if ($range->match($address->getAddress())) {
+            if ($range->matchAddress($address)) {
                 return false;
             }
         }

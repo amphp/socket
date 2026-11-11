@@ -13,6 +13,7 @@ use Revolt\EventLoop;
  * If you want to accept TLS connections, you have to use `yield $socket->setupTls()` after accepting new clients.
  *
  * @param SocketAddress|string $address URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ *     URIs with userinfo (user@host) are rejected.
  * @param BindContext|null $bindContext Context options for listening.
  * @param positive-int $chunkSize Chunk size for the accepted sockets.
  *
@@ -89,6 +90,7 @@ function socketConnector(?SocketConnector $connector = null): SocketConnector
  * Establish a socket connection to the specified URI.
  *
  * @param SocketAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ *     URIs with userinfo (user@host) are rejected.
  * @param ConnectContext|null $context Socket connect context to use when connecting.
  *
  * @throws ConnectException
@@ -103,6 +105,7 @@ function connect(SocketAddress|string $uri, ?ConnectContext $context = null, ?Ca
  * Establish a socket connection to the specified URI and enable TLS.
  *
  * @param SocketAddress|string $uri URI in scheme://host:port format. TCP is assumed if no scheme is present.
+ *     URIs with userinfo (user@host) are rejected.
  * @param ConnectContext|null $context Socket connect context to use when connecting.
  *
  * @throws ConnectException

@@ -56,7 +56,9 @@ function parseUri(string $uri): array
         );
     }
 
-    // PHP and the URI parser read the userinfo differently, so the host and port would be ambiguous.
+    // Rejected as a security measure, even though such URIs were accepted before: PHP and the URI parser read the
+    // userinfo differently, so the host and port would be ambiguous. Socket URIs have no use for userinfo, e.g.
+    // Socks5SocketConnector takes its credentials as separate arguments.
     if ($uriParts['user'] !== null) {
         throw new \Error(
             "Invalid URI: $uri; userinfo component not allowed"

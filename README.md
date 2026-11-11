@@ -37,6 +37,24 @@ $deferredCancellation = new Amp\DeferredCancellation();
 $socket = connect('amphp.org:80', $connectContext, $deferredCancellation->getCancellation());
 ```
 
+### Restricting Connections
+
+`DnsSocketConnector` accepts a `ConnectPolicy` that checks each resolved address before connecting, e.g. to guard against server-side request forgery.
+`PublicAddressConnectPolicy` allows public IP addresses only.
+
+```php
+$connector = new Amp\Socket\RetrySocketConnector(
+    new Amp\Socket\DnsSocketConnector(connectPolicy: new Amp\Socket\PublicAddressConnectPolicy),
+);
+```
+
+If every address is denied, a `ConnectPolicyException` is thrown, which `RetrySocketConnector` doesn't retry.
+
+The policy only applies to connections the connector opens itself.
+When connecting through a proxy such as `Socks5SocketConnector`, the proxy connects to the target, so restrict the targets at the proxy.
+
+As a security measure, URIs with userinfo (`user@host`) are rejected, since PHP and the URI parser disagree on how to read them.
+
 ### Encrypted Connections / TLS
 
 If you want to connect via TLS, use `Amp\Socket\connectTls()` instead or call `$socket->setupTls()` on the returned socket.

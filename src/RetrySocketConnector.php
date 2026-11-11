@@ -46,6 +46,8 @@ final class RetrySocketConnector implements SocketConnector
         do {
             try {
                 return $this->delegate->connect($uri, $context, $cancellation);
+            } catch (ConnectPolicyException $e) {
+                throw $e; // The same addresses would be denied again.
             } catch (ConnectException $e) {
                 if (++$attempts === $this->maxAttempts) {
                     throw new ConnectException(\sprintf(

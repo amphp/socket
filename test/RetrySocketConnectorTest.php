@@ -38,4 +38,31 @@ class RetrySocketConnectorTest extends AsyncTestCase
             self::assertSame([false, false], $delegate->previousAttemptAlive);
         }
     }
+
+    public function testConnectPolicyExceptionIsNotRetried(): void
+    {
+        $delegate = new class implements SocketConnector {
+            public int $attempts = 0;
+
+            public function connect(
+                SocketAddress|string $uri,
+                ?ConnectContext $context = null,
+                ?Cancellation $cancellation = null
+            ): Socket {
+                $this->attempts++;
+
+                throw new ConnectPolicyException('Connection failed: denied by the connect policy');
+            }
+        };
+
+        $connector = new RetrySocketConnector($delegate, maxAttempts: 3, exponentialBackoffBase: 1);
+
+        try {
+            $connector->connect('tcp://127.0.0.1:1');
+            self::fail('Expected the connection to fail');
+        } catch (ConnectPolicyException $e) {
+            self::assertSame('Connection failed: denied by the connect policy', $e->getMessage());
+            self::assertSame(1, $delegate->attempts);
+        }
+    }
 }
