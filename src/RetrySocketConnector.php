@@ -50,12 +50,16 @@ final class RetrySocketConnector implements SocketConnector
                 throw $e; // The same addresses would be denied again.
             } catch (ConnectException $e) {
                 if (++$attempts === $this->maxAttempts) {
-                    throw new ConnectException(\sprintf(
-                        'Connection to %s failed after %d attempts; previous attempts: %s',
-                        (string) $uri,
-                        $attempts,
-                        \implode(', ', $failures),
-                    ));
+                    if (!$failures) {
+                        throw $e;
+                    }
+
+                    // The last attempt is the error, the previous ones are listed for context.
+                    throw new ConnectException(
+                        $e->getMessage() . '; previous attempts: ' . \implode(', ', $failures),
+                        $e->getCode(),
+                        $e,
+                    );
                 }
 
                 $failures[] = $e->getMessage();
