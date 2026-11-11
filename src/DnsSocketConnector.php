@@ -67,7 +67,7 @@ final class DnsSocketConnector implements SocketConnector
                     'Connection to %s failed: %s%s',
                     $authority,
                     $reason,
-                    $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
+                    self::formatPreviousAttempts($failures)
                 );
                 $lastCode = 0;
 
@@ -88,7 +88,7 @@ final class DnsSocketConnector implements SocketConnector
                         $authority,
                         $errno,
                         $errstr,
-                        $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
+                        self::formatPreviousAttempts($failures)
                     ), $errno);
                 });
 
@@ -122,7 +122,7 @@ final class DnsSocketConnector implements SocketConnector
                         'Connecting to %s failed: timeout exceeded (%0.3f s)%s',
                         $authority,
                         $timeout,
-                        $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
+                        self::formatPreviousAttempts($failures)
                     ), Internal\CONNECTION_TIMEOUT); // See ETIMEDOUT in http://www.virtsync.com/c-error-codes-include-errno
                 } finally {
                     EventLoop::cancel($watcher);
@@ -136,7 +136,7 @@ final class DnsSocketConnector implements SocketConnector
                     throw new ConnectException(\sprintf(
                         'Connection to %s refused%s',
                         $authority,
-                        $failures ? '; previous attempts: ' . \implode(', ', $failures) : ''
+                        self::formatPreviousAttempts($failures)
                     ), Internal\CONNECTION_REFUSED); // See ECONNREFUSED in http://www.virtsync.com/c-error-codes-include-errno
                 }
             } catch (ConnectException $e) {
@@ -171,6 +171,14 @@ final class DnsSocketConnector implements SocketConnector
         }
 
         throw new ConnectException($lastMessage, $lastCode);
+    }
+
+    /**
+     * @param list<string> $failures
+     */
+    private static function formatPreviousAttempts(array $failures): string
+    {
+        return $failures ? '; previous attempts: ' . \implode(', ', $failures) : '';
     }
 
     /**
